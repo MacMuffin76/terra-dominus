@@ -1,0 +1,73 @@
+body {
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.register-container {
+  background-color: rgba(0, 0, 0, 0.8); /* Fond noir semi-transparent */
+  padding: 30px;
+  border-radius: 10px; /* Coins arrondis */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre pour la boîte */
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+
+
+  /* Centrage vertical et horizontal */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+}
+
+.register-container h2 {
+  color: white;
+}
+
+.register-container input[type="text"],
+.register-container input[type="email"],
+.register-container input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.register-container button[type="submit"] {
+  background-color: #4CAF50; /* Bouton vert */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.register-container button[type="submit"]:hover {
+  background-color: #45a049;
+}
+
+.register-container a {
+  color: #00f;
+  text-decoration: none;
+}
+
+.register-container a:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}

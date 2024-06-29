@@ -1,0 +1,20 @@
+.resource-detail {
+  padding: 40px;
+  border: 1px solid #360000;
+  border-radius: 8px;
+  background-color: #000000a6;
+}
+
+.resource-detail h2 {
+  margin-top: 0;
+}
+
+.resource-detail p {
+  margin: 5px 0;
+}
+
+.resource-detail button {
+  margin: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+}

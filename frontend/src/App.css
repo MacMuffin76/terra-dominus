@@ -1,0 +1,46 @@
+/*   background: url('/public/images/background.png') no-repeat center center fixed; */
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: url('/public/images/background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+}
+
+h1 {
+  margin: 0;
+  font-size: 48px;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 2px 2px #000;
+}
+
+h2 {
+  font-size: 24px;
+  text-align: center;
+  color: #1e90ff;
+  text-shadow: 1px 1px #000;
+}
+
+p {
+  margin: 0;
+  padding: 5px 0;
+  font-size: 18px;
+}
+
+.menu {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding-top: 20px;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.menu-title {
+  color: white;
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+

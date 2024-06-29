@@ -1,0 +1,92 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  width: calc(100% - 250px); /* Ajoutez cette ligne pour prendre en compte la largeur du menu */
+  padding: 20px;
+  margin-left: 250px; /* Ajoutez cette ligne pour décaler le contenu vers la droite */
+  box-sizing: border-box;
+}
+
+.dashboard-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.dashboard-header {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 48px;
+  font-family: 'Arial', sans-serif;
+  color: #ffffff;
+  text-shadow: 2px 2px #000;
+  border-bottom: 2px solid #ffffff;
+  padding-bottom: 10px;
+}
+
+.dashboard-modules {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-module {
+  margin: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  width: calc(25% - 20px); /* Ajustez cette largeur pour mieux utiliser l'espace */
+  text-align: left;
+  transition: transform 0.3s;
+}
+
+.dashboard-module:hover {
+  transform: scale(1.05);
+}
+
+.dashboard-module h2 {
+  margin-bottom: 10px;
+  color: #1e90ff;
+  border-bottom: 1px solid #1e90ff;
+  padding-bottom: 5px;
+}
+
+.dashboard-resources ul,
+.dashboard-buildings ul,
+.dashboard-units ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.dashboard-resources li,
+.dashboard-buildings li,
+.dashboard-units li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dashboard-resource-icon,
+.dashboard-building-icon,
+.dashboard-unit-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  flex-shrink: 0; /* Ajoutez cette ligne pour éviter que l'image ne rétrécisse */
+}
+
+.dashboard-resource-text,
+.dashboard-building-text,
+.dashboard-unit-text {
+  white-space: nowrap; /* Ajoutez cette ligne pour empêcher le retour à la ligne */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

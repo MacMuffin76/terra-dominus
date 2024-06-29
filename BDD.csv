@@ -1,0 +1,42 @@
+"table_name","column_name","data_type","character_maximum_length"
+"resources","amount","integer",NULL
+"quêtes","date_fin","timestamp without time zone",NULL
+"users","password","character varying",255
+"users","points_experience","integer",NULL
+"flottes","etat","character varying",50
+"resources","id","integer",NULL
+"quêtes","nom","character varying",255
+"users","email","character varying",255
+"quêtes","quete_id","integer",NULL
+"units","force","integer",NULL
+"buildings","capacite","integer",NULL
+"quêtes","description","text",NULL
+"users","id","integer",NULL
+"quêtes","date_debut","timestamp without time zone",NULL
+"buildings","level","integer",NULL
+"alliances","date_creation","timestamp without time zone",NULL
+"units","user_id","integer",NULL
+"alliances","alliance_id","integer",NULL
+"users","two_factor_enabled","boolean",NULL
+"buildings","id","integer",NULL
+"alliances","description","text",NULL
+"buildings","name","character varying",255
+"users","rang","character varying",50
+"flottes","joueur_id","integer",NULL
+"flottes","composition","jsonb",NULL
+"units","name","character varying",255
+"resources","type","USER-DEFINED",NULL
+"flottes","flotte_id","integer",NULL
+"units","id","integer",NULL
+"quêtes","statut","character varying",50
+"flottes","nom","character varying",255
+"users","two_factor_secret","character varying",255
+"buildings","user_id","integer",NULL
+"units","quantity","integer",NULL
+"alliances","nom","character varying",255
+"quêtes","joueur_id","integer",NULL
+"units","capacite_speciale","character varying",255
+"users","username","character varying",255
+"buildings","production_horaire","integer",NULL
+"resources","user_id","integer",NULL
+"flottes","localisation","character varying",255

@@ -1,0 +1,15 @@
+html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-image: url('./images/background.png'); /* Chemin correct vers l'image */
+  background-size: cover;
+  background-position: center;
+  color: #fff; /* S'assurer que le texte est visible sur le background */
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
