@@ -14,19 +14,23 @@ const Building = sequelize.define('Building', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      len: [1, 255]
+    }
   },
   level: {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 1,
   },
-  production_horaire: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
   capacite: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     defaultValue: 0,
+  },
+  description: {
+    type: DataTypes.STRING(1500),
+    allowNull: true, // Allow null if description is not mandatory
   },
 }, {
   tableName: 'buildings',

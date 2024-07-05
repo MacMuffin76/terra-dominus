@@ -44,49 +44,53 @@ const Dashboard = () => {
     return <div>Loading...</div>;
   }
 
+  const formatFileName = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
+  };
+
   return (
     <div className="dashboard">
       <Menu />
       <div className="dashboard-content">
         <div className="dashboard-header">
-          <h1>Dashboard</h1>
+          <h1>Tableau de bord</h1>
         </div>
         <div className="dashboard-modules">
           <div className="dashboard-module">
-            <h2>User Info</h2>
-            <p>Username: {data.user.username}</p>
+            <h2>Informations</h2>
+            <p>Pseudo: {data.user.username}</p>
             <p>Level: {data.user.level}</p>
-            <p>Experience Points: {data.user.points_experience}</p>
-            <p>Rank: {data.user.rang}</p>
+            <p>Points d'experience: {data.user.points_experience}</p>
+            <p>Rang: {data.user.rang}</p>
           </div>
           <div className="dashboard-module dashboard-resources">
-            <h2>Resources</h2>
+            <h2>Ressources</h2>
             <ul>
               {data.resources.map((resource) => (
                 <li key={resource.id}>
-                  <img src={`./images/resources/${resource.type}.png`} alt={resource.type} className="dashboard-resource-icon" />
+                  <img src={`./images/resources/${formatFileName(resource.type)}.png`} alt={resource.type} className="dashboard-resource-icon" />
                   <span className="dashboard-resource-text">{resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}: {Math.floor(resource.amount)}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div className="dashboard-module dashboard-buildings">
-            <h2>Buildings</h2>
+            <h2>Batiments</h2>
             <ul>
               {data.buildings.map((building) => (
                 <li key={building.id}>
-                  <img src={`./images/buildings/${building.name.toLowerCase().replace(' ', '_')}.png`} alt={building.name} className="dashboard-building-icon" />
+                  <img src={`./images/buildings/${formatFileName(building.name)}.png`} alt={building.name} className="dashboard-building-icon" />
                   <span className="dashboard-building-text">{building.name.charAt(0).toUpperCase() + building.name.slice(1)} (Level: {building.level})</span>
                 </li>
               ))}
             </ul>
           </div>
           <div className="dashboard-module dashboard-units">
-            <h2>Units</h2>
+            <h2>Unités</h2>
             <ul>
               {data.units.map((unit) => (
                 <li key={unit.id}>
-                  <img src={`./images/units/${unit.name.toLowerCase().replace(' ', '_')}.png`} alt={unit.name} className="dashboard-unit-icon" />
+                  <img src={`./images/training/${formatFileName(unit.name)}.png`} alt={unit.name} className="dashboard-unit-icon" />
                   <span className="dashboard-unit-text">{unit.name.charAt(0).toUpperCase() + unit.name.slice(1)}: {unit.quantity}</span>
                 </li>
               ))}

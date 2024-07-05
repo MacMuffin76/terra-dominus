@@ -14,6 +14,9 @@ const Unit = sequelize.define('Unit', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      len: [1, 255]
+    }
   },
   quantity: {
     type: DataTypes.INTEGER,
@@ -22,10 +25,15 @@ const Unit = sequelize.define('Unit', {
   },
   force: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     defaultValue: 0,
   },
   capacite_speciale: {
     type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      len: [0, 255]
+    }
   },
 }, {
   tableName: 'units',

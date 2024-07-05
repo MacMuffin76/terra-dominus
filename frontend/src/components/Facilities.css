@@ -1,8 +1,121 @@
+/* Reset CSS */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+/* Autres règles CSS existantes */
 .facilities-container {
   display: flex;
-  flex-direction: column; /* Aligner les éléments en colonne */
-  justify-content: flex-start; /* Aligner le contenu en haut */
-  align-items: center; /* Centrer le contenu horizontalement */
-  margin-left: 250px; /* Espace réservé pour le menu */
-  height: 100vh; /* Prendre toute la hauteur de l'écran */
+  flex-direction: column;
+  align-items: center;
+}
+
+.facilities-content {
+  width: calc(100% - 250px); /* Prenez en compte la largeur du menu latéral */
+  max-width: 1200px;
+  padding: 20px;
+  position: relative; /* Assurez-vous que le contenu est positionné relativement */
+  margin-left: 250px; /* Ajustez cette valeur pour prendre en compte le menu latéral */
+}
+
+.facilities-content h1 {
+  margin-bottom: 60px; /* Espace entre le titre et le contenu */
+  text-align: center; /* Centre le titre */
+}
+
+.facilities-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 20px; /* Add space between items */
+  margin-top: 100px; /* Ajustez cette valeur pour descendre les images initialement */
+  transition: transform 0.3s ease;
+}
+
+.facilities-content.with-details .facilities-list {
+  transform: translateY(300px); /* Ajustez cette valeur pour correspondre à la hauteur du panneau de détails */
+}
+
+.facility-card {
+  width: calc(33.333% - 40px); /* Ajustez la largeur pour s'assurer que trois cartes s'affichent par ligne */
+  margin: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px; /* Rounded corners */
+  overflow: hidden;
+  background-color: #1c1c1c; /* Background color for the card */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  height: 280px; /* Fixed height for uniform size */
+}
+
+.facility-card:hover {
+  transform: translateY(-10px); /* Slight lift on hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+.facility-image {
+  width: 100%;
+  height: 200px; /* Fixed height for images */
+  object-fit: cover; /* Ensures the image covers the area */
+  border-bottom: 2px solid #444; /* Bottom border for separation */
+}
+
+.facility-card h3 {
+  margin: 5px 0; /* Reduced margin for less height */
+  font-size: 1em; /* Adjusted font size */
+  color: #fff; /* White text color */
+}
+
+.facility-card p {
+  margin: 3px 0; /* Reduced margin for less height */
+  color: #bbb; /* Light grey text color */
+  font-size: 0.9em; /* Adjusted font size */
+}
+
+.facility-detail {
+  position: absolute;
+  top: 150px; /* Ajustez cette valeur pour placer le panneau de détails */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1000px;
+  padding: 20px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #070707; /* Couleur de fond noir */
+  color: #fff; /* Couleur du texte blanche pour contraste */
+  z-index: 10;
+}
+
+.facility-detail h2 {
+  margin-top: 0;
+  color: #fff; /* Couleur du texte blanche pour contraste */
+}
+
+.facility-detail p {
+  margin: 5px 0;
+}
+
+.facility-detail button {
+  margin: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #555; /* Couleur de fond des boutons */
+  color: #fff; /* Couleur du texte des boutons */
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.facility-detail button:hover {
+  background-color: #777; /* Couleur de fond des boutons au survol */
 }

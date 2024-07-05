@@ -35,6 +35,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
+  gap: 20px; /* Add space between items */
   margin-top: 100px; /* Ajustez cette valeur pour descendre les images initialement */
   transition: transform 0.3s ease;
 }
@@ -44,21 +45,45 @@ body {
 }
 
 .building-card {
-  width: 150px;
+  width: calc(33.33333% - 40px); /* Ajustez la largeur pour s'assurer que trois cartes s'affichent par ligne */
   margin: 10px;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px; /* Rounded corners */
+  overflow: hidden;
+  background-color: #1c1c1c; /* Background color for the card */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  height: 280px; /* Fixed height for uniform size */
+}
+
+.building-card:hover {
+  transform: translateY(-10px); /* Slight lift on hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
 }
 
 .building-image {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 200px; /* Fixed height for images */
+  object-fit: cover; /* Ensures the image covers the area */
+  border-bottom: 2px solid #444; /* Bottom border for separation */
+}
+
+.building-card h3 {
+  margin: 5px 0; /* Reduced margin for less height */
+  font-size: 1em; /* Adjusted font size */
+  color: #fff; /* White text color */
+}
+
+.building-card p {
+  margin: 3px 0; /* Reduced margin for less height */
+  color: #bbb; /* Light grey text color */
+  font-size: 0.9em; /* Adjusted font size */
 }
 
 .resource-detail {
   position: absolute;
-  top: 100px; /* Ajustez cette valeur pour placer le panneau de détails */
+  top: 150px; /* Ajustez cette valeur pour placer le panneau de détails */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -88,6 +113,7 @@ body {
   color: #fff; /* Couleur du texte des boutons */
   border: none;
   border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 
 .resource-detail button:hover {

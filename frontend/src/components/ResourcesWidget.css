@@ -1,0 +1,29 @@
+/* frontend/src/components/ResourcesWidget.css */
+.resources-widget {
+  position: absolute;
+  top: 80px;
+  left: calc(50% + 125px);
+  transform: translateX(-50%);
+  background-color: rgba(28, 28, 28, 0.8); /* Couleur de fond avec opacité */
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center; /* Centre les items verticalement */
+  gap: 15px; /* Espace entre les items */
+}
+
+.resource-item {
+  display: flex;
+  align-items: center; /* Centre l'icône et le texte verticalement */
+  color: #fff;
+  font-size: 16px; /* Taille de police plus grande */
+  font-weight: 500; /* Légèrement en gras */
+}
+
+.resource-item img {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px; /* Espace entre l'icône et le texte */
+}

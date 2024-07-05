@@ -5,7 +5,7 @@ const WebSocketComponent = () => {
   const [messages, setMessages] = useState([]);
   
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3000');
+    const ws = new WebSocket('ws://localhost:5000');
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server');
@@ -32,7 +32,7 @@ const WebSocketComponent = () => {
   
   return (
     <div>
-      <h2>WebSocket Messages</h2>
+      <h2></h2>
       <ul>
         {messages.map((message, index) => (
           <li key={index}>{message}</li>

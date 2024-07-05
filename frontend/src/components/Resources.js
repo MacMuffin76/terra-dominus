@@ -3,17 +3,19 @@ import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import './Resources.css';
 import ResourceDetail from './ResourceDetail';
+import ResourcesWidget from './ResourcesWidget';
 
 const Resources = () => {
   const [data, setData] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
 
-  const allowedBuildings = ['Gold Mine', 'Metal Mine', 'Farm', 'House', 'Sawmill', 'Power Plant', 'Quarry'];
+  const allowedBuildings = ['Ferme', 'Mine d\'or', 'Mine de métal', 'Centrale électrique', 'Carrière', 'Scierie'];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get('/resources/resource-buildings');
+        console.log('Fetched data:', response.data);
         const filteredData = response.data.filter(building => allowedBuildings.includes(building.name));
         setData(filteredData);
       } catch (error) {
@@ -32,11 +34,16 @@ const Resources = () => {
     }
   };
 
+  const formatFileName = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
+  };
+
   return (
     <div className="resources-container">
       <Menu />
+      <ResourcesWidget />
       <div className={`resources-content ${selectedBuilding ? 'with-details' : ''}`}>
-        <h1>Resources</h1>
+        <h1>Ressources</h1>
         {selectedBuilding && (
           <ResourceDetail building={selectedBuilding} />
         )}
@@ -44,7 +51,7 @@ const Resources = () => {
           {Array.isArray(data) && data.map((building) => (
             <div key={building.id} className="building-card" onClick={() => handleBuildingClick(building)}>
               <img
-                src={`/images/buildings/${building.name.toLowerCase().replace(' ', '_')}.png`}
+                src={`/images/buildings/${formatFileName(building.name)}.png`}
                 alt={building.name}
                 className="building-image"
               />

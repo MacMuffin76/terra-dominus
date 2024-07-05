@@ -17,31 +17,31 @@ const Menu = () => {
       <Link to="/dashboard">
         <DashboardIcon className="menu-icon" />
         <div>
-          Dashboard
+          Tableau de bord
         </div>
       </Link>
       <Link to="/resources">
         <CategoryIcon className="menu-icon" />
         <div>
-          Resources
+          Ressource
         </div>
       </Link>
       <Link to="/facilities">
         <BusinessIcon className="menu-icon" />
         <div>
-          Facilities
+          Installation
         </div>
       </Link>
       <Link to="/research">
         <ScienceIcon className="menu-icon" />
         <div>
-          Research
+          Recherche
         </div>
       </Link>
-      <Link to="/construction">
+      <Link to="/training">
         <BuildIcon className="menu-icon" />
         <div>
-          Construction Site
+          Centre d'entrainement
         </div>
       </Link>
       <Link to="/defense">
@@ -53,7 +53,7 @@ const Menu = () => {
       <Link to="/fleet">
         <DirectionsBoatIcon className="menu-icon" />
         <div>
-          Fleet
+          Flotte
         </div>
       </Link>
       <Link to="/alliance">

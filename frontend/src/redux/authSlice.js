@@ -5,6 +5,7 @@ import axios from 'axios';
 export const login = createAsyncThunk('auth/login', async ({ username, password }, thunkAPI) => {
   try {
     const response = await axios.post('/api/auth/login', { username, password });
+    localStorage.setItem('userId', response.data.user.id); // Enregistrer l'ID utilisateur dans localStorage
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response.data);
@@ -14,6 +15,7 @@ export const login = createAsyncThunk('auth/login', async ({ username, password 
 export const registerUser = createAsyncThunk('auth/registerUser', async ({ username, email, password }, thunkAPI) => {
   try {
     const response = await axios.post('/api/auth/register', { username, email, password });
+    localStorage.setItem('userId', response.data.user.id); // Enregistrer l'ID utilisateur dans localStorage
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response.data);
@@ -31,10 +33,15 @@ const authSlice = createSlice({
     isAuthenticated: false,
   },
   reducers: {
+    loginSuccess: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      localStorage.removeItem('userId'); // Supprimer l'ID utilisateur de localStorage lors de la déconnexion
     },
   },
   extraReducers: (builder) => {
@@ -70,5 +77,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { loginSuccess, logout } = authSlice.actions;
 export default authSlice.reducer;

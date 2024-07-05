@@ -30,7 +30,7 @@ p {
 
 .menu {
   position: fixed;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.747);
   padding-top: 20px;
   box-sizing: border-box;
   z-index: 1000;
