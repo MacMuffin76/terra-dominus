@@ -1,3 +1,5 @@
+// frontend/src/components/Research.js
+
 import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
@@ -9,23 +11,15 @@ const Research = () => {
   const [data, setData] = useState([]);
   const [selectedResearch, setSelectedResearch] = useState(null);
 
-  const allowedResearches = [
-    'Extraction Avancée', 'Agriculture Intensive', 'Gestion des Ressources', 'Énergie Renouvelable',
-    'Système de Défense Automatisé', 'Armement Avancé', 'Entraînement Intensif', 'Communication Rapide',
-    'Technologie Médicale', 'Matériaux Renforcés', 'Camouflage Avancé', 'Transport Rapide',
-    'Systèmes de Surveillance', 'Technologie Laser', 'Production Robotique', 'Boucliers Énergétiques',
-    'Entraînement Commando', 'Réseaux de Tunnels', 'Gestion de Crise', 'Technologie des Nanobots'
-  ];
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get('/research/research-items');
-        const filteredData = response.data.filter(research => allowedResearches.includes(research.name));
-        setData(filteredData);
+        // On prend toutes les recherches renvoyées par l'API, sans filtre
+        setData(response.data);
       } catch (error) {
         console.error('Error fetching research items:', error);
-        setData([]); // Set data to an empty array on error
+        setData([]); // En cas d'erreur, on définit data comme un tableau vide
       }
     };
     fetchData();
@@ -33,14 +27,19 @@ const Research = () => {
 
   const handleResearchClick = (research) => {
     if (selectedResearch && selectedResearch.id === research.id) {
-      setSelectedResearch(null); // Deselect if already selected
+      setSelectedResearch(null);
     } else {
       setSelectedResearch(research);
     }
   };
 
   const formatFileName = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
+    return name
+      .toLowerCase()
+      .normalize('NFD')                    // décompose accents
+      .replace(/[\u0300-\u036f]/g, '')     // retire les accents
+      .replace(/['’]/g, '')                // retire apostrophes (simple & typographique)
+      .replace(/\s+/g, '_');               // espaces → underscore
   };
 
   return (
@@ -49,12 +48,18 @@ const Research = () => {
       <ResourcesWidget />
       <div className={`research-content ${selectedResearch ? 'with-details' : ''}`}>
         <h1>Recherche</h1>
+
         {selectedResearch && (
           <ResearchDetail research={selectedResearch} />
         )}
+
         <div className="research-list">
-          {Array.isArray(data) && data.map((research) => (
-            <div key={research.id} className="research-card" onClick={() => handleResearchClick(research)}>
+          {data.map((research) => (
+            <div
+              key={research.id}
+              className="research-card"
+              onClick={() => handleResearchClick(research)}
+            >
               <img
                 src={`/images/research/${formatFileName(research.name)}.png`}
                 alt={research.name}

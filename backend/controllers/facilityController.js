@@ -1,9 +1,23 @@
-const Facility = require('../models/Facility');
+// backend/controllers/facilityController.js
 
-// Get all facility buildings
+const Facility        = require('../models/Facility');
+const ResourceCost    = require('../models/ResourceCost');
+const Resource        = require('../models/Resource');
+const Entity          = require('../models/Entity');
+const { getUserMainCity } = require('../utils/cityUtils');
+
+// Récupère toutes les installations de la ville principale
 exports.getFacilityBuildings = async (req, res) => {
   try {
-    const facilities = await Facility.findAll({ where: { user_id: req.user.id } });
+    const city = await getUserMainCity(req.user.id);
+    if (!city) {
+      return res.status(404).json({ message: 'Pas de ville trouvée' });
+    }
+
+    const facilities = await Facility.findAll({
+      where: { city_id: city.id },
+    });
+
     res.json(facilities);
   } catch (error) {
     console.error('Error fetching facility buildings:', error);
@@ -11,17 +25,31 @@ exports.getFacilityBuildings = async (req, res) => {
   }
 };
 
-// Get details of a specific facility building
+// Détails d’une installation + coût du niveau suivant
 exports.getFacilityDetails = async (req, res) => {
   try {
     const facility = await Facility.findByPk(req.params.id);
     if (!facility) {
       return res.status(404).json({ message: 'Facility not found' });
     }
+
+    const entity = await Entity.findOne({
+      where: { entity_type: 'facility', entity_name: facility.name },
+    });
+    if (!entity) {
+      return res.status(404).json({ message: 'Entity not found' });
+    }
+
+    const nextLevelCost = await ResourceCost.findAll({
+      where: {
+        entity_id: entity.entity_id,
+        level:     facility.level + 1,
+      },
+    });
+
     res.json({
       ...facility.dataValues,
-      description: facility.description,
-      nextLevelCost: facility.nextlevelcost, // Use the actual next level cost from the model
+      nextLevelCost,
     });
   } catch (error) {
     console.error('Error fetching facility details:', error);
@@ -29,15 +57,56 @@ exports.getFacilityDetails = async (req, res) => {
   }
 };
 
-// Upgrade a specific facility building
+// Upgrade facility (déduit ressources de la ville)
 exports.upgradeFacility = async (req, res) => {
   try {
+    const userId = req.user.id;
+    const city   = await getUserMainCity(userId);
+    if (!city) {
+      return res.status(404).json({ message: 'Pas de ville trouvée' });
+    }
+
     const facility = await Facility.findByPk(req.params.id);
     if (!facility) {
       return res.status(404).json({ message: 'Facility not found' });
     }
-    facility.level += 1; // Increment the level
+
+    const entity = await Entity.findOne({
+      where: { entity_type: 'facility', entity_name: facility.name },
+    });
+    if (!entity) {
+      return res.status(404).json({ message: 'Entity not found' });
+    }
+
+    const costs = await ResourceCost.findAll({
+      where: {
+        entity_id: entity.entity_id,
+        level:     facility.level + 1,
+      },
+    });
+
+    for (const cost of costs) {
+      const userRes = await Resource.findOne({
+        where: { city_id: city.id, type: cost.resource_type },
+      });
+      if (!userRes || userRes.amount < cost.amount) {
+        return res
+          .status(400)
+          .json({ message: `Pas assez de ${cost.resource_type}` });
+      }
+    }
+
+    for (const cost of costs) {
+      const userRes = await Resource.findOne({
+        where: { city_id: city.id, type: cost.resource_type },
+      });
+      userRes.amount -= cost.amount;
+      await userRes.save();
+    }
+
+    facility.level += 1;
     await facility.save();
+
     res.json(facility);
   } catch (error) {
     console.error('Error upgrading facility:', error);
@@ -45,7 +114,26 @@ exports.upgradeFacility = async (req, res) => {
   }
 };
 
-// Destroy a specific facility building
+exports.downgradeFacility = async (req, res) => {
+  try {
+    const facility = await Facility.findByPk(req.params.id);
+    if (!facility) {
+      return res.status(404).json({ message: 'Facility not found' });
+    }
+
+    if (facility.level > 0) {
+      facility.level -= 1;
+      await facility.save();
+      res.json(facility);
+    } else {
+      res.status(400).json({ message: 'Cannot downgrade below level 0' });
+    }
+  } catch (error) {
+    console.error('Error downgrading facility:', error);
+    res.status(500).json({ message: 'Error downgrading facility' });
+  }
+};
+
 exports.destroyFacility = async (req, res) => {
   try {
     const facility = await Facility.findByPk(req.params.id);

@@ -1,64 +1,80 @@
+// frontend/src/components/Training.js
+
 import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '../utils/axiosInstance';   // ← ../utils et non ./utils
 import './Training.css';
-import TrainingDetail from './TrainingDetail';
 import ResourcesWidget from './ResourcesWidget';
-const Training = () => {
-  const [data, setData] = useState([]);
-  const [selectedTraining, setSelectedTraining] = useState(null);
 
-  const allowedTrainings = ['Medecin', 'Chasseurs de Devastation', 'Drone', 'Gardiens des Ruines', 'Guerriers des Decombres', 'Mercenaires du Chaos', 'Rangers du Neant'];
+const Training = () => {
+  const [units, setUnits] = useState([]);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUnits = async () => {
       try {
-        const response = await axiosInstance.get('/training/training-centers');
-        const filteredData = response.data.filter(training => allowedTrainings.includes(training.name));
-        setData(filteredData);
-      } catch (error) {
-        console.error('Error fetching training centers:', error);
-        setData([]); // Set data to an empty array on error
+        // On appelle '/units' (baseURL = '/api'), pas '/api/units'
+        const response = await axiosInstance.get('/units');
+        setUnits(response.data);
+      } catch (err) {
+        console.error('Error fetching units:', err);
+        setError('Erreur lors du chargement des unités');
+        setUnits([]);
       }
     };
-    fetchData();
+    fetchUnits();
   }, []);
 
-  const handleTrainingClick = (training) => {
-    if (selectedTraining && selectedTraining.id === training.id) {
-      setSelectedTraining(null); // Deselect if already selected
+  const handleUnitClick = (unit) => {
+    if (selectedUnit && selectedUnit.id === unit.id) {
+      setSelectedUnit(null);
     } else {
-      setSelectedTraining(training);
+      setSelectedUnit(unit);
     }
   };
 
-  const formatUnitName = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
-  };
-
+  const formatFileName = (name) =>
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')   // supprime les accents
+      .replace(/['’]/g, '')              // supprime les apostrophes
+      .replace(/\s+/g, '_');             // espaces → underscore
 
   return (
     <div className="training-container">
       <Menu />
       <ResourcesWidget />
-      <div className={`training-content ${selectedTraining ? 'with-details' : ''}`}>
-        <h1>Training Centers</h1>
-        {selectedTraining && (
-          <TrainingDetail training={selectedTraining} />
-        )}
+      <div className={`training-content ${selectedUnit ? 'with-details' : ''}`}>
+        <h1>Entraînement de Troupes</h1>
+        {error && <p className="error-message">{error}</p>}
+
         <div className="training-list">
-          {Array.isArray(data) && data.map((training) => (
-            <div key={training.id} className="training-card" onClick={() => handleTrainingClick(training)}>
+          {units.map((unit) => (
+            <div
+              key={unit.id}
+              className="training-card"
+              onClick={() => handleUnitClick(unit)}
+            >
               <img
-                src={`/images/training/${formatUnitName(training.name)}.png`}
-                alt={training.name}
+                src={`/images/training/${formatFileName(unit.name)}.png`}
+                alt={unit.name}
                 className="training-image"
               />
-              <h3>{training.name}</h3>
-              <p>Nombre: {training.level}</p>
+              <h3>{unit.name}</h3>
+              <p>Quantité : {unit.quantity}</p>
             </div>
           ))}
         </div>
+
+        {selectedUnit && (
+          <div className="training-detail">
+            <h2>{selectedUnit.name}</h2>
+            <p>Quantité actuelle : {selectedUnit.quantity}</p>
+            <button onClick={() => setSelectedUnit(null)}>Fermer</button>
+          </div>
+        )}
       </div>
     </div>
   );

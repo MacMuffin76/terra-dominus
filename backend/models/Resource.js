@@ -1,18 +1,21 @@
-const { DataTypes } = require('sequelize');
+// backend/models/Resource.js
+const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
-const Resource = sequelize.define('Resource', {
+class Resource extends Model {}
+
+Resource.init({
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
     primaryKey: true,
+    autoIncrement: true,
   },
-  user_id: {
+  city_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
   type: {
-    type: DataTypes.ENUM('or', 'bois', 'nourriture', 'pierre', 'metal', 'energie'),
+    type: DataTypes.STRING(50),
     allowNull: false,
   },
   amount: {
@@ -20,9 +23,22 @@ const Resource = sequelize.define('Resource', {
     allowNull: false,
     defaultValue: 0,
   },
+  last_update: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
 }, {
+  sequelize,
+  modelName: 'Resource',
   tableName: 'resources',
   timestamps: false,
+  indexes: [
+    {
+      unique: true,
+      fields: ['city_id', 'type'],
+    },
+  ],
 });
 
 module.exports = Resource;

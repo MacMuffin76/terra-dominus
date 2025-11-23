@@ -1,38 +1,139 @@
+/* frontend/src/components/TrainingDetail.css */
+
 .training-detail {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 260px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-top: 16px;
+}
+
+/* Overlay léger pour laisser bien voir l’image */
+.training-detail-overlay {
   position: absolute;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1000px;
-  padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #000000a6;
-  color: #fff; /* Couleur du texte blanche pour contraste */
-  z-index: 10;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.55)
+  );
+  z-index: 0;
 }
 
-.training-detail h2 {
-  margin-top: 0;
-  color: #fff; /* Couleur du texte blanche pour contraste */
+.training-detail-content {
+  position: relative;
+  z-index: 1;
+  padding: 24px 32px;
+  color: #f5f5f5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-.training-detail p {
-  margin: 5px 0;
+.training-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
 }
 
-.training-detail button {
-  margin: 5px;
+.training-detail-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.training-detail-subtitle {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.training-detail-description {
+  margin-top: 12px;
+  max-width: 720px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+/* Bloc stats */
+
+.training-stats {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.training-stat-block {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.training-stat-block h4 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+
+.training-stat-value {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* Actions */
+
+.training-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.training-actions button {
+  min-width: 150px;
   padding: 10px 20px;
-  cursor: pointer;
-  background-color: #555; /* Couleur de fond des boutons */
-  color: #fff; /* Couleur du texte des boutons */
+  border-radius: 999px;
   border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: #f5f5f5;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
 
-.training-detail button:hover {
-  background-color: #777; /* Couleur de fond des boutons au survol */
+.training-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.training-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Texte de chargement */
+.training-detail-loading {
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: #f5f5f5;
 }

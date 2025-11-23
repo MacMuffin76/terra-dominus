@@ -1,0 +1,43 @@
+/* frontend/src/components/Units.css */
+
+.units-container {
+  display: flex;
+}
+
+.units-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 20px;
+}
+
+.units-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.unit-card {
+  background: #1c1c1c;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: center;
+  padding: 10px;
+}
+
+.unit-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.unit-detail {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000a;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+}

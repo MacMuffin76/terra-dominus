@@ -1,93 +1,141 @@
-const Building = require('../models/Building');
-const ResourceCost = require('../models/ResourceCost');
-const Entity = require('../models/Entity');
+// backend/controllers/buildingController.js
 
-// Create a new building
-exports.createBuilding = async (req, res) => {
+const Building        = require('../models/Building');
+const ResourceCost    = require('../models/ResourceCost');
+const Resource        = require('../models/Resource');
+const Entity          = require('../models/Entity');
+const { getUserMainCity } = require('../utils/cityUtils');
+const { getBuildDurationSeconds } = require('../utils/balancing');
+
+exports.getBuildingDetails = async (req, res) => {
   try {
-    const { name, level, costs } = req.body;
-    const building = await Building.create({ name, level });
+    const b = await Building.findByPk(req.params.id);
+    if (!b) return res.status(404).json({ message: 'Building not found' });
 
-    // Add entity entry
-    const entity = await Entity.create({ entity_type: 'building', entity_name: name });
+    let remainingTime = 0;
+    if (b.build_start && b.build_duration) {
+      const elapsed = (new Date() - new Date(b.build_start)) / 1000;
+      const total   = Number(b.build_duration) || 0;
 
-    // Add costs
-    for (const cost of costs) {
-      await ResourceCost.create({
-        entity_id: entity.entity_id,
-        resource_type: cost.resource_type,
-        amount: cost.amount,
-        level: cost.level,
-      });
+      if (elapsed < total) {
+        remainingTime = Math.ceil(total - elapsed);
+      } else {
+        b.build_start    = null;
+        b.build_duration = null;
+        await b.save();
+      }
     }
 
-    res.json(building);
-  } catch (error) {
-    console.error('Error creating building:', error);
-    res.status(500).json({ message: 'Error creating building' });
+    res.json({
+      ...b.toJSON(),
+      remainingTime,
+      inProgress: !!b.build_start && !!b.build_duration,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching building details' });
   }
 };
 
-// Get building costs by level
-exports.getBuildingCosts = async (req, res) => {
+exports.upgradeBuilding = async (req, res) => {
   try {
-    const { buildingId, level } = req.params;
-    const building = await Building.findByPk(buildingId);
+    const userId = req.user.id;
+    const city   = await getUserMainCity(userId);
+    if (!city) {
+      return res.status(404).json({ message: 'Pas de ville trouvée' });
+    }
 
-    if (!building) {
-      return res.status(404).json({ message: 'Building not found' });
+    const b = await Building.findByPk(req.params.id);
+    if (!b) return res.status(404).json({ message: 'Building not found' });
+
+    if (b.build_start && b.build_duration) {
+      const elapsed = (new Date() - new Date(b.build_start)) / 1000;
+      const total   = Number(b.build_duration) || 0;
+      if (elapsed < total) {
+        return res
+          .status(400)
+          .json({ message: 'Construction déjà en cours' });
+      } else {
+        b.build_start    = null;
+        b.build_duration = null;
+        await b.save();
+      }
     }
 
     const entity = await Entity.findOne({
-      where: { entity_type: 'building', entity_name: building.name }
+      where: {
+        entity_type: 'building',
+        entity_name: b.name,
+      },
     });
 
     if (!entity) {
-      return res.status(404).json({ message: 'Entity not found' });
+      return res.status(404).json({ message: 'Entity not found for building' });
     }
+
+    const nextLevel = (Number(b.level) || 0) + 1;
 
     const costs = await ResourceCost.findAll({
       where: {
         entity_id: entity.entity_id,
-        level: level,
+        level: nextLevel,
       },
     });
 
-    res.json(costs);
-  } catch (error) {
-    console.error('Error fetching building costs:', error);
-    res.status(500).json({ message: 'Error fetching building costs' });
-  }
-};
+    for (const cost of costs) {
+      const ur = await Resource.findOne({
+        where: { city_id: city.id, type: cost.resource_type },
+      });
 
-// Upgrade a specific building
-exports.upgradeBuilding = async (req, res) => {
-  try {
-    const building = await Building.findByPk(req.params.id);
-    if (!building) {
-      return res.status(404).json({ message: 'Building not found' });
+      const currentAmount = ur ? Number(ur.amount) || 0 : 0;
+
+      if (currentAmount < Number(cost.amount)) {
+        return res
+          .status(400)
+          .json({ message: 'Ressources insuffisantes pour améliorer' });
+      }
     }
 
-    building.level += 1;
-    await building.save();
-    res.json(building);
-  } catch (error) {
-    console.error('Error upgrading building:', error);
+    for (const cost of costs) {
+      const ur = await Resource.findOne({
+        where: { city_id: city.id, type: cost.resource_type },
+      });
+      ur.amount = Number(ur.amount) - Number(cost.amount);
+      await ur.save();
+    }
+
+    const buildDuration = getBuildDurationSeconds(nextLevel);
+    b.build_start       = new Date();
+    b.build_duration    = buildDuration;
+    b.level             = nextLevel;
+    await b.save();
+
+    return res.json({
+      buildDuration,
+      inProgress: true,
+      level: b.level,
+      build_start: b.build_start,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Error upgrading building' });
   }
 };
 
-// Destroy a specific building
-exports.destroyBuilding = async (req, res) => {
+exports.downgradeBuilding = async (req, res) => {
   try {
-    const building = await Building.findByPk(req.params.id);
-    if (!building) {
-      return res.status(404).json({ message: 'Building not found' });
-    }
-    await building.destroy();
-    res.json({ message: 'Building destroyed' });
-  } catch (error) {
-    console.error('Error destroying building:', error);
-    res.status(500).json({ message: 'Error destroying building' });
+    const b = await Building.findByPk(req.params.id);
+    if (!b) return res.status(404).json({ message: 'Building not found' });
+
+    b.build_start    = null;
+    b.build_duration = null;
+
+    if (b.level > 1) b.level -= 1;
+    await b.save();
+
+    res.json(b);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error downgrading' });
   }
 };

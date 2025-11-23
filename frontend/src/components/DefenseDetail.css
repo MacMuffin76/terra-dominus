@@ -1,38 +1,103 @@
+/* frontend/src/components/DefenseDetail.css */
+
 .defense-detail {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 260px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-top: 16px;
+}
+
+/* Overlay léger pour bien voir l'image (proche de ce qu’on a fait pour les bâtiments) */
+.defense-detail::before {
+  content: '';
   position: absolute;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1000px;
-  padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #000000a6;
-  color: #fff; /* Couleur du texte blanche pour contraste */
-  z-index: 10;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.6)
+  );
+  z-index: 0;
 }
 
-.defense-detail h2 {
-  margin-top: 0;
-  color: #fff; /* Couleur du texte blanche pour contraste */
+.defense-detail-overlay {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+  color: #fff;
 }
 
-.defense-detail p {
-  margin: 5px 0;
+.defense-title {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
 }
 
-.defense-detail button {
-  margin: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #555; /* Couleur de fond des boutons */
-  color: #fff; /* Couleur du texte des boutons */
+.defense-description {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.defense-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-block {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.stat-block h4 {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.stat-block p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.defense-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.defense-actions button {
   border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f2b21a;
+  color: #101010;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease;
 }
 
-.defense-detail button:hover {
-  background-color: #777; /* Couleur de fond des boutons au survol */
+.defense-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.defense-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.defense-detail-loading {
+  margin-top: 16px;
+  font-size: 0.95rem;
 }

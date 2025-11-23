@@ -18,6 +18,12 @@ body {
   align-items: center;
 }
 
+.resources-row {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
 .resources-content {
   width: calc(100% - 250px); /* Prenez en compte la largeur du menu latéral */
   max-width: 1200px;
@@ -27,7 +33,7 @@ body {
 }
 
 .resources-content h1 {
-  margin-bottom: 60px; /* Espace entre le titre et le contenu */
+  margin-bottom: 100px; /* Espace entre le titre et le contenu */
   text-align: center; /* Centre le titre */
 }
 
@@ -36,7 +42,7 @@ body {
   flex-wrap: wrap;
   justify-content: space-around;
   gap: 20px; /* Add space between items */
-  margin-top: 100px; /* Ajustez cette valeur pour descendre les images initialement */
+  margin-top: 10px; /* Ajustez cette valeur pour descendre les images initialement */
   transition: transform 0.3s ease;
 }
 
@@ -83,7 +89,7 @@ body {
 
 .resource-detail {
   position: absolute;
-  top: 150px; /* Ajustez cette valeur pour placer le panneau de détails */
+  top: 60px; /* Ajustez cette valeur pour placer le panneau de détails */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;

@@ -12,10 +12,12 @@ const facilityRoutes = require('./routes/facilityRoutes');
 const researchRoutes = require('./routes/researchRoutes');
 const trainingRoutes = require('./routes/trainingRoutes');
 const defenseRoutes = require('./routes/defenseRoutes');
+const unitRoutes = require('./routes/unitRoutes');
 const updateResourcesForUser = require('./updateResources');
-const cron = require('node-cron'); // Ajoutez ceci
-const { updateUserResources } = require('./controllers/resourceController'); // Ajoutez ceci
-const User = require('./models/User'); // Ajoutez ceci
+const buildingRoutes = require('./routes/buildingRoutes');
+const cron = require('node-cron');
+const { updateUserResources } = require('./controllers/resourceController');
+const User = require('./models/User');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +44,8 @@ app.use('/api', dashboardRoutes);
 app.use('/api/research', researchRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/defense', defenseRoutes);
+app.use('/api/buildings', buildingRoutes);
+app.use('/api', unitRoutes);
 
 app.use(errorHandler);
 

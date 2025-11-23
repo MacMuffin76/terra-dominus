@@ -1,3 +1,4 @@
+// backend/models/Unit.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
@@ -7,7 +8,7 @@ const Unit = sequelize.define('Unit', {
     autoIncrement: true,
     primaryKey: true,
   },
-  user_id: {
+  city_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
@@ -15,8 +16,8 @@ const Unit = sequelize.define('Unit', {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      len: [1, 255]
-    }
+      len: [1, 255],
+    },
   },
   quantity: {
     type: DataTypes.INTEGER,
@@ -32,8 +33,8 @@ const Unit = sequelize.define('Unit', {
     type: DataTypes.STRING,
     allowNull: true,
     validate: {
-      len: [0, 255]
-    }
+      len: [0, 255],
+    },
   },
 }, {
   tableName: 'units',

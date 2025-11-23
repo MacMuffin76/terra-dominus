@@ -1,10 +1,11 @@
 // frontend/src/App.js
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { fetchResources } from './redux/resourceSlice';
 import { loginSuccess } from './redux/authSlice';
-import axiosInstance from './utils/axiosInstance'; // Assurez-vous que ce fichier existe et est correct
+import axiosInstance from './utils/axiosInstance';
 import Dashboard from './components/Dashboard';
 import Resources from './components/Resources';
 import Facilities from './components/Facilities';
@@ -16,6 +17,7 @@ import Alliance from './components/Alliance';
 import Login from './components/Login';
 import Register from './components/Register';
 import WebSocketComponent from './components/WebSocketComponent';
+import { ResourcesProvider } from './context/ResourcesContext'; // <-- Ajouté ici
 import './App.css';
 
 function App() {
@@ -24,8 +26,8 @@ function App() {
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     if (userId) {
-      dispatch(fetchResources(userId)); // Fetch resources on load
-      // Fetch user data from backend if needed and dispatch loginSuccess
+      dispatch(fetchResources(userId));
+
       axiosInstance.get(`/api/auth/user/${userId}`).then(response => {
         dispatch(loginSuccess(response.data.user));
       }).catch(error => {
@@ -35,24 +37,27 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Router>
-      <div className="App">
-        <WebSocketComponent />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/facilities" element={<Facilities />} />
-          <Route path="/research" element={<Research />} />
-          <Route path="/training" element={<Training />} />
-          <Route path="/defense" element={<Defense />} />
-          <Route path="/fleet" element={<Fleet />} />
-          <Route path="/alliance" element={<Alliance />} />
-          <Route path="/" element={<Login />} />
-        </Routes>
-      </div>
-    </Router>
+<ResourcesProvider>
+  <Router>
+    <div className="App">
+      <WebSocketComponent />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/facilities" element={<Facilities />} />
+        <Route path="/research" element={<Research />} />
+        <Route path="/training" element={<Training />} />
+        <Route path="/defense" element={<Defense />} />
+        <Route path="/fleet" element={<Fleet />} />
+        <Route path="/alliance" element={<Alliance />} />
+        <Route path="/" element={<Login />} />
+      </Routes>
+    </div>
+  </Router>
+</ResourcesProvider>
+
   );
 }
 

@@ -1,3 +1,5 @@
+// frontend/src/components/Defense.js
+
 import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
@@ -10,33 +12,34 @@ const Defense = () => {
   const [selectedDefense, setSelectedDefense] = useState(null);
   const [error, setError] = useState(null);
 
-  const allowedDefenses = ['Artillerie', 'Canon', 'Lance-missiles', 'Tourelle', 'Tour Laser', 'Canon à Plasma', 'Tour de Garde', 'Pièges à Pointes'];
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get('/defense/defenses');
-        const filteredData = response.data.filter(defense => allowedDefenses.includes(defense.name));
-        setData(filteredData);
-      } catch (error) {
-        console.error('Error fetching defense buildings:', error);
+        // On prend toutes les défenses renvoyées par l'API, sans filtre
+        setData(response.data);
+      } catch (err) {
+        console.error('Error fetching defense buildings:', err);
         setError('Error fetching defense buildings');
       }
     };
     fetchData();
   }, []);
 
-  const handleDefenseClick = (defense) => {
-    if (selectedDefense && selectedDefense.id === defense.id) {
-      setSelectedDefense(null); // Deselect if already selected
+  const handleDefenseClick = (def) => {
+    if (selectedDefense && selectedDefense.id === def.id) {
+      setSelectedDefense(null);
     } else {
-      setSelectedDefense(defense);
+      setSelectedDefense(def);
     }
   };
 
-  const formatFileName = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
-  };
+  const formatFileName = (name) =>
+    name
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
   return (
     <div className="defense-container">
@@ -45,19 +48,23 @@ const Defense = () => {
       <div className={`defense-content ${selectedDefense ? 'with-details' : ''}`}>
         <h1>Défenses</h1>
         {error && <p className="error-message">{error}</p>}
-        {selectedDefense && (
-          <DefenseDetail defense={selectedDefense} />
-        )}
+
+        {selectedDefense && <DefenseDetail defense={selectedDefense} />}
+
         <div className="defense-list">
-          {Array.isArray(data) && data.map((defense) => (
-            <div key={defense.id} className="defense-card" onClick={() => handleDefenseClick(defense)}>
+          {data.map((def) => (
+            <div
+              key={def.id}
+              className="defense-card"
+              onClick={() => handleDefenseClick(def)}
+            >
               <img
-                src={`/images/defense/${formatFileName(defense.name)}.png`}
-                alt={defense.name}
+                src={`/images/defense/${formatFileName(def.name)}.png`}
+                alt={def.name}
                 className="defense-image"
               />
-              <h3>{defense.name}</h3>
-              <p>Quantité: {defense.quantity}</p>
+              <h3>{def.name}</h3>
+              <p>Quantité: {def.quantity}</p>
             </div>
           ))}
         </div>

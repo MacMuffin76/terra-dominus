@@ -13,15 +13,16 @@ const ResourceCost = sequelize.define('ResourceCost', {
     allowNull: false,
     references: {
       model: Entity,
-      key: 'entity_id'
-    }
+      key: 'entity_id',
+    },
   },
   resource_type: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   amount: {
-    type: DataTypes.NUMBER,
+    // IMPORTANT : NUMBER n'existe pas, on utilise DECIMAL pour être proche du NUMERIC Postgres
+    type: DataTypes.DECIMAL,
     allowNull: false,
   },
   level: {

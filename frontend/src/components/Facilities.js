@@ -9,46 +9,91 @@ const Facilities = () => {
   const [data, setData] = useState([]);
   const [selectedFacility, setSelectedFacility] = useState(null);
 
-  const allowedFacilities = ['Centre de Commandement', 'Laboratoire de Recherche', 'Terrain d\'Entraînement', 'Mur de Défense', 'Dépôt de Ressources'];
+  // 1) Ordre fixe souhaité
+  const allowedFacilities = [
+    'Centre de Commandement',
+    'Laboratoire de Recherche',
+    'Terrain d\'Entraînement'
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axiosInstance.get('/facilities/facility-buildings');
-        const filteredData = response.data.filter(building => allowedFacilities.includes(building.name));
-        setData(filteredData);
+        const { data: facilities } = await axiosInstance.get(
+          '/facilities/facility-buildings'
+        );
+        // 2) Filtrer les facilities autorisées
+        const filtered = facilities.filter(f =>
+          allowedFacilities.includes(f.name)
+        );
+        setData(filtered);
       } catch (error) {
         console.error('Error fetching facility buildings:', error);
-        setData([]); // En cas d'erreur, on définit data comme un tableau vide pour éviter les erreurs
+        setData([]);
       }
     };
     fetchData();
   }, []);
 
-  const handleFacilityClick = (facility) => {
-    if (selectedFacility && selectedFacility.id === facility.id) {
-      setSelectedFacility(null); // Désélectionne le bâtiment si déjà sélectionné
-    } else {
-      setSelectedFacility(facility);
-    }
+  // 3) Helpers pour gestion du click et callbacks
+  const handleFacilityClick = facility =>
+    setSelectedFacility(prev =>
+      prev && prev.id === facility.id ? null : facility
+    );
+
+  const handleFacilityUpgraded = upgraded => {
+    const updated = data.map(f =>
+      f.id === upgraded.id ? upgraded : f
+    );
+    setData(updated);
+    setSelectedFacility(upgraded);
   };
 
-  const formatFileName = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
+  const handleFacilityDowngraded = downgraded => {
+    const updated = data.map(f =>
+      f.id === downgraded.id ? downgraded : f
+    );
+    setData(updated);
+    setSelectedFacility(downgraded);
   };
+
+  // 4) formatage du nom pour l'image
+  const formatFileName = name =>
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['’]/g, '')
+      .replace(/\s+/g, '_');
+
+  // 5) On ordonne explicitement selon allowedFacilities
+  const ordered = allowedFacilities
+    .map(name => data.find(f => f.name === name))
+    .filter(Boolean);
 
   return (
     <div className="facilities-container">
       <Menu />
       <ResourcesWidget />
+
       <div className={`facilities-content ${selectedFacility ? 'with-details' : ''}`}>
         <h1>Installations</h1>
+
         {selectedFacility && (
-          <FacilityDetail facility={selectedFacility} />
+          <FacilityDetail
+            facility={selectedFacility}
+            onFacilityUpgraded={handleFacilityUpgraded}
+            onFacilityDowngraded={handleFacilityDowngraded}
+          />
         )}
+
         <div className="facilities-list">
-          {Array.isArray(data) && data.map((facility) => (
-            <div key={facility.id} className="facility-card" onClick={() => handleFacilityClick(facility)}>
+          {ordered.map(facility => (
+            <div
+              key={facility.id}
+              className="facility-card"
+              onClick={() => handleFacilityClick(facility)}
+            >
               <img
                 src={`/images/facilities/${formatFileName(facility.name)}.png`}
                 alt={facility.name}

@@ -11,78 +11,88 @@ body {
   background: none;
 }
 
+/* Container principal : Menu à gauche, contenu à droite */
 .defense-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
+ 
 }
 
+/* Contenu à droite (après le Menu) */
 .defense-content {
-  width: calc(100% - 250px); /* Prenez en compte la largeur du menu latéral */
+  width: calc(100% - 250px);
   max-width: 1200px;
+  position: relative;
+  margin-left: 250px; /* largeur du Menu */
   padding: 20px;
-  position: relative; /* Assurez-vous que le contenu est positionné relativement */
-  margin-left: 250px; /* Ajustez cette valeur pour prendre en compte le menu latéral */
 }
 
 .defense-content h1 {
-  margin-bottom: 60px; /* Espace entre le titre et le contenu */
-  text-align: center; /* Centre le titre */
+  margin-bottom: 100px;
+  text-align: center;
 }
 
+/* Grille 5 colonnes, 2 lignes */
 .defense-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 20px; /* Add space between items */
-  margin-top: 100px; /* Ajustez cette valeur pour descendre les images initialement */
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  margin: 40px auto 40px;
+}
+
+/* Déplacement vers le bas quand on affiche le détail */
+.defense-content.with-details .defense-list {
+  transform: translateY(300px);
   transition: transform 0.3s ease;
 }
 
-.defense-content.with-details .defense-list {
-  transform: translateY(300px); /* Ajustez cette valeur pour correspondre à la hauteur du panneau de détails */
-}
-
+/* Carte de recherche */
 .defense-card {
-  width: calc(25% - 40px); /* Ajustez la largeur pour s'assurer que trois cartes s'affichent par ligne */
-  margin: 10px;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
   text-align: center;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 12px; /* Rounded corners */
+  border-radius: 12px;
   overflow: hidden;
-  background-color: #1c1c1c; /* Background color for the card */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  height: 280px; /* Fixed height for uniform size */
+  background-color: #1c1c1c;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  height: 280px;
 }
 
 .defense-card:hover {
-  transform: translateY(-10px); /* Slight lift on hover */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
 }
 
+/* Image en haut de la carte */
 .defense-image {
   width: 100%;
-  height: 200px; /* Fixed height for images */
-  object-fit: cover; /* Ensures the image covers the area */
-  border-bottom: 2px solid #444; /* Bottom border for separation */
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 2px solid #444;
 }
 
+/* Titre */
 .defense-card h3 {
-  margin: 5px 0; /* Reduced margin for less height */
-  font-size: 1em; /* Adjusted font size */
-  color: #fff; /* White text color */
+  margin: 10px 0 5px;
+  font-size: 1em;
+  color: #fff;
 }
 
+/* Niveau */
 .defense-card p {
-  margin: 3px 0; /* Reduced margin for less height */
-  color: #bbb; /* Light grey text color */
-  font-size: 0.9em; /* Adjusted font size */
+  margin: 0 0 12px;
+  color: #bbb;
+  font-size: 0.9em;
 }
 
+/* Détail de la recherche (popup) */
 .defense-detail {
   position: absolute;
-  top: 150px; /* Ajustez cette valeur pour placer le panneau de détails */
+  top: 150px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -90,14 +100,14 @@ body {
   padding: 20px;
   border: 1px solid #444;
   border-radius: 8px;
-  background-color: #070707; /* Couleur de fond noir */
-  color: #fff; /* Couleur du texte blanche pour contraste */
+  background-color: #070707;
+  color: #fff;
   z-index: 10;
 }
 
 .defense-detail h2 {
   margin-top: 0;
-  color: #fff; /* Couleur du texte blanche pour contraste */
+  color: #fff;
 }
 
 .defense-detail p {
@@ -108,13 +118,13 @@ body {
   margin: 5px;
   padding: 10px 20px;
   cursor: pointer;
-  background-color: #555; /* Couleur de fond des boutons */
-  color: #fff; /* Couleur du texte des boutons */
+  background-color: #555;
+  color: #fff;
   border: none;
   border-radius: 4px;
   transition: background-color 0.3s ease;
 }
 
 .defense-detail button:hover {
-  background-color: #777; /* Couleur de fond des boutons au survol */
+  background-color: #777;
 }

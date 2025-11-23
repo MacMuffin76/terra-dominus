@@ -26,8 +26,9 @@ body {
   margin-left: 250px; /* Ajustez cette valeur pour prendre en compte le menu latéral */
 }
 
+
 .facilities-content h1 {
-  margin-bottom: 60px; /* Espace entre le titre et le contenu */
+  margin-bottom: 100px; /* Espace entre le titre et le contenu */
   text-align: center; /* Centre le titre */
 }
 

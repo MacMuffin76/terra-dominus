@@ -1,3 +1,4 @@
+// backend/models/Building.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
@@ -7,21 +8,18 @@ const Building = sequelize.define('Building', {
     autoIncrement: true,
     primaryKey: true,
   },
-  user_id: {
+  city_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      len: [1, 255]
-    }
   },
   level: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1,
+    defaultValue: 0, // on part de 0 maintenant
   },
   capacite: {
     type: DataTypes.INTEGER,
@@ -30,7 +28,19 @@ const Building = sequelize.define('Building', {
   },
   description: {
     type: DataTypes.STRING(1500),
-    allowNull: true, // Allow null if description is not mandatory
+    allowNull: true,
+  },
+  build_start: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  build_duration: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  building_type_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
 }, {
   tableName: 'buildings',

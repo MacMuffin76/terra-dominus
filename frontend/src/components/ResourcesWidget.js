@@ -1,58 +1,82 @@
+// frontend/src/components/ResourcesWidget.js
+
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchResources, updateResources } from '../redux/resourceSlice';
-import axios from '../utils/axiosInstance';
+import axiosInstance from '../utils/axiosInstance';
+import { useResources } from '../context/ResourcesContext';
 import './ResourcesWidget.css';
 
 const ResourcesWidget = () => {
-  const dispatch = useDispatch();
-  const resources = useSelector(state => state.resources.resources);
+  const { resources, setResources } = useResources();
 
-  const fetchAndUpdateResources = async () => {
-    try {
-      const response = await axios.get('/resources/user-resources');
-      const userResources = response.data.reduce((acc, resource) => {
-        acc[resource.type] = resource.amount;
-        return acc;
-      }, {});
-      dispatch(updateResources(userResources));
-    } catch (error) {
-      console.error('Error fetching resources:', error);
-    }
-  };
+  const humanize = (type) =>
+    type.charAt(0).toUpperCase() + type.slice(1);
 
   useEffect(() => {
-    fetchAndUpdateResources();
-    const interval = setInterval(fetchAndUpdateResources, 1000); // Update every second
-    return () => clearInterval(interval);
-  }, []);
+    let intervalId;
+    let lastTick = Date.now();
+
+    // Chargement initial : récupère les ressources calculées par le backend
+    const fetchResources = async () => {
+      try {
+        const { data } = await axiosInstance.get('/resources/user-resources');
+
+        const normalized = data.map((r) => ({
+          ...r,
+          amount: Number(r.amount) || 0,
+          production_rate: Number(r.production_rate) || 0,
+        }));
+
+        setResources(normalized);
+        localStorage.setItem('resourcesData', JSON.stringify(normalized));
+        lastTick = Date.now();
+      } catch (err) {
+        console.error('Error fetching resources:', err);
+      }
+    };
+
+    fetchResources();
+
+    // Intervalle d'affichage : incrémente visuellement toutes les secondes
+    intervalId = setInterval(() => {
+      setResources((prev) => {
+        const now = Date.now();
+        const deltaSec = (now - lastTick) / 1000;
+        lastTick = now;
+
+        const updated = prev.map((r) => {
+          const rate = Number(r.production_rate) || 0;
+          const currentAmount = Number(r.amount) || 0;
+          const newAmount = currentAmount + rate * deltaSec;
+
+          return {
+            ...r,
+            amount: newAmount,
+          };
+        });
+
+        localStorage.setItem('resourcesData', JSON.stringify(updated));
+        return updated;
+      });
+    }, 1000);
+
+    // Nettoyage
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [setResources]);
 
   return (
     <div className="resources-widget">
-      <div className="resource-item">
-        <img src="/images/resources/or.png" alt="Or" />
-        Or: {resources.or}
-      </div>
-      <div className="resource-item">
-        <img src="/images/resources/bois.png" alt="Bois" />
-        Bois: {resources.bois}
-      </div>
-      <div className="resource-item">
-        <img src="/images/resources/nourriture.png" alt="Nourriture" />
-        Nourriture: {resources.nourriture}
-      </div>
-      <div className="resource-item">
-        <img src="/images/resources/pierre.png" alt="Pierre" />
-        Pierre: {resources.pierre}
-      </div>
-      <div className="resource-item">
-        <img src="/images/resources/metal.png" alt="Metal" />
-        Metal: {resources.metal}
-      </div>
-      <div className="resource-item">
-        <img src="/images/resources/energie.png" alt="Energie" />
-        Energie: {resources.energie}
-      </div>
+      {resources.map((r) => (
+        <div key={r.type} className="resource-item">
+          <img
+            src={`/images/resources/${r.type.toLowerCase()}.png`}
+            alt={r.type}
+          />
+          {humanize(r.type)}:{' '}
+          {Math.floor(Number(r.amount) || 0)}
+        </div>
+      ))}
     </div>
   );
 };

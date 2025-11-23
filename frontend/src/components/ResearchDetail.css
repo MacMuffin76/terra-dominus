@@ -1,39 +1,243 @@
+/* frontend/src/components/ResearchDetail.css */
+
 .research-detail {
-    position: absolute;
-    top: 150px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 1000px;
-    padding: 20px;
-    border: 1px solid #444;
-    border-radius: 8px;
-    background-color: #000000a6;
-    color: #fff; /* Couleur du texte blanche pour contraste */
-    z-index: 10;
+  position: relative;
+  padding: 40px 40px 30px;
+  border-radius: 18px;
+  background-size: cover;
+  background-position: center;
+  color: #f5f5f5;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.research-detail::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  /* Overlay léger pour bien voir l'image */
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.6)
+  );
+  z-index: 0;
+}
+
+.research-detail > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+
+.research-detail-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.research-detail-header h2 {
+  margin: 0;
+  font-size: 32px;
+  letter-spacing: 3px;
+}
+
+.research-detail-subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #f0d58a;
+}
+
+/* Stats */
+
+.research-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.research-stat-block {
+  background: rgba(20, 20, 20, 0.7);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.research-stat-block h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #f0d58a;
+}
+
+.research-stat-value,
+.research-stat-value-large {
+  margin: 0;
+  font-weight: 600;
+}
+
+.research-stat-value {
+  font-size: 14px;
+}
+
+.research-stat-value-large {
+  font-size: 24px;
+}
+
+/* Description un peu plus large pour le texte */
+
+.research-stat-description {
+  grid-column: span 2;
+}
+
+/* Coûts */
+
+.research-cost-section {
+  margin-bottom: 22px;
+}
+
+.research-cost-section h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.research-resource-costs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.research-cost-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 15, 15, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+}
+
+.research-cost-item.enough {
+  border-color: rgba(121, 204, 121, 0.8);
+}
+
+.research-cost-item.not-enough {
+  border-color: rgba(204, 96, 96, 0.8);
+}
+
+.research-cost-resource {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #f0d58a;
+}
+
+.research-cost-values {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+}
+
+.research-cost-required {
+  font-weight: 600;
+}
+
+.research-cost-owned {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* Boutons */
+
+.research-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.research-buttons button {
+  min-width: 140px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.research-btn-upgrade {
+  background: #b3391f;
+  color: #fdf6e3;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.research-btn-upgrade:hover:not(:disabled) {
+  background: #d64527;
+  transform: translateY(-1px);
+}
+
+.research-btn-upgrade:disabled {
+  background: #555;
+  cursor: default;
+  box-shadow: none;
+}
+
+.research-btn-downgrade {
+  background: #333;
+  color: #f5f5f5;
+}
+
+.research-btn-downgrade:hover {
+  background: #444;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .research-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
-  .research-detail h2 {
-    margin-top: 0;
-    color: #fff; /* Couleur du texte blanche pour contraste */
+
+  .research-stat-description {
+    grid-column: span 2;
   }
-  
-  .research-detail p {
-    margin: 5px 0;
+}
+
+@media (max-width: 600px) {
+  .research-detail {
+    padding: 24px 18px 20px;
   }
-  
-  .research-detail button {
-    margin: 5px;
-    padding: 10px 20px;
-    cursor: pointer;
-    background-color: #555; /* Couleur de fond des boutons */
-    color: #fff; /* Couleur du texte des boutons */
-    border: none;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+
+  .research-stats {
+    grid-template-columns: 1fr;
   }
-  
-  .research-detail button:hover {
-    background-color: #777; /* Couleur de fond des boutons au survol */
+
+  .research-stat-description {
+    grid-column: span 1;
   }
-  
+
+  .research-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

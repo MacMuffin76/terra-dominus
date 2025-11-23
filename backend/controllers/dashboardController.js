@@ -1,24 +1,73 @@
-const User = require('../models/User');
-const Resource = require('../models/Resource');
-const Building = require('../models/Building');
-const Unit = require('../models/Unit');
+// backend/controllers/dashboardController.js
+
+const User      = require('../models/User');
+const sequelize = require('../db');
 
 exports.getDashboardData = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: ['username', 'level', 'points_experience', 'rang'],
-    });
-    const resources = await Resource.findAll({ where: { user_id: req.user.id } });
-    const buildings = await Building.findAll({ where: { user_id: req.user.id } });
-    const units = await Unit.findAll({ where: { user_id: req.user.id } });
+    const userId = req.user.id;
 
-    // Ajoutez un niveau par défaut pour chaque ressource si ce n'est pas déjà fait
-    const resourcesWithLevels = resources.map(resource => ({
-      ...resource.dataValues,
-      level: resource.level || 1, // Assurez-vous qu'il y a un champ level pour chaque ressource
+    // Infos du joueur
+    const userData = await User.findByPk(userId, {
+      attributes: ['username', 'points_experience', 'rang'],
+    });
+
+    if (!userData) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    const user = {
+      ...userData.dataValues,
+      level: 1, // placeholder
+    };
+
+    // Ressources par ville
+    const [resources] = await sequelize.query(
+      `
+      SELECT r.*
+      FROM resources r
+      JOIN cities c ON c.id = r.city_id
+      WHERE c.user_id = :userId
+      ORDER BY r.id
+      `,
+      { replacements: { userId } }
+    );
+
+    const resourcesWithLevels = resources.map((r) => ({
+      ...r,
+      level: r.level || 1,
     }));
 
-    res.json({ user, resources: resourcesWithLevels, buildings, units });
+    // Bâtiments par ville
+    const [buildings] = await sequelize.query(
+      `
+      SELECT b.*
+      FROM buildings b
+      JOIN cities c ON c.id = b.city_id
+      WHERE c.user_id = :userId
+      ORDER BY b.id
+      `,
+      { replacements: { userId } }
+    );
+
+    // Unités par ville
+    const [units] = await sequelize.query(
+      `
+      SELECT u.*
+      FROM units u
+      JOIN cities c ON c.id = u.city_id
+      WHERE c.user_id = :userId
+      ORDER BY u.id
+      `,
+      { replacements: { userId } }
+    );
+
+    res.json({
+      user,
+      resources: resourcesWithLevels,
+      buildings,
+      units,
+    });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     res.status(500).json({ message: 'Error fetching dashboard data' });

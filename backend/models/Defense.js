@@ -1,3 +1,4 @@
+// backend/models/Defense.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
@@ -7,7 +8,7 @@ const Defense = sequelize.define('Defense', {
     autoIncrement: true,
     primaryKey: true,
   },
-  user_id: {
+  city_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
@@ -15,8 +16,8 @@ const Defense = sequelize.define('Defense', {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      len: [1, 255]
-    }
+      len: [1, 255],
+    },
   },
   description: {
     type: DataTypes.STRING(1500),
@@ -30,6 +31,7 @@ const Defense = sequelize.define('Defense', {
   cost: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    defaultValue: 0,
   },
   date_creation: {
     type: DataTypes.DATE,

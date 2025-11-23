@@ -1,52 +1,46 @@
+// src/components/Dashboard.js
+
 import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
-import { calculateResourceProduction, calculateEnergyProduction } from '../utils/resourceProduction';
+import { useResources } from '../context/ResourcesContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
+  const { resources, setResources } = useResources();
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
         const response = await axiosInstance.get('/dashboard');
         setData(response.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
-    };
-    fetchData();
+    })();
   }, []);
 
   useEffect(() => {
-    if (data) {
-      const interval = setInterval(() => {
-        const newResources = data.resources.map((resource) => {
-          const level = Number(resource.level) || 1;
-          const productionRate = resource.type === 'energie' ? calculateEnergyProduction(level) : calculateResourceProduction(level);
-          return {
-            ...resource,
-            amount: resource.amount + productionRate,
-          };
-        });
-        setData((prevData) => ({
-          ...prevData,
-          resources: newResources,
-        }));
-      }, 1000); // Mise à jour toutes les secondes
+    (async () => {
+      try {
+        const { data } = await axiosInstance.get('/resources/user-resources');
+        setResources(data);
+      } catch (err) {
+        console.error('Error fetching user resources:', err);
+      }
+    })();
+  }, []);
 
-      return () => clearInterval(interval); // Nettoyage de l'intervalle lors du démontage du composant
-    }
-  }, [data]);
+  if (!data) return <div>Loading...</div>;
 
-  if (!data) {
-    return <div>Loading...</div>;
-  }
-
-  const formatFileName = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Remplace les espaces par des underscores et enlève les accents
-  };
+  const formatFileName = name =>
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['’]/g, '')
+      .replace(/\s+/g, '_');
 
   return (
     <div className="dashboard">
@@ -56,46 +50,72 @@ const Dashboard = () => {
           <h1>Tableau de bord</h1>
         </div>
         <div className="dashboard-modules">
+
           <div className="dashboard-module">
             <h2>Informations</h2>
             <p>Pseudo: {data.user.username}</p>
             <p>Level: {data.user.level}</p>
-            <p>Points d'experience: {data.user.points_experience}</p>
+            <p>Points d'expérience: {data.user.points_experience}</p>
             <p>Rang: {data.user.rang}</p>
           </div>
+
           <div className="dashboard-module dashboard-resources">
             <h2>Ressources</h2>
             <ul>
-              {data.resources.map((resource) => (
-                <li key={resource.id}>
-                  <img src={`./images/resources/${formatFileName(resource.type)}.png`} alt={resource.type} className="dashboard-resource-icon" />
-                  <span className="dashboard-resource-text">{resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}: {Math.floor(resource.amount)}</span>
-                </li>
-              ))}
+              {resources.map(r => {
+                const amt = Math.floor(Number(r.amount) || 0);
+                return (
+                  <li key={r.type}>
+                    <img
+                      src={`./images/resources/${formatFileName(r.type)}.png`}
+                      alt={r.type}
+                      className="dashboard-resource-icon"
+                    />
+                    <span className="dashboard-resource-text">
+                      {r.type.charAt(0).toUpperCase() + r.type.slice(1)}: {amt}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
+
           <div className="dashboard-module dashboard-buildings">
-            <h2>Batiments</h2>
+            <h2>Bâtiments</h2>
             <ul>
-              {data.buildings.map((building) => (
-                <li key={building.id}>
-                  <img src={`./images/buildings/${formatFileName(building.name)}.png`} alt={building.name} className="dashboard-building-icon" />
-                  <span className="dashboard-building-text">{building.name.charAt(0).toUpperCase() + building.name.slice(1)} (Level: {building.level})</span>
+              {data.buildings.map(b => (
+                <li key={b.id}>
+                  <img
+                    src={`./images/buildings/${formatFileName(b.name)}.png`}
+                    alt={b.name}
+                    className="dashboard-building-icon"
+                  />
+                  <span className="dashboard-building-text">
+                    {b.name} (Level: {b.level})
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
+
           <div className="dashboard-module dashboard-units">
             <h2>Unités</h2>
             <ul>
-              {data.units.map((unit) => (
-                <li key={unit.id}>
-                  <img src={`./images/training/${formatFileName(unit.name)}.png`} alt={unit.name} className="dashboard-unit-icon" />
-                  <span className="dashboard-unit-text">{unit.name.charAt(0).toUpperCase() + unit.name.slice(1)}: {unit.quantity}</span>
+              {data.units.map(u => (
+                <li key={u.id}>
+                  <img
+                    src={`./images/training/${formatFileName(u.name)}.png`}
+                    alt={u.name}
+                    className="dashboard-unit-icon"
+                  />
+                  <span className="dashboard-unit-text">
+                    {u.name}: {u.quantity}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
+
         </div>
       </div>
     </div>

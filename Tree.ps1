@@ -9,9 +9,9 @@ function Get-FolderStructure {
 
     foreach ($item in $items) {
         # Vérifier si l'élément doit être exclu
-        if ($item.FullName -like "E:\terra-dominus\node_modules*" -or
-            $item.FullName -like "E:\terra-dominus\frontend\node_modules*" -or
-            $item.FullName -like "E:\terra-dominus\backend\node_modules*") {
+        if ($item.FullName -like "G:\terra-dominus\node_modules*" -or
+            $item.FullName -like "G:\terra-dominus\frontend\node_modules*" -or
+            $item.FullName -like "G:\terra-dominus\backend\node_modules*") {
             continue  # Ignorer cet élément et passer au suivant
         }
 
@@ -30,7 +30,7 @@ function Get-FolderStructure {
 
 # Exemple d'utilisation : Afficher la structure du répertoire E:\terra-dominus
 # Rediriger la sortie vers un fichier texte
-Get-FolderStructure -Path "E:\terra-dominus" | Out-File -FilePath "structure.txt"
+Get-FolderStructure -Path "G:\terra-dominus" | Out-File -FilePath "structure.txt"
 
 # Afficher le contenu du fichier
 notepad.exe "structure.txt"

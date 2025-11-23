@@ -1,11 +1,24 @@
+// backend/routes/defenseRoutes.js
+
 const express = require('express');
-const router = express.Router();
-const { getDefenses, getDefenseDetails, upgradeDefense, destroyDefense } = require('../controllers/defenseController');
+const router  = express.Router();
+
+const {
+  getDefenses,
+  getDefenseDetails,
+  buyDefenseUnit,
+} = require('../controllers/defenseController');
+
+// ton middleware exporte { protect }
 const { protect } = require('../middleware/authMiddleware');
 
+// Liste des défenses du joueur
 router.get('/defenses', protect, getDefenses);
-router.get('/defenses/:id', protect, getDefenseDetails);
-router.post('/defenses/:id/upgrade', protect, upgradeDefense);
-router.post('/defenses/:id/destroy', protect, destroyDefense);
+
+// Détail d’une défense précise
+router.get('/defense-buildings/:id', protect, getDefenseDetails);
+
+// Achat d’UNE unité de défense (pas de niveau)
+router.post('/defense-buildings/:id/upgrade', protect, buyDefenseUnit);
 
 module.exports = router;

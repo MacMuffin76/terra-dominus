@@ -1,1 +1,0 @@
-TRUNCATE TABLE buildings, resources, units, users RESTART IDENTITY CASCADE;

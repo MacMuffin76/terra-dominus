@@ -1,3 +1,4 @@
+// backend/models/Facility.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
@@ -7,7 +8,7 @@ const Facility = sequelize.define('Facility', {
     autoIncrement: true,
     primaryKey: true,
   },
-  user_id: {
+  city_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
@@ -15,21 +16,22 @@ const Facility = sequelize.define('Facility', {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      len: [1, 255]
-    }
+      len: [1, 255],
+    },
   },
   description: {
     type: DataTypes.STRING(1500),
-    allowNull: true, // Allow null if description is not mandatory
+    allowNull: true,
   },
   level: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1,
+    defaultValue: 0,
   },
   nextlevelcost: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    defaultValue: 0,
   },
   date_creation: {
     type: DataTypes.DATE,
