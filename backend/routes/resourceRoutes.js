@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const validate = require('../middlewares/validate');
+const validate = require('../middleware/validate');
 const { upgradeBuildingSchema, saveUserResourcesSchema } = require('../validation/resourceValidation');
 
 const {
