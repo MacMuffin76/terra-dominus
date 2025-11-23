@@ -1,17 +1,13 @@
 const http = require('http');
-const { Server } = require('socket.io');
 const app = require('./app');
 const resourceService = require('./services/resourceService');
 const { getPgClientConfig } = require('./utils/databaseConfig');
+const { initIO } = require('./socket');
 
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-});
+const io = initIO(server);
 
 const emitUserResources = async (socket, userId) => {
   const resources = await resourceService.getUserResources(userId);
@@ -24,6 +20,7 @@ io.on('connection', (socket) => {
 
   socket.on('user_connected', async ({ userId }) => {
     console.log(`User connected: ${userId}`);
+    socket.join(`user_${userId}`);
 
     try {
       await emitUserResources(socket, userId);

@@ -1,26 +1,14 @@
+const { Op } = require('sequelize');
 const Building = require('../models/Building');
 const ResourceCost = require('../models/ResourceCost');
 const Resource = require('../models/Resource');
 const Entity = require('../models/Entity');
+const ConstructionQueue = require('../models/ConstructionQueue');
 const { getUserMainCity } = require('../utils/cityUtils');
 const { getBuildDurationSeconds } = require('../utils/balancing');
 const sequelize = require('../db');
 
-function ensureBuildAvailability(building) {
-  if (building.build_start && building.build_duration) {
-    const elapsed = (new Date() - new Date(building.build_start)) / 1000;
-    const total = Number(building.build_duration) || 0;
-
-    if (elapsed < total) {
-      const error = new Error('Construction déjà en cours');
-      error.status = 400;
-      throw error;
-    }
-
-    building.build_start = null;
-    building.build_duration = null;
-  }
-}
+const { getIO } = require('../socket');
 
 function assertOptimisticUpdate(updatedRows) {
   if (!updatedRows) {
@@ -30,6 +18,68 @@ function assertOptimisticUpdate(updatedRows) {
   }
 }
 
+async function emitConstructionQueue(cityId, userId) {
+  const io = getIO();
+  if (!io) return;
+
+  const queue = await ConstructionQueue.findAll({
+    where: { cityId },
+    order: [['slot', 'ASC']],
+  });
+
+  io.to(`user_${userId}`).emit('construction_queue:update', queue);
+}
+
+async function syncQueueForCity(cityId, transaction) {
+  const queue = await ConstructionQueue.findAll({
+    where: {
+      cityId,
+      status: {
+        [Op.in]: ['queued', 'in_progress'],
+      },
+    },
+    order: [['slot', 'ASC']],
+    transaction,
+    lock: transaction?.LOCK.UPDATE,
+  });
+
+  let activeStart = new Date();
+  let hasActive = false;
+  let slot = 1;
+
+  for (const item of queue) {
+    const durationMs = item.finishTime && item.startTime
+      ? new Date(item.finishTime) - new Date(item.startTime)
+      : 0;
+
+    item.slot = slot;
+
+    if (!hasActive) {
+      item.status = 'in_progress';
+      if (!item.startTime) {
+        item.startTime = new Date();
+        item.finishTime = new Date(item.startTime.getTime() + durationMs);
+      }
+      activeStart = item.finishTime ? new Date(item.finishTime) : new Date();
+      hasActive = true;
+    } else {
+      item.status = 'queued';
+      const startTime = item.startTime && item.finishTime && durationMs > 0
+        ? new Date(activeStart)
+        : new Date();
+      item.startTime = startTime;
+      item.finishTime = durationMs > 0
+        ? new Date(startTime.getTime() + durationMs)
+        : item.finishTime;
+      activeStart = item.finishTime ? new Date(item.finishTime) : activeStart;
+    }
+
+    await item.save({ transaction });
+    slot += 1;
+  }
+}
+
+
 async function getBuildingDetails(buildingId) {
   const building = await Building.findByPk(buildingId);
   if (!building) {
@@ -38,24 +88,34 @@ async function getBuildingDetails(buildingId) {
     throw error;
   }
 
-  let remainingTime = 0;
-  if (building.build_start && building.build_duration) {
-    const elapsed = (new Date() - new Date(building.build_start)) / 1000;
-    const total = Number(building.build_duration) || 0;
+  const entity = await Entity.findOne({
+    where: {
+      entity_type: 'building',
+      entity_name: building.name,
+    },
+  });
 
-    if (elapsed < total) {
-      remainingTime = Math.ceil(total - elapsed);
-    } else {
-      building.build_start = null;
-      building.build_duration = null;
-      await building.save();
-    }
-  }
+    const queueEntries = entity
+    ? await ConstructionQueue.findAll({
+        where: {
+          cityId: building.city_id,
+          entityId: entity.entity_id,
+          type: 'building',
+        },
+        order: [['slot', 'ASC']],
+      })
+    : [];
+
+  const inProgress = queueEntries.find((entry) => entry.status === 'in_progress');
+  const remainingTime = inProgress && inProgress.finishTime
+    ? Math.max(0, Math.ceil((new Date(inProgress.finishTime) - new Date()) / 1000))
+    : 0;
 
   return {
     ...building.toJSON(),
     remainingTime,
-    inProgress: !!building.build_start && !!building.build_duration,
+    inProgress: !!inProgress,
+    queue: queueEntries,
   };
 }
 
@@ -78,7 +138,6 @@ async function upgradeBuilding(userId, buildingId) {
       throw error;
     }
 
-    ensureBuildAvailability(building);
     const entity = await Entity.findOne({
       where: {
         entity_type: 'building',
@@ -87,15 +146,26 @@ async function upgradeBuilding(userId, buildingId) {
       transaction,
     });
 
-
     if (!entity) {
       const error = new Error('Entity not found for building');
       error.status = 404;
       throw error;
     }
 
+    const pendingLevels = await ConstructionQueue.count({
+      where: {
+        cityId: city.id,
+        entityId: entity.entity_id,
+        type: 'building',
+        status: {
+          [Op.in]: ['queued', 'in_progress'],
+        },
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
-    const nextLevel = (Number(building.level) || 0) + 1;
+    const nextLevel = (Number(building.level) || 0) + pendingLevels + 1;
     const costs = await ResourceCost.findAll({
       where: {
         entity_id: entity.entity_id,
@@ -148,74 +218,131 @@ async function upgradeBuilding(userId, buildingId) {
     }
 
     const buildDuration = getBuildDurationSeconds(nextLevel);
-    const build_start = new Date();
-    const currentVersion = Number(building.version) || 0;
-
-    const [affected] = await Building.update(
-      {
-        build_start,
-        build_duration: buildDuration,
-        level: nextLevel,
-        version: currentVersion + 1,
-      },
-      {
-        where: { id: building.id, version: currentVersion },
-        transaction,
-      }
-    );
-
-    assertOptimisticUpdate(affected);
-
-    return {
-      buildDuration,
-      inProgress: true,
-      level: nextLevel,
-      build_start,
-    };
-  });
-}
-
-async function downgradeBuilding(buildingId) {
-  return sequelize.transaction(async (transaction) => {
-    const building = await Building.findByPk(buildingId, {
+    const lastTask = await ConstructionQueue.findOne({
+      where: { cityId: city.id },
+      order: [['slot', 'DESC']],
       transaction,
       lock: transaction.LOCK.UPDATE,
     });
-    if (!building) {
-      const error = new Error('Building not found');
+
+    const startTime = lastTask?.finishTime ? new Date(lastTask.finishTime) : new Date();
+    const finishTime = new Date(startTime.getTime() + buildDuration * 1000);
+
+    const queueItem = await ConstructionQueue.create({
+      cityId: city.id,
+      entityId: entity.entity_id,
+      type: 'building',
+      status: lastTask ? 'queued' : 'in_progress',
+      startTime,
+      finishTime,
+      slot: lastTask ? lastTask.slot + 1 : 1,
+    }, { transaction });
+
+    await syncQueueForCity(city.id, transaction);
+
+    transaction.afterCommit(() => {
+      emitConstructionQueue(city.id, userId).catch(() => {});
+    });
+
+    return queueItem.toJSON();
+  });
+}
+
+async function listConstructionQueue(userId) {
+  const city = await getUserMainCity(userId);
+  if (!city) {
+    const error = new Error('Pas de ville trouvée');
+    error.status = 404;
+    throw error;
+  }
+
+  return ConstructionQueue.findAll({
+    where: { cityId: city.id },
+    order: [['slot', 'ASC']],
+  });
+}
+
+async function cancelConstruction(userId, queueId) {
+  return sequelize.transaction(async (transaction) => {
+    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!city) {
+      const error = new Error('Pas de ville trouvée');
       error.status = 404;
       throw error;
     }
 
-    const nextLevel = building.level > 1 ? building.level - 1 : building.level;
-    const currentVersion = Number(building.version) || 0;
+    const queueItem = await ConstructionQueue.findByPk(queueId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!queueItem || queueItem.cityId !== city.id) {
+      const error = new Error('Construction introuvable');
+      error.status = 404;
+      throw error;
+    }
 
-    const [affected] = await Building.update(
-      {
-        build_start: null,
-        build_duration: null,
-        level: nextLevel,
-        version: currentVersion + 1,
-      },
-      {
-        where: { id: building.id, version: currentVersion },
-        transaction,
-      }
-    );
+    if (queueItem.status === 'in_progress') {
+      const error = new Error('Impossible d’annuler une construction en cours');
+      error.status = 400;
+      throw error;
+    }
 
-    assertOptimisticUpdate(affected);
-    return {
-      ...building.toJSON(),
-      level: nextLevel,
-      build_start: null,
-      build_duration: null,
-      version: currentVersion + 1,
-    };
+    queueItem.status = 'cancelled';
+    await queueItem.save({ transaction });
+
+    await syncQueueForCity(city.id, transaction);
+
+    transaction.afterCommit(() => {
+      emitConstructionQueue(city.id, userId).catch(() => {});
+    });
+
+    return queueItem.toJSON();
+  });
+}
+
+async function accelerateConstruction(userId, queueId) {
+  return sequelize.transaction(async (transaction) => {
+    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!city) {
+      const error = new Error('Pas de ville trouvée');
+      error.status = 404;
+      throw error;
+    }
+
+    const queueItem = await ConstructionQueue.findByPk(queueId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!queueItem || queueItem.cityId !== city.id) {
+      const error = new Error('Construction introuvable');
+      error.status = 404;
+      throw error;
+    }
+
+    if (queueItem.status !== 'in_progress') {
+      const error = new Error('Seule une construction en cours peut être accélérée');
+      error.status = 400;
+      throw error;
+    }
+
+    queueItem.finishTime = new Date();
+    await queueItem.save({ transaction });
+
+    await syncQueueForCity(city.id, transaction);
+
+    transaction.afterCommit(() => {
+      emitConstructionQueue(city.id, userId).catch(() => {});
+    });
+
+    return queueItem.toJSON();
   });
 }
 
 module.exports = {
   getBuildingDetails,
   upgradeBuilding,
-  downgradeBuilding,
+  listConstructionQueue,
+  cancelConstruction,
+  accelerateConstruction,
 };
