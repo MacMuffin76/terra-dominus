@@ -3,7 +3,9 @@ const Training = require('../models/Training');
 // Get all training centers
 exports.getTrainingCenters = async (req, res) => {
   try {
-    const trainings = await Training.findAll({ where: { user_id: req.user.id } });
+    const trainings = await Training.findAll({
+      where: { user_id: req.user.id },
+    });
     res.json(trainings);
   } catch (error) {
     console.error('Error fetching training centers:', error);
@@ -18,6 +20,8 @@ exports.getTrainingDetails = async (req, res) => {
     if (!training) {
       return res.status(404).json({ message: 'Training center not found' });
     }
+
+    // On renvoie toutes les données + un alias nextLevelCost
     res.json({
       ...training.dataValues,
       description: training.description,
@@ -36,8 +40,11 @@ exports.upgradeTraining = async (req, res) => {
     if (!training) {
       return res.status(404).json({ message: 'Training center not found' });
     }
-    training.level += 1; // Increment the level
+
+    // Simple logique d'upgrade : level + 1
+    training.level += 1;
     await training.save();
+
     res.json(training);
   } catch (error) {
     console.error('Error upgrading training:', error);
@@ -52,6 +59,7 @@ exports.destroyTraining = async (req, res) => {
     if (!training) {
       return res.status(404).json({ message: 'Training center not found' });
     }
+
     await training.destroy();
     res.json({ message: 'Training center destroyed' });
   } catch (error) {
