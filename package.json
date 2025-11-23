@@ -11,6 +11,7 @@
     "install-all": "npm run install-backend && npm run install-frontend"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "concurrently": "^6.5.1"
   },
   "author": "",

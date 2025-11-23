@@ -30,7 +30,6 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
 
   useEffect(() => {
     refreshTraining();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [training?.id]);
 
   const handleUpgrade = async () => {
@@ -60,9 +59,11 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
 
     setLoading(true);
     try {
-      await axiosInstance.delete(`/training/training-centers/${training.id}`);
+      await axiosInstance.post(
+        `/training/training-centers/${training.id}/destroy`
+      );
       if (onTrainingUpdated) {
-        onTrainingUpdated(null); // à toi de gérer côté parent si besoin
+        onTrainingUpdated(null); // le parent saura retirer la carte
       }
       setDetail(null);
     } catch (error) {
