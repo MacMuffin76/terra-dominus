@@ -41,6 +41,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      localStorage.removeItem('jwtToken');
       localStorage.removeItem('userId'); // Supprimer l'ID utilisateur de localStorage lors de la déconnexion
     },
   },
@@ -55,6 +56,11 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.loading = false;
         state.isAuthenticated = true;
+        
+        // Persist the JWT so protected endpoints (e.g., units) work after login
+        if (action.payload.token) {
+          localStorage.setItem('jwtToken', action.payload.token);
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -69,6 +75,11 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.loading = false;
         state.isAuthenticated = true;
+        
+        // Persist the JWT directly after registration
+        if (action.payload.token) {
+          localStorage.setItem('jwtToken', action.payload.token);
+        }
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;

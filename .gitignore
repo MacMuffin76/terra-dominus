@@ -3,4 +3,5 @@
 node_modules/
 bin/
 obj/
+frontend/node_modules/
 .DS_Store
