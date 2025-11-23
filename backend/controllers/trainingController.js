@@ -1,11 +1,46 @@
 const Training = require('../models/Training');
 
+const DEFAULT_TRAINING_TYPES = [
+  'Drone d’assaut terrestre',
+  'Fantassin plasmique',
+  'Infiltrateur holo-camouflage',
+  'Tireur à antimatière',
+  'Artilleur à railgun',
+  'Exo-sentinelle',
+  'Commandos nano-armure',
+  'Légionnaire quantique',
+];
+
+const ensureUserTrainings = async (userId) => {
+  const trainings = await Training.findAll({
+    where: { user_id: userId },
+  });
+
+  const missingTypes = DEFAULT_TRAINING_TYPES.filter(
+    (name) => !trainings.some((training) => training.name === name)
+  );
+
+  if (missingTypes.length > 0) {
+    await Training.bulkCreate(
+      missingTypes.map((name) => ({
+        user_id: userId,
+        name,
+        level: 0,
+        nextlevelcost: 0,
+        description: null,
+      }))
+    );
+
+    return Training.findAll({ where: { user_id: userId } });
+  }
+
+  return trainings;
+};
+
 // Get all training centers
 exports.getTrainingCenters = async (req, res) => {
   try {
-    const trainings = await Training.findAll({
-      where: { user_id: req.user.id },
-    });
+    const trainings = await ensureUserTrainings(req.user.id);
     res.json(trainings);
   } catch (error) {
     console.error('Error fetching training centers:', error);
