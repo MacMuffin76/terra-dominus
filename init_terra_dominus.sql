@@ -99,6 +99,7 @@ CREATE TABLE resources (
     type VARCHAR(50) NOT NULL,           -- 'metal', 'energie', 'carburant', 'or'
     amount INTEGER NOT NULL CHECK (amount >= 0),
     last_update TIMESTAMP NOT NULL DEFAULT NOW(),
+    version INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT uq_resources_city_type UNIQUE (city_id, type)
 );
 
@@ -118,6 +119,7 @@ CREATE TABLE buildings (
     build_start TIMESTAMP NULL,
     build_duration INTEGER NULL,
     building_type_id INTEGER NULL REFERENCES entities(entity_id) ON DELETE SET NULL,
+    version INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT uq_buildings_city_name UNIQUE (city_id, name)
 );
 
