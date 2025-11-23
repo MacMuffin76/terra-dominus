@@ -82,3 +82,7 @@ exports.saveUserResources = async (req, res) => {
     return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la sauvegarde des ressources.' });
   }
 };
+
+exports.updateUserResources = async (userId) => {
+  await resourceService.getUserResources(userId);
+};
