@@ -9,6 +9,7 @@ const {
   getProductionPerSecond,
   getBuildDurationSeconds,
 } = require('../utils/balancing');
+const sequelize = require('../db');
 
 const RESOURCE_BUILDINGS = [
   "Mine d'or",
@@ -23,7 +24,15 @@ const TYPE_TO_BUILDING_NAME = {
   carburant: 'Extracteur',
 };
 
-async function getBuildingEntityId(building) {
+function assertOptimisticUpdate(updatedRows) {
+  if (!updatedRows) {
+    const error = new Error('Conflit concurrent détecté, veuillez réessayer.');
+    error.status = 409;
+    throw error;
+  }
+}
+
+async function getBuildingEntityId(building, options = {}) {
   if (building.building_type_id) return building.building_type_id;
 
   const entity = await Entity.findOne({
@@ -31,6 +40,7 @@ async function getBuildingEntityId(building) {
       entity_type: 'building',
       entity_name: building.name,
     },
+    ...options,
   });
 
   if (!entity) {
@@ -138,126 +148,192 @@ async function getResourceBuildingDetails(userId, buildingId) {
 }
 
 async function upgradeResourceBuilding(userId, buildingId) {
-  const city = await getUserMainCity(userId);
-  if (!city) {
-    const error = new Error('Aucune ville trouvée.');
-    error.status = 404;
-    throw error;
-  }
+  return sequelize.transaction(async (transaction) => {
+    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!city) {
+      const error = new Error('Aucune ville trouvée.');
+      error.status = 404;
+      throw error;
+    }
 
   const building = await Building.findOne({
-    where: {
-      id: buildingId,
-      city_id: city.id,
-    },
-  });
+      where: {
+        id: buildingId,
+        city_id: city.id,
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
-  if (!building) {
-    const error = new Error('Bâtiment introuvable.');
-    error.status = 404;
-    throw error;
-  }
-
-  if (building.build_start && building.build_duration) {
-    const now = Date.now();
-    const started = new Date(building.build_start).getTime();
-    const elapsed = (now - started) / 1000;
-    const total = Number(building.build_duration) || 0;
-
-    if (elapsed < total) {
-      const error = new Error('Construction déjà en cours pour ce bâtiment.');
-      error.status = 400;
+    if (!building) {
+      const error = new Error('Bâtiment introuvable.');
+      error.status = 404;
       throw error;
-    } else {
-      building.build_start = null;
-      building.build_duration = null;
-      await building.save();
     }
-  }
+  
 
-  const currentLevel = Number(building.level) || 0;
-  const nextLevel = currentLevel + 1;
+    if (building.build_start && building.build_duration) {
+      const now = Date.now();
+      const started = new Date(building.build_start).getTime();
+      const elapsed = (now - started) / 1000;
+      const total = Number(building.build_duration) || 0;
 
-  const entityId = await getBuildingEntityId(building);
+      if (elapsed < total) {
+        const error = new Error('Construction déjà en cours pour ce bâtiment.');
+        error.status = 400;
+        throw error;
+      } else {
+        building.build_start = null;
+        building.build_duration = null;
+        const currentVersion = Number(building.version) || 0;
+        const [affected] = await Building.update(
+          {
+            build_start: null,
+            build_duration: null,
+            version: currentVersion + 1,
+          },
+          {
+            where: { id: building.id, version: currentVersion },
+            transaction,
+          }
+        );
+        assertOptimisticUpdate(affected);
+        building.version = currentVersion + 1;
+      }
+    }
+
+     const currentLevel = Number(building.level) || 0;
+    const nextLevel = currentLevel + 1;
+
+  const entityId = await getBuildingEntityId(building, { transaction });
 
   const costs = await ResourceCost.findAll({
-    where: {
-      entity_id: entityId,
-      level: nextLevel,
-    },
-  });
+      where: {
+        entity_id: entityId,
+        level: nextLevel,
+      },
+      transaction,
+    });
 
   const resources = await Resource.findAll({
-    where: { city_id: city.id },
-  });
+      where: { city_id: city.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
   const resMap = new Map(resources.map((r) => [r.type, r]));
-
   for (const cost of costs) {
-    const resource = resMap.get(cost.resource_type);
-    const currentAmount = resource ? Number(resource.amount) || 0 : 0;
+      const resource = resMap.get(cost.resource_type);
+      const currentAmount = resource ? Number(resource.amount) || 0 : 0;
 
-    if (currentAmount < Number(cost.amount)) {
-      const error = new Error(`Ressources insuffisantes pour améliorer : ${building.name}.`);
-      error.status = 400;
-      throw error;
+      if (currentAmount < Number(cost.amount)) {
+        const error = new Error(`Ressources insuffisantes pour améliorer : ${building.name}.`);
+        error.status = 400;
+        throw error;
+      }
     }
-  }
 
-  for (const cost of costs) {
-    const resource = resMap.get(cost.resource_type);
-    resource.amount = Number(resource.amount) - Number(cost.amount);
-    await resource.save();
-  }
+
+ for (const cost of costs) {
+      const resource = resMap.get(cost.resource_type);
+      const currentAmount = Number(resource.amount);
+      const updatedAmount = currentAmount - Number(cost.amount);
+      const currentVersion = Number(resource.version) || 0;
+
+  const [affected] = await Resource.update(
+        {
+          amount: updatedAmount,
+          version: currentVersion + 1,
+        },
+        {
+          where: { id: resource.id, version: currentVersion },
+          transaction,
+        }
+      );
+
+      assertOptimisticUpdate(affected);
+      resource.amount = updatedAmount;
+      resource.version = currentVersion + 1;
+    }
 
   const buildDuration = getBuildDurationSeconds(nextLevel);
+const currentVersion = Number(building.version) || 0;
+    const build_start = new Date();
 
-  building.level = nextLevel;
-  building.build_start = new Date();
-  building.build_duration = buildDuration;
-  await building.save();
+    const [affected] = await Building.update(
+      {
+        level: nextLevel,
+        build_start,
+        build_duration: buildDuration,
+        version: currentVersion + 1,
+      },
+      {
+        where: { id: building.id, version: currentVersion },
+        transaction,
+      }
+    );
 
-  return {
-    message: 'Bâtiment amélioré.',
-    id: building.id,
-    name: building.name,
-    level: building.level,
-    build_start: building.build_start,
-    build_duration: building.build_duration,
-    buildDuration,
-  };
+    assertOptimisticUpdate(affected);
+
+    return {
+      message: 'Bâtiment amélioré.',
+      id: building.id,
+      name: building.name,
+      level: nextLevel,
+      build_start,
+      build_duration: buildDuration,
+      buildDuration,
+    };
+  });
 }
 
 async function downgradeResourceBuilding(userId, buildingId) {
-  const city = await getUserMainCity(userId);
-  if (!city) {
-    const error = new Error('Aucune ville trouvée.');
-    error.status = 404;
-    throw error;
-  }
-
-  const building = await Building.findOne({
-    where: {
-      id: buildingId,
-      city_id: city.id,
-    },
-  });
+  return sequelize.transaction(async (transaction) => {
+    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!city) {
+      const error = new Error('Aucune ville trouvée.');
+      error.status = 404;
+      throw error;
+    }
+    const building = await Building.findOne({
+      where: {
+        id: buildingId,
+        city_id: city.id,
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
   if (!building) {
-    const error = new Error('Bâtiment introuvable.');
-    error.status = 404;
-    throw error;
-  }
+      const error = new Error('Bâtiment introuvable.');
+      error.status = 404;
+      throw error;
+    }
 
-  building.build_start = null;
-  building.build_duration = null;
+  const nextLevel = building.level > 0 ? building.level - 1 : building.level;
+    const currentVersion = Number(building.version) || 0;
 
-  if (building.level > 0) {
-    building.level -= 1;
-  }
-
-  await building.save();
-  return building;
+  const [affected] = await Building.update(
+      {
+        build_start: null,
+        build_duration: null,
+        level: nextLevel,
+        version: currentVersion + 1,
+      },
+      {
+        where: { id: building.id, version: currentVersion },
+        transaction,
+      }
+    );
+     assertOptimisticUpdate(affected);
+    return {
+      ...building.toJSON(),
+      level: nextLevel,
+      build_start: null,
+      build_duration: null,
+      version: currentVersion + 1,
+    };
+  });
 }
 
 async function destroyResourceBuilding(userId, buildingId) {

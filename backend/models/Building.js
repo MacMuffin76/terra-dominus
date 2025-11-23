@@ -42,6 +42,11 @@ const Building = sequelize.define('Building', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  version: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
   tableName: 'buildings',
   timestamps: false,

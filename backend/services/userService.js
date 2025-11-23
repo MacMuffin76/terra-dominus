@@ -11,15 +11,16 @@ const Training = require('../models/Training');
 const Defense = require('../models/Defense');
 const Facility = require('../models/Facility');
 const Entity = require('../models/Entity');
+const sequelize = require('../db');
 
-async function initializeUserGameData(userId) {
+async function initializeUserGameData(userId, transaction) {
   const city = await City.create({
     user_id: userId,
     name: 'Capitale',
     is_capital: true,
     coord_x: 0,
     coord_y: 0,
-  });
+ }, { transaction });
 
   const cityId = city.id;
 
@@ -37,7 +38,7 @@ async function initializeUserGameData(userId) {
         city_id: cityId,
         type,
         amount: initialAmounts[type] ?? 0,
-      })
+      }, { transaction })
     )
   );
 
@@ -54,6 +55,7 @@ async function initializeUserGameData(userId) {
     buildingTypes.map(async (name) => {
       const entity = await Entity.findOne({
         where: { entity_type: 'building', entity_name: name },
+        transaction,
       });
 
       if (!entity) {
@@ -67,7 +69,7 @@ async function initializeUserGameData(userId) {
         capacite: 0,
         description: null,
         building_type_id: entity.entity_id,
-      });
+      }, { transaction });
     })
   );
 
@@ -81,6 +83,7 @@ async function initializeUserGameData(userId) {
     facilityTypes.map(async (name) => {
       const entity = await Entity.findOne({
         where: { entity_type: 'facility', entity_name: name },
+        transaction,
       });
 
       if (!entity) {
@@ -94,7 +97,7 @@ async function initializeUserGameData(userId) {
         level: 0,
         nextlevelcost: 0,
         facility_type_id: entity.entity_id,
-      });
+      }, { transaction });
     })
   );
 
@@ -116,7 +119,7 @@ async function initializeUserGameData(userId) {
         name,
         quantity: 0,
         force: 0,
-      })
+      }, { transaction })
     )
   );
 
@@ -141,7 +144,7 @@ async function initializeUserGameData(userId) {
         level: 0,
         nextlevelcost: 0,
         description: null,
-      })
+      }, { transaction })
     )
   );
 
@@ -164,7 +167,7 @@ async function initializeUserGameData(userId) {
         level: 0,
         nextlevelcost: 0,
         description: null,
-      })
+      }, { transaction })
     )
   );
 
@@ -189,7 +192,7 @@ async function initializeUserGameData(userId) {
         quantity: 0,
         cost: 0,
         description: null,
-      })
+      }, { transaction })
     )
   );
 }
@@ -202,15 +205,18 @@ async function registerUser({ username, email, password }) {
   }
 
   const hashed = await bcrypt.hash(password, 10);
-  const newUser = await User.create({ username, email, password: hashed });
+  return sequelize.transaction(async (transaction) => {
+    const newUser = await User.create(
+      { username, email, password: hashed },
+      { transaction }
+    );
+  await initializeUserGameData(newUser.id, transaction);
 
-  await initializeUserGameData(newUser.id);
-
-  const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-    expiresIn: '2h',
+    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+      expiresIn: '2h',
+    });
+    return { token, user: newUser };
   });
-
-  return { token, user: newUser };
 }
 
 async function loginUser({ username, password }) {

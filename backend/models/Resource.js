@@ -28,6 +28,11 @@ Resource.init({
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  version: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
   sequelize,
   modelName: 'Resource',
