@@ -6,6 +6,7 @@ const Resource  = require('../models/Resource');
 const Building  = require('../models/Building');
 const Unit      = require('../models/Unit');
 const Research  = require('../models/Research');
+const Training  = require('../models/Training');
 const Defense   = require('../models/Defense');
 const Facility  = require('../models/Facility');
 const Entity    = require('../models/Entity');
@@ -148,7 +149,31 @@ const initializeUserGameData = async (userId) => {
     )
   );
 
-  // 🔹 6) Défenses – par ville
+// 🔹 6) Entraînements – global au joueur (user_id)
+  const trainingTypes = [
+    'Drone d’assaut terrestre',
+    'Fantassin plasmique',
+    'Infiltrateur holo-camouflage',
+    'Tireur à antimatière',
+    'Artilleur à railgun',
+    'Exo-sentinelle',
+    'Commandos nano-armure',
+    'Légionnaire quantique',
+  ];
+
+  await Promise.all(
+    trainingTypes.map((name) =>
+      Training.create({
+        user_id:       userId,
+        name,
+        level:         0,
+        nextlevelcost: 0,
+        description:   null,
+      })
+    )
+  );
+
+  // 🔹 7) Défenses – par ville
   const defenseTypes = [
     'Tourelle à laser',
     'Canon railgun',

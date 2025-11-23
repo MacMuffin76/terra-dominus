@@ -99,9 +99,7 @@ const Training = () => {
               onClick={() => handleTrainingClick(training)}
             >
               <img
-                src={`/images/trainings/${formatFileName(
-                  training.name
-                )}.png`}
+                src={`/images/training/${formatFileName(training.name)}.png`}
                 alt={training.name}
                 className="training-image"
               />

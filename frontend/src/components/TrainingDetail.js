@@ -96,7 +96,7 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
     <div
       className="training-detail"
       style={{
-        backgroundImage: `url(/images/trainings/${bgName}.png)`,
+        backgroundImage: `url(/images/training/${bgName}.png)`,
       }}
     >
       <div className="training-detail-overlay" />
