@@ -35,7 +35,6 @@ const FacilityDetail = ({
 
   useEffect(() => {
     refreshFacility();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facility.id]);
 
   const handleUpgrade = async () => {

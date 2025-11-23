@@ -57,7 +57,6 @@ const ResourceDetail = ({
 
   useEffect(() => {
     refreshBuilding();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [building.id]);
 
   const handleUpgrade = async () => {
