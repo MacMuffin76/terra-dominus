@@ -1,34 +1,25 @@
-require('dotenv').config();
 const http = require('http');
 const { Server } = require('socket.io');
 const { Client } = require('pg');
-const cron = require('node-cron');
 const app = require('./app');
-const { updateUserResources } = require('./controllers/resourceController');
 const updateResourcesForUser = require('./updateResources');
-const User = require('./models/User');
+const { getPgClientConfig } = require('./utils/databaseConfig');
 
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
-  }
+    origin: '*',
+  },
 });
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
+const client = new Client(getPgClientConfig());
+client.connect().catch((error) => {
+  console.error('Unable to establish pg client connection:', error.message);
 });
-client.connect();
 
-// Planifiez la mise à jour des ressources toutes les secondes
-cron.schedule('* * * * * *', async () => {
-  const users = await User.findAll();
-  for (const user of users) {
-    await updateUserResources(user.id);
-  }
-});
+
 
 const getUserResources = async (userId) => {
   try {
