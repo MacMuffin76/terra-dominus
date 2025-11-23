@@ -2,7 +2,8 @@
 
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:5000'); // Assurez-vous que l'adresse correspond à votre serveur
+const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
+const socket = io(socketUrl);
 
 export const sendUserId = (userId, event) => {
     socket.emit('message', JSON.stringify({ event, userId }));
@@ -31,3 +32,5 @@ window.addEventListener('hashchange', () => {
         sendUserId(userId, 'page_change');
     }
 });
+
+export default socket;
