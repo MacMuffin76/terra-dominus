@@ -3,10 +3,13 @@ const path = require('path');
 // Load environment variables from backend/.env first, then fall back to the repo root.
 // This avoids silent failures when the .env file is placed at the project root while the
 // server is launched from the backend directory.
-const { error: localEnvError } = require('dotenv').config();
+const backendEnvPath = path.resolve(__dirname, '..', '.env');
+const rootEnvPath = path.resolve(__dirname, '..', '..', '.env');
+
+const { error: localEnvError } = require('dotenv').config({ path: backendEnvPath });
 
 if (localEnvError) {
-  require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+  require('dotenv').config({ path: rootEnvPath });
 }
 
 const buildConnectionString = () => {
@@ -30,29 +33,4 @@ const buildSslConfig = () => {
   }
 
   return undefined;
-};
-
-const getSequelizeOptions = () => {
-  const ssl = buildSslConfig();
-
-  return {
-    dialect: 'postgres',
-    logging: false,
-    dialectOptions: ssl ? { ssl } : undefined,
-  };
-};
-
-const getPgClientConfig = () => {
-  const ssl = buildSslConfig();
-
-  return {
-    connectionString: buildConnectionString(),
-    ssl,
-  };
-};
-
-module.exports = {
-  buildConnectionString,
-  getSequelizeOptions,
-  getPgClientConfig,
 };
