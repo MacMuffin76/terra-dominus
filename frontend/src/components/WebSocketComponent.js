@@ -1,43 +1,99 @@
 // src/components/WebSocketComponent.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { io } from 'socket.io-client';
+
+const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
 const WebSocketComponent = () => {
-  const [messages, setMessages] = useState([]);
-  
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:5000');
+  const [connectionStatus, setConnectionStatus] = useState('Connexion en cours...');
+  const [resources, setResources] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
-    ws.onopen = () => {
-      console.log('Connected to WebSocket server');
-      ws.send('Hello Server!');
-    };
-    
-    ws.onmessage = (event) => {
-      const message = event.data;
-      setMessages((prevMessages) => [...prevMessages, message]);
-    };
-    
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket server');
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    return () => {
-      ws.close();
-    };
+  const socket = useMemo(() => {
+    const token = localStorage.getItem('jwtToken');
+    return io(socketUrl, {
+      transports: ['websocket'],
+      auth: token ? { token } : undefined,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
   }, []);
-  
+
+  useEffect(() => {
+    const handleConnect = () => {
+      setConnectionStatus('Connecté au serveur Socket.io');
+      socket.emit('user_connected');
+    };
+
+    const handleDisconnect = () => setConnectionStatus('Déconnecté du serveur Socket.io');
+
+    const handleConnectError = (error) =>
+      setConnectionStatus(`Erreur de connexion : ${error.message}`);
+
+    const handleReconnectAttempt = (attempt) =>
+      setConnectionStatus(`Tentative de reconnexion (${attempt})...`);
+
+    const handleReconnect = (attempt) =>
+      setConnectionStatus(`Reconnecté après ${attempt} tentative(s)`);
+
+    const handleResources = (payload = []) => setResources(payload);
+
+    const handleNotification = (payload) =>
+      setNotifications((prev) => [...prev, payload]);
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
+    socket.io.on('reconnect_attempt', handleReconnectAttempt);
+    socket.io.on('reconnect', handleReconnect);
+    socket.on('resources', handleResources);
+    socket.on('notification', handleNotification);
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
+      socket.io.off('reconnect_attempt', handleReconnectAttempt);
+      socket.io.off('reconnect', handleReconnect);
+      socket.off('resources', handleResources);
+      socket.off('notification', handleNotification);
+      socket.disconnect();
+    };
+  }, [socket]);
+
   return (
     <div>
-      <h2></h2>
-      <ul>
-        {messages.map((message, index) => (
-          <li key={index}>{message}</li>
-        ))}
-      </ul>
+      <h2>Socket.io</h2>
+      <p>{connectionStatus}</p>
+
+      <section>
+        <h3>Ressources</h3>
+        {resources.length === 0 ? (
+          <p>Aucune ressource reçue.</p>
+        ) : (
+          <ul>
+            {resources.map((resource, index) => (
+              <li key={index}>
+                {resource.type || 'Ressource'} : {resource.amount ?? 'N/A'}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h3>Notifications</h3>
+        {notifications.length === 0 ? (
+          <p>Aucune notification pour le moment.</p>
+        ) : (
+          <ul>
+            {notifications.map((notification, index) => (
+              <li key={index}>{JSON.stringify(notification)}</li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 };
