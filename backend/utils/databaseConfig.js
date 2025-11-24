@@ -6,7 +6,10 @@ const path = require('path');
 const backendEnvPath = path.resolve(__dirname, '..', '.env');
 const rootEnvPath = path.resolve(__dirname, '..', '..', '.env');
 
-const { error: localEnvError } = require('dotenv').config({ path: backendEnvPath });
+require('dotenv').config({ path: backendEnvPath });
+// Load root-level variables without overriding backend/.env or existing env vars so missing
+// values can be filled while preserving higher-priority ones.
+require('dotenv').config({ path: rootEnvPath, override: false });
 
 if (localEnvError) {
   require('dotenv').config({ path: rootEnvPath });
@@ -34,3 +37,20 @@ const buildSslConfig = () => {
 
   return undefined;
 };
+
+const getSequelizeOptions = () => {
+  const ssl = buildSslConfig();
+
+  const options = {
+    dialect: 'postgres',
+    logging: false,
+  };
+
+  if (ssl) {
+    options.dialectOptions = { ssl };
+  }
+
+  return options;
+};
+
+module.exports = { buildConnectionString, buildSslConfig, getSequelizeOptions };
