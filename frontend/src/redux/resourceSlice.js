@@ -1,13 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
+import { logout } from './authSlice';
 
 // Thunk to fetch resources
 export const fetchResources = createAsyncThunk('resources/fetchResources', async (userId, thunkAPI) => {
   try {
-    const response = await axios.get(`/api/resources/${userId}`);
+    const response = await axiosInstance.get(`/resources/${userId}`);
     return response.data;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data);
+    const status = error.response?.status;
+
+    if (status === 401) {
+      thunkAPI.dispatch(logout());
+      return thunkAPI.rejectWithValue({ status, message: 'Non autorisé : veuillez vous reconnecter.' });
+    }
+
+    const message = error.response?.data?.message || error.message || 'Une erreur est survenue lors du chargement des ressources.';
+    return thunkAPI.rejectWithValue({ status: status || 500, message });
   }
 });
 
