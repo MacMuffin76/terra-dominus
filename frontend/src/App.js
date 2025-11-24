@@ -18,6 +18,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import WebSocketComponent from './components/WebSocketComponent';
 import { ResourcesProvider } from './context/ResourcesContext'; // <-- Ajouté ici
+import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
 function App() {
@@ -37,26 +38,82 @@ function App() {
   }, [dispatch]);
 
   return (
-<ResourcesProvider>
-  <Router>
-    <div className="App">
-      <WebSocketComponent />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/facilities" element={<Facilities />} />
-        <Route path="/research" element={<Research />} />
-        <Route path="/training" element={<Training />} />
-        <Route path="/defense" element={<Defense />} />
-        <Route path="/fleet" element={<Fleet />} />
-        <Route path="/alliance" element={<Alliance />} />
-        <Route path="/" element={<Login />} />
-      </Routes>
-    </div>
-  </Router>
-</ResourcesProvider>
+    <ResourcesProvider>
+      <Router>
+        <div className="App">
+          <WebSocketComponent />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/dashboard"
+              element={(
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/resources"
+              element={(
+                <PrivateRoute>
+                  <Resources />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/facilities"
+              element={(
+                <PrivateRoute>
+                  <Facilities />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/research"
+              element={(
+                <PrivateRoute>
+                  <Research />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/training"
+              element={(
+                <PrivateRoute>
+                  <Training />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/defense"
+              element={(
+                <PrivateRoute>
+                  <Defense />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/fleet"
+              element={(
+                <PrivateRoute>
+                  <Fleet />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/alliance"
+              element={(
+                <PrivateRoute>
+                  <Alliance />
+                </PrivateRoute>
+              )}
+            />
+            <Route path="/" element={<Login />} />
+          </Routes>
+        </div>
+      </Router>
+    </ResourcesProvider>
 
   );
 }
