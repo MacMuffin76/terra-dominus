@@ -1,26 +1,39 @@
 // src/components/WebSocketComponent.js
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 
 const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
 const WebSocketComponent = () => {
-  const [connectionStatus, setConnectionStatus] = useState('Connexion en cours...');
+  const [connectionStatus, setConnectionStatus] = useState('En attente d\'authentification...');
   const [resources, setResources] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
+  const { token: authToken } = useSelector((state) => state.auth);
+  const storedToken = authToken || localStorage.getItem('jwtToken');
+
   const socket = useMemo(() => {
-    const token = localStorage.getItem('jwtToken');
+    if (!storedToken) {
+      return null;
+    }
+
     return io(socketUrl, {
       transports: ['websocket'],
-      auth: token ? { token } : undefined,
+      auth: { token: storedToken },
+      withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
-  }, []);
+  }, [storedToken]);
 
   useEffect(() => {
+    if (!socket) {
+      setConnectionStatus('Connexion Socket.io en attente (token manquant)');
+      return undefined;
+    }
+
     const handleConnect = () => {
       setConnectionStatus('Connecté au serveur Socket.io');
       socket.emit('user_connected');
