@@ -13,6 +13,10 @@ const createHealthRouter = require('./observability/healthRoutes');
 const createApp = (container) => {
   const app = express();
 
+  // Trust the first proxy to ensure rate limiting and client IP detection work
+  // correctly when requests include the X-Forwarded-For header.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
+
   app.use(express.json());
   app.use(cors(buildCorsOptions()));
   app.use(correlationMiddleware);
