@@ -26,6 +26,8 @@ const TYPE_TO_BUILDING_NAME = {
   carburant: 'Extracteur',
 };
 
+const MAX_BUILDING_UPDATE_RETRIES = 2;
+
 function assertOptimisticUpdate(updatedRows) {
   if (!updatedRows) {
     const error = new Error('Conflit concurrent détecté, veuillez réessayer.');
@@ -51,6 +53,15 @@ async function getBuildingEntityId(building, options = {}) {
 
   return entity.entity_id;
 }
+
+async function reloadBuildingWithLock(cityId, buildingId, transaction) {
+  return Building.findOne({
+    where: { id: buildingId, city_id: cityId },
+    transaction,
+    lock: transaction?.LOCK?.UPDATE,
+  });
+}
+
 
 async function getResourceBuildings(userId) {
   const city = await getUserMainCity(userId);
@@ -150,143 +161,143 @@ async function getResourceBuildingDetails(userId, buildingId) {
 }
 
 async function upgradeResourceBuilding(userId, buildingId) {
-  return sequelize.transaction(async (transaction) => {
-    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
-    if (!city) {
-      const error = new Error('Aucune ville trouvée.');
-      error.status = 404;
-      throw error;
-    }
+  for (let attempt = 1; attempt <= MAX_BUILDING_UPDATE_RETRIES; attempt++) {
+    try {
+      return await sequelize.transaction(async (transaction) => {
+        const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!city) {
+          const error = new Error('Aucune ville trouvée.');
+          error.status = 404;
+          throw error;
+        }
 
-  const building = await Building.findOne({
-      where: {
-        id: buildingId,
-        city_id: city.id,
-      },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
+        let building = await reloadBuildingWithLock(city.id, buildingId, transaction);
 
-    if (!building) {
-      const error = new Error('Bâtiment introuvable.');
-      error.status = 404;
-      throw error;
-    }
-  
+        if (!building) {
+          const error = new Error('Bâtiment introuvable.');
+          error.status = 404;
+          throw error;
+        }
 
-    if (building.build_start && building.build_duration) {
-      const now = Date.now();
-      const started = new Date(building.build_start).getTime();
-      const elapsed = (now - started) / 1000;
-      const total = Number(building.build_duration) || 0;
+        if (building.build_start && building.build_duration) {
+          const now = Date.now();
+          const started = new Date(building.build_start).getTime();
+          const elapsed = (now - started) / 1000;
+          const total = Number(building.build_duration) || 0;
 
-      if (elapsed < total) {
-        const error = new Error('Construction déjà en cours pour ce bâtiment.');
-        error.status = 400;
-        throw error;
-      } else {
-        building.build_start = null;
-        building.build_duration = null;
+          if (elapsed < total) {
+            const error = new Error('Construction déjà en cours pour ce bâtiment.');
+            error.status = 400;
+            throw error;
+          } else {
+            const currentVersion = Number(building.version) || 0;
+            const [affected] = await Building.update(
+              {
+                build_start: null,
+                build_duration: null,
+                version: currentVersion + 1,
+              },
+              {
+                where: { id: building.id, version: currentVersion },
+                transaction,
+              }
+            );
+            assertOptimisticUpdate(affected);
+            building = await reloadBuildingWithLock(city.id, buildingId, transaction);
+          }
+        }
+
+        const currentLevel = Number(building.level) || 0;
+        const nextLevel = currentLevel + 1;
+
+        const entityId = await getBuildingEntityId(building, { transaction });
+
+        const costs = await ResourceCost.findAll({
+          where: {
+            entity_id: entityId,
+            level: nextLevel,
+          },
+          transaction,
+        });
+
+        const resources = await Resource.findAll({
+          where: { city_id: city.id },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+
+        const resMap = new Map(resources.map((r) => [r.type, r]));
+        for (const cost of costs) {
+          const resource = resMap.get(cost.resource_type);
+          const currentAmount = resource ? Number(resource.amount) || 0 : 0;
+
+          if (currentAmount < Number(cost.amount)) {
+            const error = new Error(`Ressources insuffisantes pour améliorer : ${building.name}.`);
+            error.status = 400;
+            throw error;
+          }
+        }
+
+        for (const cost of costs) {
+          const resource = resMap.get(cost.resource_type);
+          const currentAmount = Number(resource.amount);
+          const updatedAmount = currentAmount - Number(cost.amount);
+          const currentVersion = Number(resource.version) || 0;
+
+          const [affected] = await Resource.update(
+            {
+              amount: updatedAmount,
+              version: currentVersion + 1,
+            },
+            {
+              where: { id: resource.id, version: currentVersion },
+              transaction,
+            }
+          );
+
+          assertOptimisticUpdate(affected);
+          resource.amount = updatedAmount;
+          resource.version = currentVersion + 1;
+        }
+
+        const buildDuration = getBuildDurationSeconds(nextLevel);
         const currentVersion = Number(building.version) || 0;
-        const [affected] = await Building.update(
+        const build_start = new Date();
+
+        const [affected, updatedBuildings] = await Building.update(
           {
-            build_start: null,
-            build_duration: null,
+            level: nextLevel,
+            build_start,
+            build_duration: buildDuration,
             version: currentVersion + 1,
           },
           {
             where: { id: building.id, version: currentVersion },
             transaction,
+            returning: true,
           }
         );
+
         assertOptimisticUpdate(affected);
-        building.version = currentVersion + 1;
+        const updatedBuilding = updatedBuildings?.[0] || (await reloadBuildingWithLock(city.id, buildingId, transaction));
+
+        return {
+          message: 'Bâtiment amélioré.',
+          id: updatedBuilding.id,
+          name: updatedBuilding.name,
+          level: Number(updatedBuilding.level) || nextLevel,
+          build_start: updatedBuilding.build_start,
+          build_duration: updatedBuilding.build_duration,
+          buildDuration,
+        };
+      });
+    } catch (err) {
+      if (err.status === 409 && attempt < MAX_BUILDING_UPDATE_RETRIES) {
+        continue;
       }
+      throw err;
     }
-
-     const currentLevel = Number(building.level) || 0;
-    const nextLevel = currentLevel + 1;
-
-  const entityId = await getBuildingEntityId(building, { transaction });
-
-  const costs = await ResourceCost.findAll({
-      where: {
-        entity_id: entityId,
-        level: nextLevel,
-      },
-      transaction,
-    });
-
-  const resources = await Resource.findAll({
-      where: { city_id: city.id },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
-
-  const resMap = new Map(resources.map((r) => [r.type, r]));
-  for (const cost of costs) {
-      const resource = resMap.get(cost.resource_type);
-      const currentAmount = resource ? Number(resource.amount) || 0 : 0;
-
-      if (currentAmount < Number(cost.amount)) {
-        const error = new Error(`Ressources insuffisantes pour améliorer : ${building.name}.`);
-        error.status = 400;
-        throw error;
-      }
-    }
-
-
- for (const cost of costs) {
-      const resource = resMap.get(cost.resource_type);
-      const currentAmount = Number(resource.amount);
-      const updatedAmount = currentAmount - Number(cost.amount);
-      const currentVersion = Number(resource.version) || 0;
-
-  const [affected] = await Resource.update(
-        {
-          amount: updatedAmount,
-          version: currentVersion + 1,
-        },
-        {
-          where: { id: resource.id, version: currentVersion },
-          transaction,
-        }
-      );
-
-      assertOptimisticUpdate(affected);
-      resource.amount = updatedAmount;
-      resource.version = currentVersion + 1;
-    }
-
-  const buildDuration = getBuildDurationSeconds(nextLevel);
-const currentVersion = Number(building.version) || 0;
-    const build_start = new Date();
-
-    const [affected] = await Building.update(
-      {
-        level: nextLevel,
-        build_start,
-        build_duration: buildDuration,
-        version: currentVersion + 1,
-      },
-      {
-        where: { id: building.id, version: currentVersion },
-        transaction,
-      }
-    );
-
-    assertOptimisticUpdate(affected);
-
-    return {
-      message: 'Bâtiment amélioré.',
-      id: building.id,
-      name: building.name,
-      level: nextLevel,
-      build_start,
-      build_duration: buildDuration,
-      buildDuration,
-    };
-  });
+  }
 }
 
 async function downgradeResourceBuilding(userId, buildingId) {
