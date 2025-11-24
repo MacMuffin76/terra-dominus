@@ -1,4 +1,13 @@
-require('dotenv').config();
+const path = require('path');
+
+// Load environment variables from backend/.env first, then fall back to the repo root.
+// This avoids silent failures when the .env file is placed at the project root while the
+// server is launched from the backend directory.
+const { error: localEnvError } = require('dotenv').config();
+
+if (localEnvError) {
+  require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+}
 
 const buildConnectionString = () => {
   if (process.env.DATABASE_URL) {
