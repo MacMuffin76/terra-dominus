@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const { getQueue, createWorker, queueNames, serializeJobData } = require('../queueConfig');
 const { getIO } = require('../../socket');
+const { getLogger } = require('../../utils/logger');
 
 const PRODUCTION_JOB_ID = 'production-tick';
 const DEFAULT_INTERVAL = Number(process.env.PRODUCTION_TICK_MS || 60000);
@@ -18,9 +19,10 @@ async function ensureProductionTick(queue) {
 }
 
 function createProductionWorker(container) {
+  const logger = getLogger({ module: 'productionWorker' });
   const queue = getQueue(queueNames.PRODUCTION);
   ensureProductionTick(queue).catch((err) => {
-    console.error('Failed to schedule production tick', err);
+    logger.error({ err }, 'Failed to schedule production tick');
   });
 
   return createWorker(queueNames.PRODUCTION, async () => {

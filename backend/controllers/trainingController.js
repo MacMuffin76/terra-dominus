@@ -1,7 +1,9 @@
 const Training = require('../models/Training');
 const BlueprintRepository = require('../repositories/BlueprintRepository');
+const { getLogger } = require('../utils/logger');
 
 const blueprintRepository = new BlueprintRepository();
+const logger = getLogger({ module: 'TrainingController' });
 
 const DEFAULT_TRAINING_TYPES = [
   'Drone d’assaut terrestre',
@@ -91,7 +93,7 @@ exports.getTrainingCenters = async (req, res) => {
 
     res.json(payload);
   } catch (error) {
-    console.error('Error fetching training centers:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching training centers');
     res.status(500).json({ message: 'Error fetching training centers' });
   }
 };
@@ -118,7 +120,7 @@ exports.getTrainingDetails = async (req, res) => {
       maxLevel: blueprint?.max_level ?? null,
     });
   } catch (error) {
-    console.error('Error fetching training details:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching training details');
     res.status(500).json({ message: 'Error fetching training details' });
   }
 };
@@ -144,6 +146,7 @@ exports.upgradeTraining = async (req, res) => {
     training.nextlevelcost = sumCost(followingCost);
     await training.save();
 
+    (req.logger || logger).audit({ userId: req.user.id, trainingId: training.id }, 'Training upgraded');
     res.json({
       ...training.toJSON(),
       nextLevelCost: training.nextlevelcost,
@@ -152,7 +155,7 @@ exports.upgradeTraining = async (req, res) => {
       maxLevel: blueprint?.max_level ?? null,
     });
   } catch (error) {
-    console.error('Error upgrading training:', error);
+    (req.logger || logger).error({ err: error }, 'Error upgrading training');
     res.status(500).json({ message: 'Error upgrading training' });
   }
 };
@@ -166,9 +169,10 @@ exports.destroyTraining = async (req, res) => {
     }
 
     await training.destroy();
+    (req.logger || logger).audit({ userId: req.user.id, trainingId: training.id }, 'Training destroyed');
     res.json({ message: 'Training center destroyed' });
   } catch (error) {
-    console.error('Error destroying training:', error);
+    (req.logger || logger).error({ err: error }, 'Error destroying training');
     res.status(500).json({ message: 'Error destroying training' });
   }
 };

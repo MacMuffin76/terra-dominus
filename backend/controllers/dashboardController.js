@@ -2,6 +2,9 @@
 
 const User      = require('../models/User');
 const sequelize = require('../db');
+const { getLogger } = require('../utils/logger');
+
+const logger = getLogger({ module: 'DashboardController' });
 
 exports.getDashboardData = async (req, res) => {
   try {
@@ -22,7 +25,7 @@ exports.getDashboardData = async (req, res) => {
     };
 
     // Ressources par ville
-    const [resources] = await sequelize.query(
+  const [resources] = await sequelize.query(
       `
       SELECT r.*
       FROM resources r
@@ -69,7 +72,7 @@ exports.getDashboardData = async (req, res) => {
       units,
     });
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching dashboard data');
     res.status(500).json({ message: 'Error fetching dashboard data' });
   }
 };

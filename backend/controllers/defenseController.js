@@ -5,6 +5,9 @@ const Resource     = require('../models/Resource');
 const Entity       = require('../models/Entity');
 const ResourceCost = require('../models/ResourceCost');
 const City         = require('../models/City');
+const { getLogger } = require('../utils/logger');
+
+const logger = getLogger({ module: 'DefenseController' });
 
 /**
  * Récupère la ville "principale" de l'utilisateur (capitale)
@@ -42,7 +45,7 @@ exports.getDefenses = async (req, res) => {
 
     res.json(defenses);
   } catch (err) {
-    console.error('Error fetching defenses:', err);
+    (req.logger || logger).error({ err }, 'Error fetching defenses');
     res.status(500).json({ message: 'Error fetching defense buildings' });
   }
 };
@@ -105,7 +108,7 @@ exports.getDefenseDetails = async (req, res) => {
       costs,
     });
   } catch (err) {
-    console.error('Error fetching defense details:', err);
+    (req.logger || logger).error({ err }, 'Error fetching defense details');
     res.status(500).json({ message: 'Error fetching defense details' });
   }
 };
@@ -203,6 +206,7 @@ exports.buyDefenseUnit = async (req, res) => {
     defense.quantity += 1;
     await defense.save();
 
+    (req.logger || logger).audit({ userId, defenseId: defense.id, cityId: city.id }, 'Defense unit purchased');
     return res.json({
       id:          defense.id,
       name:        defense.name,
@@ -211,7 +215,7 @@ exports.buyDefenseUnit = async (req, res) => {
       cost:        defense.cost,
     });
   } catch (err) {
-    console.error('Error buying defense unit:', err);
+    (req.logger || logger).error({ err }, 'Error buying defense unit');
     res.status(500).json({ message: 'Error buying defense' });
   }
 };

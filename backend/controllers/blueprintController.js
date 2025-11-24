@@ -1,11 +1,15 @@
+const { getLogger } = require('../utils/logger');
+
 const createBlueprintController = ({ blueprintRepository }) => {
+  const logger = getLogger({ module: 'BlueprintController' });
+
   const listBlueprints = async (req, res) => {
     try {
       const { category } = req.query;
       const blueprints = await blueprintRepository.listByCategory(category);
       return res.json(blueprints);
     } catch (error) {
-      console.error('Error fetching blueprints:', error);
+      (req.logger || logger).error({ err: error }, 'Error fetching blueprints');
       return res.status(500).json({ message: 'Error fetching blueprints' });
     }
   };
@@ -27,9 +31,10 @@ const createBlueprintController = ({ blueprintRepository }) => {
         return res.status(404).json({ message: 'Blueprint not found' });
       }
 
+      (req.logger || logger).audit({ blueprintId, userId: req.user?.id }, 'Blueprint updated');
       return res.json(updated);
     } catch (error) {
-      console.error('Error updating blueprint:', error);
+      (req.logger || logger).error({ err: error }, 'Error updating blueprint');
       return res.status(500).json({ message: 'Error updating blueprint' });
     }
   };

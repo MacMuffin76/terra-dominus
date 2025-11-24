@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Queue, Worker, QueueScheduler } = require('bullmq');
+const { getLogger } = require('../utils/logger');
 
 const queueNames = {
   CONSTRUCTION: 'construction',
@@ -23,13 +24,14 @@ const defaultJobOptions = {
 
 const queueCache = new Map();
 const schedulerCache = new Map();
+const logger = getLogger({ module: 'queues' });
 
 function ensureScheduler(name) {
   if (schedulerCache.has(name)) return schedulerCache.get(name);
 
   const scheduler = new QueueScheduler(name, { connection });
   scheduler.waitUntilReady().catch((err) => {
-    console.error(`[QueueScheduler] Failed to start for ${name}:`, err);
+    logger.error({ err, queue: name }, '[QueueScheduler] Failed to start');
   });
 
   schedulerCache.set(name, scheduler);

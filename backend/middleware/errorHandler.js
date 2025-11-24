@@ -1,6 +1,8 @@
+const { getLogger } = require('../utils/logger');
+
 function errorHandler(err, req, res, next) {
-  // eslint-disable-next-line no-console
-  console.error(err.stack || err.message || err);
+  const logger = req.logger || getLogger({ module: 'ErrorHandler' });
+  logger.error({ err }, 'Unhandled error');
 
   const status = err.status || 500;
   const payload = err.expose

@@ -5,6 +5,7 @@ const sequelize = require('./db');
 const { initIO } = require('./socket');
 const { userConnectedSchema } = require('./validation/socketValidation');
 const { startJobs } = require('./jobs');
+const { getLogger, runWithContext, generateTraceId } = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
 
@@ -15,6 +16,7 @@ const io = initIO(server);
 startJobs(container);
 
 const resourceService = container.resolve('resourceService');
+const logger = getLogger({ module: 'server' });
 
 const emitUserResources = async (socket, userId) => {
   const resources = await resourceService.getUserResources(userId);
@@ -29,47 +31,65 @@ io.on('connection', (socket) => {
     return;
   }
 
+  const traceId = generateTraceId(socket.handshake.headers['x-trace-id']);
+  const context = { traceId, userId, connectionId: socket.id };
+  const socketLogger = getLogger({ module: 'socket', userId, connectionId: socket.id, traceId });
+  socket.data.logger = socketLogger;
+  socket.data.traceId = traceId;
+
   const userRoom = `user_${userId}`;
   socket.join(userRoom);
 
-  const sendResources = async () => {
-    try {
-      await emitUserResources(socket, userId);
-      console.log(`Resources sent to user: ${userId}`);
-    } catch (error) {
-      console.error('Error updating resources:', error);
-    }
-  };
+  const sendResources = async () =>
+    runWithContext(context, async () => {
+      try {
+        await emitUserResources(socket, userId);
+        socketLogger.info('Resources sent to user');
+      } catch (error) {
+        socketLogger.error({ err: error }, 'Error updating resources');
+      }
+    });
+
+  runWithContext(context, () => {
+    socketLogger.info('Client connected');
+    socket.emit('trace_ack', { traceId });
+  });
 
   sendResources();
 
   socket.on('user_connected', async (payload = {}) => {
-    const parseResult = userConnectedSchema.safeParse(payload);
+    runWithContext(context, async () => {
+      const parseResult = userConnectedSchema.safeParse(payload);
 
-    if (!parseResult.success) {
-      socket.emit('error', { message: 'Payload invalide pour user_connected' });
-      return;
-    }
+      if (!parseResult.success) {
+        socket.emit('error', { message: 'Payload invalide pour user_connected' });
+        return;
+      }
 
-    if (parseResult.data.userId && parseResult.data.userId !== userId) {
-      socket.emit('error', { message: 'Accès à une room non autorisée' });
-      return;
-    }
+      if (parseResult.data.userId && parseResult.data.userId !== userId) {
+        socket.emit('error', { message: 'Accès à une room non autorisée' });
+        return;
+      }
 
-    await sendResources();
+      await sendResources();
+    });
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    runWithContext(context, () => {
+      socketLogger.info('Client disconnected');
+    });
   });
 
   socket.on('error', (error) => {
-    console.error('WebSocket error:', error);
+    runWithContext(context, () => {
+      socketLogger.error({ err: error }, 'WebSocket error');
+    });
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info({ port: PORT }, 'Server running');
 });
 
 module.exports = server;

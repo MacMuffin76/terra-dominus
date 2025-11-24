@@ -1,13 +1,19 @@
+const { getLogger } = require('../utils/logger');
+
 // backend/controllers/resourceController.js
 
 const createResourceController = ({ resourceService }) => {
+  const logger = getLogger({ module: 'ResourceController' });
+
   const getResourceBuildings = async (req, res) => {
     try {
       const buildings = await resourceService.getResourceBuildings(req.user.id);
       return res.json(buildings);
     } catch (err) {
-      console.error('Error fetching resource buildings:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la récupération des bâtiments de ressource.' });
+      (req.logger || logger).error({ err }, 'Error fetching resource buildings');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des bâtiments de resource.' });
     }
   };
 
@@ -16,38 +22,49 @@ const createResourceController = ({ resourceService }) => {
       const details = await resourceService.getResourceBuildingDetails(req.user.id, req.params.id);
       return res.json(details);
     } catch (err) {
-      console.error('Error fetching building details:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la récupération du bâtiment.' });
+      (req.logger || logger).error({ err }, 'Error fetching building details');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération du bâtiment.' });
     }
   };
 
   const upgradeBuilding = async (req, res) => {
     try {
       const result = await resourceService.upgradeResourceBuilding(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, buildingId: req.params.id }, 'Resource building upgraded');
       return res.json(result);
     } catch (err) {
-      console.error('Error upgrading building:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de l’amélioration du bâtiment.' });
+      (req.logger || logger).error({ err }, 'Error upgrading building');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de l’amélioration du bâtiment.' });
     }
   };
 
   const downgradeBuilding = async (req, res) => {
     try {
       const result = await resourceService.downgradeResourceBuilding(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, buildingId: req.params.id }, 'Resource building downgraded');
       return res.json(result);
     } catch (err) {
-      console.error('Erreur downgrade:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors du rétrogradage du bâtiment.' });
+      (req.logger || logger).error({ err }, 'Erreur downgrade');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors du rétrogradage du bâtiment.' });
     }
   };
 
   const destroyBuilding = async (req, res) => {
     try {
       const result = await resourceService.destroyResourceBuilding(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, buildingId: req.params.id }, 'Resource building destroyed');
       return res.json(result);
     } catch (err) {
-      console.error('Error destroying building:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la destruction du bâtiment.' });
+      (req.logger || logger).error({ err }, 'Error destroying building');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la destruction du bâtiment.' });
     }
   };
 
@@ -56,18 +73,23 @@ const createResourceController = ({ resourceService }) => {
       const resources = await resourceService.getUserResources(req.user.id);
       return res.json(resources);
     } catch (err) {
-      console.error('Error fetching user resources:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la récupération des ressources.' });
+      (req.logger || logger).error({ err }, 'Error fetching user resources');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des ressources.' });
     }
   };
 
   const saveUserResources = async (req, res) => {
     try {
       const result = await resourceService.saveUserResources(req.user.id, req.body.resources);
+      (req.logger || logger).audit({ userId: req.user.id }, 'User resources saved');
       return res.json(result);
     } catch (err) {
-      console.error('Error saving resources:', err);
-      return res.status(err.status || 500).json({ message: err.message || 'Erreur lors de la sauvegarde des ressources.' });
+      (req.logger || logger).error({ err }, 'Error saving resources');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la sauvegarde des ressources.' });
     }
   };
 

@@ -1,12 +1,14 @@
-// backend/controllers/buildingController.js
+const { getLogger } = require('../utils/logger');
 
 const createBuildingController = ({ buildingService }) => {
+  const logger = getLogger({ module: 'BuildingController' });
+
   const getBuildingDetails = async (req, res) => {
     try {
       const details = await buildingService.getBuildingDetails(req.params.id);
       res.json(details);
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error fetching building details');
       res.status(err.status || 500).json({ message: err.message || 'Error fetching building details' });
     }
   };
@@ -14,9 +16,10 @@ const createBuildingController = ({ buildingService }) => {
   const startUpgrade = async (req, res) => {
     try {
       const result = await buildingService.startUpgrade(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, buildingId: req.params.id }, 'Building upgrade started');
       return res.json(result);
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error upgrading building');
       res.status(err.status || 500).json({ message: err.message || 'Error upgrading building' });
     }
   };
@@ -25,7 +28,7 @@ const createBuildingController = ({ buildingService }) => {
     try {
       res.status(410).json({ message: 'Downgrade not supported with construction queue' });
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error downgrading building');
       res.status(err.status || 500).json({ message: err.message || 'Error downgrading' });
     }
   };
@@ -35,7 +38,7 @@ const createBuildingController = ({ buildingService }) => {
       const queue = await buildingService.listConstructionQueue(req.user.id);
       res.json(queue);
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error fetching construction queue');
       res.status(err.status || 500).json({ message: err.message || 'Error fetching construction queue' });
     }
   };
@@ -43,9 +46,10 @@ const createBuildingController = ({ buildingService }) => {
   const cancelConstruction = async (req, res) => {
     try {
       const result = await buildingService.cancelConstruction(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, queueId: req.params.id }, 'Construction cancelled');
       res.json(result);
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error cancelling construction');
       res.status(err.status || 500).json({ message: err.message || 'Error cancelling construction' });
     }
   };
@@ -53,9 +57,10 @@ const createBuildingController = ({ buildingService }) => {
   const collectConstruction = async (req, res) => {
     try {
       const result = await buildingService.collectConstruction(req.user.id, req.params.id);
+      (req.logger || logger).audit({ userId: req.user.id, queueId: req.params.id }, 'Construction collected');
       res.json(result);
     } catch (err) {
-      console.error(err);
+      (req.logger || logger).error({ err }, 'Error collecting construction');
       res.status(err.status || 500).json({ message: err.message || 'Error collecting construction' });
     }
   };

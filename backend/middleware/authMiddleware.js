@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const { getLogger } = require('../utils/logger');
+
+const logger = getLogger({ module: 'AuthMiddleware' });
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -17,7 +20,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      (req.logger || logger).error({ err: error }, 'JWT validation failed');
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }

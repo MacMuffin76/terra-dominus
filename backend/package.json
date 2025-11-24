@@ -23,6 +23,8 @@
     "express-async-handler": "^1.2.0",
     "express-rate-limit": "^7.4.0",
     "jsonwebtoken": "^8.5.1",
+    "pino": "^9.3.2",
+    "pino-http": "^10.1.0",
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.6.2",

@@ -1,4 +1,7 @@
 const ResourceCost = require('../models/ResourceCost');
+const { getLogger } = require('../utils/logger');
+
+const logger = getLogger({ module: 'CostController' });
 
 // Get costs for a specific entity and level
 exports.getEntityCosts = async (req, res) => {
@@ -12,7 +15,7 @@ exports.getEntityCosts = async (req, res) => {
     });
     res.json(costs);
   } catch (error) {
-    console.error('Error fetching entity costs:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching entity costs');
     res.status(500).json({ message: 'Error fetching entity costs' });
   }
 };
@@ -29,9 +32,10 @@ exports.addEntityCosts = async (req, res) => {
         level: cost.level,
       });
     }
+    (req.logger || logger).audit({ entityId, count: costs.length }, 'Entity costs added');
     res.status(201).json({ message: 'Costs added successfully' });
   } catch (error) {
-    console.error('Error adding entity costs:', error);
+    (req.logger || logger).error({ err: error }, 'Error adding entity costs');
     res.status(500).json({ message: 'Error adding entity costs' });
   }
 };

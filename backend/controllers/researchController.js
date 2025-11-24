@@ -1,7 +1,9 @@
 const Research = require('../models/Research');
 const BlueprintRepository = require('../repositories/BlueprintRepository');
+const { getLogger } = require('../utils/logger');
 
 const blueprintRepository = new BlueprintRepository();
+const logger = getLogger({ module: 'ResearchController' });
 
 const DEFAULT_RESEARCH_TYPES = [
   'Technologie Laser Photonique',
@@ -86,11 +88,11 @@ exports.getResearchItems = async (req, res) => {
         nextLevelDuration: computeDuration(blueprint, nextLevel),
         maxLevel: blueprint?.max_level ?? null,
       };
-    });
+  });
 
-    res.json(payload);
+  res.json(payload);
   } catch (error) {
-    console.error('Error fetching research items:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching research items');
     res.status(500).json({ message: 'Error fetching research items' });
   }
 };
@@ -114,7 +116,7 @@ exports.getResearchDetails = async (req, res) => {
       maxLevel: blueprint?.max_level ?? null,
     });
   } catch (error) {
-    console.error('Error fetching research details:', error);
+    (req.logger || logger).error({ err: error }, 'Error fetching research details');
     res.status(500).json({ message: 'Error fetching research details' });
   }
 };
@@ -135,6 +137,7 @@ exports.upgradeResearch = async (req, res) => {
     const nextCost = computeCostBreakdown(blueprint, research.level + 1);
     research.nextlevelcost = sumCost(nextCost);
     await research.save();
+    (req.logger || logger).audit({ userId: req.user.id, researchId: research.id }, 'Research upgraded');
     res.json({
       ...research.toJSON(),
       nextLevelCost: research.nextlevelcost,
@@ -143,7 +146,7 @@ exports.upgradeResearch = async (req, res) => {
       maxLevel: blueprint?.max_level ?? null,
     });
   } catch (error) {
-    console.error('Error upgrading research:', error);
+    (req.logger || logger).error({ err: error }, 'Error upgrading research');
     res.status(500).json({ message: 'Error upgrading research' });
   }
 };
@@ -156,9 +159,10 @@ exports.destroyResearch = async (req, res) => {
       return res.status(404).json({ message: 'Research not found' });
     }
     await research.destroy();
+    (req.logger || logger).audit({ userId: req.user.id, researchId: research.id }, 'Research destroyed');
     res.json({ message: 'Research destroyed' });
   } catch (error) {
-    console.error('Error destroying research:', error);
+    (req.logger || logger).error({ err: error }, 'Error destroying research');
     res.status(500).json({ message: 'Error destroying research' });
   }
 };
