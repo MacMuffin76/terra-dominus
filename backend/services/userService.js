@@ -16,8 +16,11 @@ const sequelize = require('../db');
 const RefreshToken = require('../models/RefreshToken');
 const BlueprintRepository = require('../repositories/BlueprintRepository');
 
+const { getJwtSecret } = require('../config/jwtConfig');
+
 const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '2h';
 const REFRESH_TOKEN_TTL_MS = Number(process.env.REFRESH_TOKEN_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+const JWT_SECRET = getJwtSecret();
 
 const blueprintRepository = new BlueprintRepository();
 
@@ -33,10 +36,10 @@ const computeBlueprintLevelCost = (blueprint, level) => {
 };
 
 const buildAccessToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: ACCESS_TOKEN_TTL,
   });
-
+  
 async function createRefreshTokenRecord(userId, transaction) {
   const token = crypto.randomBytes(64).toString('hex');
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);

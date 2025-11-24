@@ -1,8 +1,10 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { getAllowedOrigins } = require('./utils/cors');
+const { getJwtSecret } = require('./config/jwtConfig');
 
 let ioInstance = null;
+const JWT_SECRET = getJwtSecret();
 
 const parseAuthToken = (socket) => {
   const authHeader = socket.handshake.headers.authorization;
@@ -29,7 +31,7 @@ function socketAuthMiddleware(socket, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     socket.user = { id: decoded.id };
     return next();
   } catch (err) {

@@ -2,8 +2,10 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const { getLogger } = require('../utils/logger');
+const { getJwtSecret } = require('../config/jwtConfig');
 
 const logger = getLogger({ module: 'AuthMiddleware' });
+const JWT_SECRET = getJwtSecret();
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -11,7 +13,7 @@ const protect = asyncHandler(async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
       req.user = await User.findByPk(decoded.id);
 
       if (!req.user) {
