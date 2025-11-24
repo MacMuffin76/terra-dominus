@@ -57,6 +57,15 @@ const createContainer = () => {
     const BlueprintRepository = require('./repositories/BlueprintRepository');
     return new BlueprintRepository();
   });
+
+  container.register('battleReportRepository', () => {
+    const BattleReportRepository = require('./modules/combat/infra/BattleReportRepository');
+    return new BattleReportRepository();
+  });
+  container.register('combatSimulationService', (c) => {
+    const CombatSimulationService = require('./modules/combat/application/CombatSimulationService');
+    return new CombatSimulationService({ battleReportRepository: c.resolve('battleReportRepository') });
+  });
   container.register('userService', () => require('./services/userService'));
 
   container.register('resourceController', (c) => require('./controllers/resourceController')({ resourceService: c.resolve('resourceService') }));

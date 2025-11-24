@@ -4,6 +4,7 @@ const { Queue, Worker, QueueScheduler } = require('bullmq');
 const queueNames = {
   CONSTRUCTION: 'construction',
   PRODUCTION: 'production',
+  COMBAT: 'combat',
 };
 
 const connection = {
