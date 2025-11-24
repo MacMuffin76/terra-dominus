@@ -4,6 +4,7 @@ const createContainer = require('./container');
 const sequelize = require('./db');
 const { initIO } = require('./socket');
 const { userConnectedSchema } = require('./validation/socketValidation');
+const { startJobs } = require('./jobs');
 
 const PORT = process.env.PORT || 5000;
 
@@ -11,6 +12,7 @@ const container = createContainer();
 const app = createApp(container);
 const server = http.createServer(app);
 const io = initIO(server);
+startJobs(container);
 
 const resourceService = container.resolve('resourceService');
 

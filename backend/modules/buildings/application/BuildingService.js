@@ -1,6 +1,10 @@
 const Building = require('../domain/Building');
 const ConstructionOrder = require('../domain/ConstructionOrder');
 const assertOptimisticUpdate = require('../infra/assertOptimisticUpdate');
+const {
+  removeConstructionJob,
+  scheduleActiveConstruction,
+} = require('../../../jobs/constructionQueue');
 
 class BuildingService {
   constructor({
@@ -102,8 +106,12 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
+        scheduleActiveConstruction(city.id, city.user_id).catch((err) => {
+          console.error('Failed to schedule construction completion', err);
+        });
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
+
 
       return created;
     });
@@ -136,6 +144,8 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
+        removeConstructionJob(queueId).catch(() => {});
+        scheduleActiveConstruction(city.id, city.user_id).catch(() => {});
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
 
@@ -183,6 +193,8 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
+        removeConstructionJob(order.id).catch(() => {});
+        scheduleActiveConstruction(city.id, city.user_id).catch(() => {});
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
 

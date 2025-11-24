@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "worker": "node jobs/resourceWorker.js",
+    "worker": "node jobs/startWorkers.js",
     "test": "jest"
   },
   "author": "",
