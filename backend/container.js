@@ -28,7 +28,31 @@ const createContainer = () => {
   const container = new Container();
 
   container.register('resourceService', () => require('./services/resourceService'));
-  container.register('buildingService', () => require('./services/buildingService'));
+  container.register('buildingService', () => {
+    const BuildingService = require('./modules/buildings/application/BuildingService');
+    const {
+      BuildingRepository,
+      ResourceRepository,
+      ResourceCostRepository,
+      EntityRepository,
+      ConstructionOrderRepository,
+      QueueEventPublisher,
+      CityRepository,
+      transactionProvider,
+    } = require('./modules/buildings/infra/SequelizeRepositories');
+    const { getIO } = require('./socket');
+
+    return new BuildingService({
+      buildingRepository: new BuildingRepository(),
+      resourceRepository: new ResourceRepository(),
+      resourceCostRepository: new ResourceCostRepository(),
+      constructionOrderRepository: new ConstructionOrderRepository(),
+      entityRepository: new EntityRepository(),
+      queueEventPublisher: new QueueEventPublisher(getIO),
+      cityRepository: new CityRepository(),
+      transactionProvider,
+    });
+  });
   container.register('userService', () => require('./services/userService'));
 
   container.register('resourceController', (c) => require('./controllers/resourceController')({ resourceService: c.resolve('resourceService') }));

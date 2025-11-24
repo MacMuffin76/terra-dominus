@@ -7,9 +7,9 @@ const createBuildingRouter = (container) => {
 
   router.get('/construction/queue', protect, controller.listConstructionQueue);
   router.delete('/construction/queue/:id', protect, controller.cancelConstruction);
-  router.post('/construction/queue/:id/accelerate', protect, controller.accelerateConstruction);
+  router.post('/construction/queue/:id/collect', protect, controller.collectConstruction);
   router.get('/:id', protect, controller.getBuildingDetails);
-  router.post('/:id/upgrade', protect, controller.upgradeBuilding);
+  router.post('/:id/start-upgrade', protect, controller.startUpgrade);
   router.post('/:id/downgrade', protect, controller.downgradeBuilding);
 
   return router;

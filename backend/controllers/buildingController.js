@@ -11,9 +11,9 @@ const createBuildingController = ({ buildingService }) => {
     }
   };
 
-  const upgradeBuilding = async (req, res) => {
+  const startUpgrade = async (req, res) => {
     try {
-      const result = await buildingService.upgradeBuilding(req.user.id, req.params.id);
+      const result = await buildingService.startUpgrade(req.user.id, req.params.id);
       return res.json(result);
     } catch (err) {
       console.error(err);
@@ -50,23 +50,23 @@ const createBuildingController = ({ buildingService }) => {
     }
   };
 
-  const accelerateConstruction = async (req, res) => {
+  const collectConstruction = async (req, res) => {
     try {
-      const result = await buildingService.accelerateConstruction(req.user.id, req.params.id);
+      const result = await buildingService.collectConstruction(req.user.id, req.params.id);
       res.json(result);
     } catch (err) {
       console.error(err);
-      res.status(err.status || 500).json({ message: err.message || 'Error accelerating construction' });
+      res.status(err.status || 500).json({ message: err.message || 'Error collecting construction' });
     }
   };
 
   return {
     getBuildingDetails,
-    upgradeBuilding,
+    startUpgrade,
     downgradeBuilding,
     listConstructionQueue,
     cancelConstruction,
-    accelerateConstruction,
+    collectConstruction,
   };
 };
 

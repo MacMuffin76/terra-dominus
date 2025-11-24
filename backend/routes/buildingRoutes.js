@@ -3,10 +3,10 @@ const router  = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const {
   getBuildingDetails,
-  upgradeBuilding,
+  startUpgrade,
   listConstructionQueue,
   cancelConstruction,
-  accelerateConstruction,
+  collectConstruction,
 } = require('../controllers/buildingController');
 
 // Liste de la file de construction
@@ -17,17 +17,17 @@ router.get('/construction/queue', protect, listConstructionQueue);
 // DELETE /api/buildings/construction/queue/:id
 router.delete('/construction/queue/:id', protect, cancelConstruction);
 
-// Accélérer une construction
-// POST /api/buildings/construction/queue/:id/accelerate
-router.post('/construction/queue/:id/accelerate', protect, accelerateConstruction);
+// Collecter une construction terminée
+// POST /api/buildings/construction/queue/:id/collect
+router.post('/construction/queue/:id/collect', protect, collectConstruction);
 
 
 // Détails d'un bâtiment
 // GET /api/buildings/:id
 router.get('/:id', protect, getBuildingDetails);
 
-// Améliorer un bâtiment
-// PUT /api/buildings/:id/upgrade
-router.put('/:id/upgrade', protect, upgradeBuilding);
+// Démarrer un upgrade
+// POST /api/buildings/:id/start-upgrade
+router.post('/:id/start-upgrade', protect, startUpgrade);
 
 module.exports = router;
