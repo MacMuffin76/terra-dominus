@@ -7,6 +7,11 @@ const createResourceRouter = (container) => {
   const router = Router();
   const controller = container.resolve('resourceController');
 
+  // ✅ Route de test non protégée
+router.get('/ping', (req, res) => {
+res.json({ status: 'OK', time: new Date() });
+});
+
   router.get('/resource-buildings', protect, controller.getResourceBuildings);
   router.get('/resource-buildings/:id', protect, controller.getBuildingDetails);
   router.post('/resource-buildings/:id/upgrade', protect, validate(upgradeBuildingSchema), controller.upgradeBuilding);
