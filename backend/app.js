@@ -1,31 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
-const userRoutes = require('./routes/authRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const facilityRoutes = require('./routes/facilityRoutes');
-const researchRoutes = require('./routes/researchRoutes');
-const trainingRoutes = require('./routes/trainingRoutes');
-const defenseRoutes = require('./routes/defenseRoutes');
-const unitRoutes = require('./routes/unitRoutes');
-const buildingRoutes = require('./routes/buildingRoutes');
+const createApiRouter = require('./api');
 
-const app = express();
+const createApp = (container) => {
+  const app = express();
 
-app.use(express.json());
-app.use(cors());
+  app.use(express.json());
+  app.use(cors());
 
-app.use('/api/auth', userRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/facilities', facilityRoutes);
-app.use('/api', dashboardRoutes);
-app.use('/api/research', researchRoutes);
-app.use('/api/training', trainingRoutes);
-app.use('/api/defense', defenseRoutes);
-app.use('/api/buildings', buildingRoutes);
-app.use('/api', unitRoutes);
+  const apiRouter = createApiRouter(container);
+  app.use('/api/v1', apiRouter);
 
-app.use(errorHandler);
+  app.use(errorHandler);
 
-module.exports = app;
+  return app;
+};
+
+module.exports = createApp;

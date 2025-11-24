@@ -1,19 +1,22 @@
 const http = require('http');
-const app = require('./app');
-const resourceService = require('./services/resourceService');
-const { getPgClientConfig } = require('./utils/databaseConfig');
+const createApp = require('./app');
+const createContainer = require('./container');
+const sequelize = require('./db');
 const { initIO } = require('./socket');
 
 const PORT = process.env.PORT || 5000;
 
+const container = createContainer();
+const app = createApp(container);
 const server = http.createServer(app);
 const io = initIO(server);
+
+const resourceService = container.resolve('resourceService');
 
 const emitUserResources = async (socket, userId) => {
   const resources = await resourceService.getUserResources(userId);
   socket.emit('resources', resources);
 };
-
 
 io.on('connection', (socket) => {
   console.log('Client connected');
