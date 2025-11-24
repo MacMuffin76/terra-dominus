@@ -3,6 +3,7 @@ const createApp = require('./app');
 const createContainer = require('./container');
 const sequelize = require('./db');
 const { initIO } = require('./socket');
+const { userConnectedSchema } = require('./validation/socketValidation');
 
 const PORT = process.env.PORT || 5000;
 
@@ -19,18 +20,41 @@ const emitUserResources = async (socket, userId) => {
 };
 
 io.on('connection', (socket) => {
-  console.log('Client connected');
+  const userId = socket.user?.id;
 
-  socket.on('user_connected', async ({ userId }) => {
-    console.log(`User connected: ${userId}`);
-    socket.join(`user_${userId}`);
+  if (!userId) {
+    socket.disconnect(true);
+    return;
+  }
 
+  const userRoom = `user_${userId}`;
+  socket.join(userRoom);
+
+  const sendResources = async () => {
     try {
       await emitUserResources(socket, userId);
       console.log(`Resources sent to user: ${userId}`);
     } catch (error) {
       console.error('Error updating resources:', error);
     }
+  };
+
+  sendResources();
+
+  socket.on('user_connected', async (payload = {}) => {
+    const parseResult = userConnectedSchema.safeParse(payload);
+
+    if (!parseResult.success) {
+      socket.emit('error', { message: 'Payload invalide pour user_connected' });
+      return;
+    }
+
+    if (parseResult.data.userId && parseResult.data.userId !== userId) {
+      socket.emit('error', { message: 'Accès à une room non autorisée' });
+      return;
+    }
+
+    await sendResources();
   });
 
   socket.on('disconnect', () => {

@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const User = require('../models/User');
 const City = require('../models/City');
@@ -12,6 +13,32 @@ const Defense = require('../models/Defense');
 const Facility = require('../models/Facility');
 const Entity = require('../models/Entity');
 const sequelize = require('../db');
+const RefreshToken = require('../models/RefreshToken');
+
+const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '2h';
+const REFRESH_TOKEN_TTL_MS = Number(process.env.REFRESH_TOKEN_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+
+const buildAccessToken = (userId) =>
+  jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_TTL,
+  });
+
+async function createRefreshTokenRecord(userId, transaction) {
+  const token = crypto.randomBytes(64).toString('hex');
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+
+  await RefreshToken.create(
+    {
+      token,
+      user_id: userId,
+      expires_at: expiresAt,
+      revoked: false,
+    },
+    { transaction }
+  );
+
+  return { token, expiresAt };
+}
 
 async function initializeUserGameData(userId, transaction) {
   const city = await City.create({
@@ -20,7 +47,7 @@ async function initializeUserGameData(userId, transaction) {
     is_capital: true,
     coord_x: 0,
     coord_y: 0,
- }, { transaction });
+  }, { transaction });
 
   const cityId = city.id;
 
@@ -212,10 +239,9 @@ async function registerUser({ username, email, password }) {
     );
   await initializeUserGameData(newUser.id, transaction);
 
-    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-      expiresIn: '2h',
-    });
-    return { token, user: newUser };
+    const accessToken = buildAccessToken(newUser.id);
+    const refreshToken = await createRefreshTokenRecord(newUser.id, transaction);
+    return { token: accessToken, refreshToken: refreshToken.token, user: newUser };
   });
 }
 
@@ -229,15 +255,56 @@ async function loginUser({ username, password }) {
     throw error;
   }
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: '2h',
-  });
+  const accessToken = buildAccessToken(user.id);
+  const refreshToken = await createRefreshTokenRecord(user.id);
 
-  return { token, user };
+  return { token: accessToken, refreshToken: refreshToken.token, user };
+}
+
+async function refreshSession(refreshToken) {
+  const stored = await RefreshToken.findOne({ where: { token: refreshToken } });
+
+  if (!stored) {
+    const error = new Error('Refresh token invalide');
+    error.status = 401;
+    throw error;
+  }
+
+  if (stored.revoked) {
+    const error = new Error('Refresh token révoqué');
+    error.status = 401;
+    throw error;
+  }
+
+  if (stored.expires_at.getTime() < Date.now()) {
+    stored.revoked = true;
+    await stored.save();
+    const error = new Error('Refresh token expiré');
+    error.status = 401;
+    throw error;
+  }
+
+  const user = await User.findByPk(stored.user_id);
+
+  if (!user) {
+    const error = new Error('Utilisateur introuvable');
+    error.status = 404;
+    throw error;
+  }
+
+  const accessToken = buildAccessToken(user.id);
+  const newRefreshToken = await createRefreshTokenRecord(user.id);
+
+  stored.revoked = true;
+  stored.replaced_by_token = newRefreshToken.token;
+  await stored.save();
+
+  return { token: accessToken, refreshToken: newRefreshToken.token, user };
 }
 
 module.exports = {
   initializeUserGameData,
   registerUser,
   loginUser,
+  refreshSession,
 };

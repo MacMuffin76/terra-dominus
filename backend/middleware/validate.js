@@ -1,20 +1,11 @@
-const { checkSchema, validationResult } = require('express-validator');
+const { celebrate, Joi, Segments, errors, isCelebrateError } = require('celebrate');
 
-const validate = (schema) => {
-  const validationChain = checkSchema(schema);
+const validate = (schema) => celebrate(schema, { abortEarly: false, stripUnknown: true });
 
-  return [
-    ...validationChain,
-    (req, res, next) => {
-      const errors = validationResult(req);
-
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      return next();
-    },
-  ];
-};
+const validationErrorHandler = errors();
 
 module.exports = validate;
+module.exports.Joi = Joi;
+module.exports.Segments = Segments;
+module.exports.validationErrorHandler = validationErrorHandler;
+module.exports.isCelebrateError = isCelebrateError;

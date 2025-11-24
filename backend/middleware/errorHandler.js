@@ -1,9 +1,13 @@
-// middleware/errorHandler.js
-
 function errorHandler(err, req, res, next) {
-    console.error(err.stack); // Log l'erreur dans la console pour le suivi
-    res.status(500).json({ error: 'Erreur interne du serveur' }); // Répond avec une erreur 500 et un message JSON
-  }
-  
-  module.exports = errorHandler;
-  
+  // eslint-disable-next-line no-console
+  console.error(err.stack || err.message || err);
+
+  const status = err.status || 500;
+  const payload = err.expose
+    ? { message: err.message }
+    : { error: 'Erreur interne du serveur' };
+
+  res.status(status).json(payload);
+}
+
+module.exports = errorHandler;
