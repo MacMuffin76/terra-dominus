@@ -50,6 +50,35 @@ body {
   transform: translateY(300px); /* Ajustez cette valeur pour correspondre à la hauteur du panneau de détails */
 }
 
+.resources-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.loader {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #444;
+  border-top-color: #00aaff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-weight: bold;
+  text-align: center;
+}
+
+
 .building-card {
   width: calc(33.33333% - 40px); /* Ajustez la largeur pour s'assurer que trois cartes s'affichent par ligne */
   margin: 10px;

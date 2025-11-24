@@ -10,6 +10,8 @@ const Resources = () => {
   const [data, setData] = useState([]);
   const [selectedBuilding, setSel] = useState(null);
   const [allowedBuildings, setAllowedBuildings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { resources } = useResources();
 
   const orderBuildings = (list, allowed) =>
@@ -17,6 +19,8 @@ const Resources = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const [{ data: allowed }, { data: buildings }] = await Promise.all([
           axiosInstance.get('/resources/resource-buildings/allowed'),
@@ -26,10 +30,11 @@ const Resources = () => {
         setAllowedBuildings(allowed);
         const filtered = buildings.filter(b => allowed.includes(b.name));
         setData(orderBuildings(filtered, allowed));
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching resource buildings:', err);
-        setAllowedBuildings([]);
-        setData([]);
+        setError("Une erreur est survenue lors du chargement des bâtiments.");
+        setLoading(false);
       }
     };
     fetchData();
@@ -61,6 +66,13 @@ const Resources = () => {
       <ResourcesWidget />
       <div className={`resources-content ${selectedBuilding ? 'with-details' : ''}`}>
         <h1>Ressources</h1>
+
+        <div className="resources-status">
+          {loading && (
+            <div className="loader" aria-label="Chargement des bâtiments"></div>
+          )}
+          {error && <div className="error-message">{error}</div>}
+        </div>
 
         {selectedBuilding && (
           <ResourceDetail
