@@ -16,6 +16,8 @@ const RESOURCE_BUILDINGS = [
   'Mine de métal',
   'Extracteur',
   'Centrale électrique',
+  'Hangar',
+  'Réservoir',
 ];
 
 const TYPE_TO_BUILDING_NAME = {
@@ -471,6 +473,10 @@ async function saveUserResources(userId, resourcesPayload) {
   }
 
   return { message: 'Ressources sauvegardées (backend maître).' };
+}
+
+function getAllowedResourceBuildingNames() {
+  return [...RESOURCE_BUILDINGS];
 }
 
 module.exports = {

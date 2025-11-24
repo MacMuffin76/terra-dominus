@@ -19,6 +19,7 @@ const createResourceRouter = (container) => {
     res.json({ status: 'OK', time: new Date().toISOString() });
   });
 
+  router.get('/resource-buildings/allowed', protect, controller.getAllowedResourceBuildings);
   router.get('/resource-buildings', protect, controller.getResourceBuildings);
   router.get('/resource-buildings/:id', protect, controller.getBuildingDetails);
   router.post(

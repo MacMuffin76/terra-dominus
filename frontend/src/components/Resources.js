@@ -9,25 +9,26 @@ import { useResources } from '../context/ResourcesContext';
 const Resources = () => {
   const [data, setData] = useState([]);
   const [selectedBuilding, setSel] = useState(null);
+  const [allowedBuildings, setAllowedBuildings] = useState([]);
   const { resources } = useResources();
 
-  const allowedBuildings = [
-    "Mine d'or",
-    'Mine de métal',
-    'Extracteur',
-    'Centrale électrique',
-    'Hangar',
-    'Réservoir'
-  ];
+  const orderBuildings = (list, allowed) =>
+    allowed.map(n => list.find(b => b.name === n)).filter(Boolean);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: buildings } = await axiosInstance.get('/resources/resource-buildings');
-        const filtered = buildings.filter(b => allowedBuildings.includes(b.name));
-        setData(filtered);
+        const [{ data: allowed }, { data: buildings }] = await Promise.all([
+          axiosInstance.get('/resources/resource-buildings/allowed'),
+          axiosInstance.get('/resources/resource-buildings'),
+        ]);
+
+        setAllowedBuildings(allowed);
+        const filtered = buildings.filter(b => allowed.includes(b.name));
+        setData(orderBuildings(filtered, allowed));
       } catch (err) {
         console.error('Error fetching resource buildings:', err);
+        setAllowedBuildings([]);
         setData([]);
       }
     };
@@ -35,14 +36,13 @@ const Resources = () => {
   }, []);
 
   const handleClick = b => setSel(prev => prev?.id === b.id ? null : b);
-  const handleUp = updated => {
+  const handleUp = updated => handleUpdate(updated);
+  const handleDown = updated => handleUpdate(updated);
+
+  const handleUpdate = updated => {
     const upd = data.map(b => b.id === updated.id ? updated : b);
-    setData(upd);
-    setSel(updated);
-  };
-  const handleDown = updated => {
-    const upd = data.map(b => b.id === updated.id ? updated : b);
-    setData(upd);
+    const ordered = orderBuildings(upd, allowedBuildings);
+    setData(ordered);
     setSel(updated);
   };
 
@@ -53,10 +53,8 @@ const Resources = () => {
     .replace(/['’]/g, '')
     .replace(/\s+/g, '_');
 
-  const ordered = allowedBuildings.map(n => data.find(b => b.name === n)).filter(Boolean);
-  const firstRow = ordered.slice(0, 3);
-  const secondRow = ordered.slice(3, 6);
-
+  const firstRow = data.slice(0, 3);
+  const secondRow = data.slice(3, 6);
   return (
     <div className="resources-container">
       <Menu />

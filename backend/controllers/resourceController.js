@@ -17,6 +17,18 @@ const createResourceController = ({ resourceService }) => {
     }
   };
 
+  const getAllowedResourceBuildings = async (req, res) => {
+    try {
+      const allowed = resourceService.getAllowedResourceBuildingNames();
+      return res.json(allowed);
+    } catch (err) {
+      (req.logger || logger).error({ err }, 'Error fetching allowed resource buildings');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des bâtiments de ressource autorisés.' });
+    }
+  };
+
   const getBuildingDetails = async (req, res) => {
     try {
       const details = await resourceService.getResourceBuildingDetails(req.user.id, req.params.id);
@@ -106,6 +118,7 @@ const createResourceController = ({ resourceService }) => {
     getUserResources,
     saveUserResources,
     updateUserResources,
+    getAllowedResourceBuildings,
   };
 };
 
