@@ -1,13 +1,6 @@
 const Building = require('../domain/Building');
 const ConstructionOrder = require('../domain/ConstructionOrder');
 const assertOptimisticUpdate = require('../infra/assertOptimisticUpdate');
-const {
-  removeConstructionJob,
-  scheduleActiveConstruction,
-} = require('../../../jobs/constructionQueue');
-const { getLogger } = require('../../../utils/logger');
-
-const logger = getLogger({ module: 'BuildingService' });
 
 class BuildingService {
   constructor({
@@ -33,7 +26,58 @@ class BuildingService {
   async withCity(userId, transactionOptions = {}) {
     const city = await this.cityRepository.getUserMainCity(userId, transactionOptions);
     if (!city) {
-@@ -85,51 +88,51 @@ class BuildingService {
+      const error = new Error('Pas de ville trouvée');
+      error.status = 404;
+      throw error;
+    }
+    return city;
+  }
+
+  async getBuildingDetails(buildingId) {
+    const building = await this.buildingRepository.findById(buildingId);
+    if (!building) {
+      const error = new Error('Building not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const entity = await this.entityRepository.findBuildingEntityByName(building.name);
+    const queue = entity
+      ? await this.constructionOrderRepository.findQueue(building.cityId, {
+          where: { entityId: entity.entity_id, type: 'building' },
+        })
+      : [];
+
+    const inProgress = queue.find((item) => item.status === 'in_progress');
+    const remainingTime = inProgress && inProgress.finishTime
+      ? Math.max(0, Math.ceil((new Date(inProgress.finishTime) - new Date()) / 1000))
+      : 0;
+
+    return {
+      ...building,
+      remainingTime,
+      inProgress: !!inProgress,
+      queue,
+    };
+  }
+
+  async startUpgrade(userId, buildingId) {
+    return this.transactionProvider(async (transaction) => {
+      const city = await this.withCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+      const building = await this.buildingRepository.findById(buildingId, { transaction, lock: transaction.LOCK.UPDATE });
+
+      if (!building || building.cityId !== city.id) {
+        const error = new Error('Building not found');
+        error.status = 404;
+        throw error;
+      }
+
+      const entity = await this.entityRepository.findBuildingEntityByName(building.name, { transaction });
+      if (!entity) {
+        const error = new Error('Entity not found for building');
+        error.status = 404;
+        throw error;
+      }
 
       const pending = await this.constructionOrderRepository.countPending(city.id, entity.entity_id, transaction);
       const nextLevel = building.getNextLevel(pending);
@@ -58,12 +102,8 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
-        scheduleActiveConstruction(city.id, city.user_id).catch((err) => {
-          logger.error({ err, cityId: city.id, userId }, 'Failed to schedule construction completion');
-        });
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
-
 
       return created;
     });
@@ -96,8 +136,6 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
-        removeConstructionJob(queueId).catch(() => {});
-        scheduleActiveConstruction(city.id, city.user_id).catch(() => {});
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
 
@@ -145,8 +183,6 @@ class BuildingService {
       await this.constructionOrderRepository.syncQueue(city.id, transaction);
 
       transaction.afterCommit(() => {
-        removeConstructionJob(order.id).catch(() => {});
-        scheduleActiveConstruction(city.id, city.user_id).catch(() => {});
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
       });
 

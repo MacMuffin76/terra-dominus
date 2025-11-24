@@ -11,10 +11,6 @@ require('dotenv').config({ path: backendEnvPath });
 // values can be filled while preserving higher-priority ones.
 require('dotenv').config({ path: rootEnvPath, override: false });
 
-if (localEnvError) {
-  require('dotenv').config({ path: rootEnvPath });
-}
-
 const buildConnectionString = () => {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
@@ -41,16 +37,11 @@ const buildSslConfig = () => {
 const getSequelizeOptions = () => {
   const ssl = buildSslConfig();
 
-  const options = {
+  return {
     dialect: 'postgres',
-    logging: false,
+    logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+    dialectOptions: ssl ? { ssl } : undefined,
   };
-
-  if (ssl) {
-    options.dialectOptions = { ssl };
-  }
-
-  return options;
 };
 
-module.exports = { buildConnectionString, buildSslConfig, getSequelizeOptions };
+module.exports = { buildConnectionString, getSequelizeOptions };
