@@ -9,6 +9,7 @@ const {
   getProductionPerSecond,
   getBuildDurationSeconds,
 } = require('../utils/balancing');
+const { calculateEnergyProduction } = require('../utils/resourceProduction');
 const sequelize = require('../db');
 
 const RESOURCE_BUILDINGS = [
@@ -25,7 +26,20 @@ const TYPE_TO_BUILDING_NAME = {
   metal: 'Mine de métal',
   carburant: 'Extracteur',
 };
+const STORAGE_BASE_CAPACITY = {
+  or: 5000,
+  metal: 5000,
+  carburant: 3000,
+  energie: 1000,
+};
 
+const STORAGE_GROWTH = {
+  hangar: 1.25,
+  reservoir: 1.25,
+  centrale: 1.15,
+};
+
+const ENERGY_CONSUMPTION_PER_LEVEL = 2;
 const MAX_BUILDING_UPDATE_RETRIES = 2;
 
 function assertOptimisticUpdate(updatedRows) {
@@ -375,85 +389,176 @@ async function destroyResourceBuilding(userId, buildingId) {
 }
 
 async function getUserResources(userId) {
-  const city = await getUserMainCity(userId);
-  if (!city) {
-    const error = new Error('Aucune ville trouvée.');
-    error.status = 404;
-    throw error;
-  }
-
-  const resources = await Resource.findAll({
-    where: { city_id: city.id },
-  });
-
-  const buildings = await Building.findAll({
-    where: { city_id: city.id },
-  });
-
-  const buildingKey = (cityId, name) => `${cityId}::${name}`;
-  const buildingMap = new Map();
-
-  buildings.forEach((b) => {
-    buildingMap.set(buildingKey(b.city_id, b.name), b);
-  });
-
-  const now = new Date();
-  const results = [];
-  const updates = [];
-
-  for (const resource of resources) {
-    const type = resource.type;
-
-    const prodBuildingName = TYPE_TO_BUILDING_NAME[type];
-    const bKey = prodBuildingName ? buildingKey(resource.city_id, prodBuildingName) : null;
-    const building = bKey ? buildingMap.get(bKey) : null;
-
-    const lastUpdate = resource.last_update ? new Date(resource.last_update) : now;
-    const diffSec = Math.max(0, (now - lastUpdate) / 1000);
-
-    let amount = Number(resource.amount) || 0;
-    let rate = 0;
-
-    if (building) {
-      rate = getProductionPerSecond(building.name, building.level);
-      if (diffSec > 0) {
-        const produced = rate * diffSec;
-        amount += produced;
-      }
+return sequelize.transaction(async (transaction) => {
+    const city = await getUserMainCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!city) {
+      const error = new Error('Aucune ville trouvée.');
+      error.status = 404;
+      throw error;
     }
 
-    const roundedAmount = Math.floor(amount);
-
-    updates.push({
-      id: resource.id,
-      amount: roundedAmount,
-      last_update: now,
+    const resources = await Resource.findAll({
+      where: { city_id: city.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     });
 
-    results.push({
-      id: resource.id,
-      city_id: resource.city_id,
-      type: resource.type,
-      amount: roundedAmount,
-      last_update: now,
-      level: building ? Number(building.level) || 0 : 0,
-      production_rate: rate,
+    const buildings = await Building.findAll({
+      where: { city_id: city.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     });
-  }
 
-  for (const update of updates) {
-    await Resource.update(
-      {
+    const buildingKey = (cityId, name) => `${cityId}::${name}`;
+    const buildingMap = new Map();
+
+    buildings.forEach((b) => {
+      buildingMap.set(buildingKey(b.city_id, b.name), b);
+    });
+
+    const now = new Date();
+    const results = [];
+    const updates = [];
+    const buildingUpdates = [];
+
+    const effectiveLevelsByName = new Map();
+
+    for (const building of buildings) {
+      let effectiveLevel = Number(building.level) || 0;
+
+      if (building.build_start && building.build_duration) {
+        const started = new Date(building.build_start).getTime();
+        const elapsed = (now.getTime() - started) / 1000;
+        const total = Number(building.build_duration) || 0;
+
+        if (elapsed >= total) {
+          const currentVersion = Number(building.version) || 0;
+          buildingUpdates.push({
+            id: building.id,
+            version: currentVersion,
+          });
+
+          building.build_start = null;
+          building.build_duration = null;
+          building.version = currentVersion + 1;
+        } else {
+          effectiveLevel = Math.max(0, effectiveLevel - 1);
+        }
+      }
+
+      effectiveLevelsByName.set(building.name, effectiveLevel);
+    }
+
+    for (const bUpdate of buildingUpdates) {
+      const [affected] = await Building.update(
+        {
+          build_start: null,
+          build_duration: null,
+          version: bUpdate.version + 1,
+        },
+        {
+          where: { id: bUpdate.id, version: bUpdate.version },
+          transaction,
+        }
+      );
+
+      assertOptimisticUpdate(affected);
+    }
+
+    const hangarLevel = effectiveLevelsByName.get('Hangar') || 0;
+    const reservoirLevel = effectiveLevelsByName.get('Réservoir') || 0;
+    const centraleLevel = effectiveLevelsByName.get('Centrale électrique') || 0;
+
+    const storageCapacities = {
+      or: Math.floor(STORAGE_BASE_CAPACITY.or * Math.pow(STORAGE_GROWTH.hangar, hangarLevel)),
+      metal: Math.floor(STORAGE_BASE_CAPACITY.metal * Math.pow(STORAGE_GROWTH.hangar, hangarLevel)),
+      carburant: Math.floor(STORAGE_BASE_CAPACITY.carburant * Math.pow(STORAGE_GROWTH.reservoir, reservoirLevel)),
+      energie: Math.floor(STORAGE_BASE_CAPACITY.energie * Math.pow(STORAGE_GROWTH.centrale, Math.max(1, centraleLevel))),
+    };
+
+    const energyProduction = calculateEnergyProduction(centraleLevel);
+    const energyConsumption = buildings
+      .filter((b) => ['Mine de métal', "Mine d'or", 'Extracteur'].includes(b.name))
+      .reduce((sum, b) => sum + (Math.max(0, effectiveLevelsByName.get(b.name)) * ENERGY_CONSUMPTION_PER_LEVEL), 0);
+
+    const energyResource = resources.find((r) => r.type === 'energie');
+    const energyLastUpdate = energyResource?.last_update ? new Date(energyResource.last_update) : now;
+    const energyDiffSec = Math.max(0, (now - energyLastUpdate) / 1000);
+    const netEnergyRate = energyProduction - energyConsumption;
+    const projectedEnergy = Math.max(0, Math.floor((Number(energyResource?.amount) || 0) + netEnergyRate * energyDiffSec));
+    const cappedEnergy = Math.min(projectedEnergy, storageCapacities.energie || projectedEnergy);
+    const hasEnergyForProduction = netEnergyRate >= 0 || cappedEnergy > 0;
+
+    if (energyResource) {
+      updates.push({
+        id: energyResource.id,
+        amount: cappedEnergy,
+        last_update: now,
+        production_rate: netEnergyRate,
+      });
+    }
+
+    for (const resource of resources) {
+      const type = resource.type;
+      if (type === 'energie') continue;
+
+      const prodBuildingName = TYPE_TO_BUILDING_NAME[type];
+      const bKey = prodBuildingName ? buildingKey(resource.city_id, prodBuildingName) : null;
+      const building = bKey ? buildingMap.get(bKey) : null;
+
+      const lastUpdate = resource.last_update ? new Date(resource.last_update) : now;
+      const diffSec = Math.max(0, (now - lastUpdate) / 1000);
+
+      let amount = Number(resource.amount) || 0;
+      let rate = 0;
+
+      if (building) {
+        const effectiveLevel = effectiveLevelsByName.get(building.name) || 0;
+        rate = hasEnergyForProduction ? getProductionPerSecond(building.name, effectiveLevel) : 0;
+        if (diffSec > 0) {
+          const produced = rate * diffSec;
+          amount += produced;
+        }
+      }
+
+      const roundedAmount = Math.max(0, Math.floor(amount));
+      const storageCap = storageCapacities[type];
+      const cappedAmount = storageCap ? Math.min(roundedAmount, storageCap) : roundedAmount;
+
+      updates.push({
+        id: resource.id,
+        amount: cappedAmount,
+        last_update: now,
+        production_rate: rate,
+        level: building ? Number(effectiveLevelsByName.get(building.name)) || 0 : 0,
+      });
+    }
+
+    for (const update of updates) {
+      await Resource.update(
+        {
+          amount: update.amount,
+          last_update: update.last_update,
+        },
+        {
+          where: { id: update.id },
+          transaction,
+        }
+      );
+
+      results.push({
+        id: update.id,
+        city_id: city.id,
+        type: resources.find((r) => r.id === update.id)?.type,
         amount: update.amount,
         last_update: update.last_update,
-      },
-      {
-        where: { id: update.id },
-      }
-    );
-  }
+        level: update.level ?? 0,
+        production_rate: update.production_rate ?? 0,
+      });
+    }
 
-  return results;
+    return results;
+  });
 }
 
 async function saveUserResources(userId, resourcesPayload) {
