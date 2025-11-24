@@ -14,9 +14,23 @@ const Facility = require('../models/Facility');
 const Entity = require('../models/Entity');
 const sequelize = require('../db');
 const RefreshToken = require('../models/RefreshToken');
+const BlueprintRepository = require('../repositories/BlueprintRepository');
 
 const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '2h';
 const REFRESH_TOKEN_TTL_MS = Number(process.env.REFRESH_TOKEN_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+
+const blueprintRepository = new BlueprintRepository();
+
+const computeBlueprintLevelCost = (blueprint, level) => {
+  if (!blueprint || (blueprint.max_level && level > blueprint.max_level)) {
+    return 0;
+  }
+
+  return Object.values(blueprint.costs || {}).reduce(
+    (sum, amount) => sum + Number(amount || 0) * level,
+    0,
+  );
+};
 
 const buildAccessToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -128,16 +142,19 @@ async function initializeUserGameData(userId, transaction) {
     })
   );
 
-  const unitTypes = [
-    'Drone d’assaut terrestre',
-    'Fantassin plasmique',
-    'Infiltrateur holo-camouflage',
-    'Tireur à antimatière',
-    'Artilleur à railgun',
-    'Exo-sentinelle',
-    'Commandos nano-armure',
-    'Légionnaire quantique',
-  ];
+  const unitBlueprints = await blueprintRepository.listByCategory('unit');
+  const unitTypes = unitBlueprints.length
+    ? unitBlueprints.map((bp) => bp.type)
+    : [
+        'Drone d’assaut terrestre',
+        'Fantassin plasmique',
+        'Infiltrateur holo-camouflage',
+        'Tireur à antimatière',
+        'Artilleur à railgun',
+        'Exo-sentinelle',
+        'Commandos nano-armure',
+        'Légionnaire quantique',
+      ];
 
   await Promise.all(
     unitTypes.map((name) =>
@@ -150,18 +167,21 @@ async function initializeUserGameData(userId, transaction) {
     )
   );
 
-  const researchTypes = [
-    'Technologie Laser Photonique',
-    'Systèmes d’Armes Railgun',
-    'Déploiement de Champs de Force',
-    'Guidage Avancé de Missiles',
-    'Antigravitationnelle',
-    'Ingénierie des Contre-mesures EM',
-    'Confinement de Plasma',
-    'Impulsion EM Avancée',
-    'Nanotechnologie Autoréplicante',
-    'Réseau de Détection Quantique',
-  ];
+  const researchBlueprints = await blueprintRepository.listByCategory('research');
+  const researchTypes = researchBlueprints.length
+    ? researchBlueprints.map((bp) => bp.type)
+    : [
+        'Technologie Laser Photonique',
+        'Systèmes d’Armes Railgun',
+        'Déploiement de Champs de Force',
+        'Guidage Avancé de Missiles',
+        'Antigravitationnelle',
+        'Ingénierie des Contre-mesures EM',
+        'Confinement de Plasma',
+        'Impulsion EM Avancée',
+        'Nanotechnologie Autoréplicante',
+        'Réseau de Détection Quantique',
+      ];
 
   await Promise.all(
     researchTypes.map((name) =>
@@ -169,30 +189,25 @@ async function initializeUserGameData(userId, transaction) {
         user_id: userId,
         name,
         level: 0,
-        nextlevelcost: 0,
+        nextlevelcost: computeBlueprintLevelCost(
+          researchBlueprints.find((bp) => bp.type === name),
+          1,
+        ),
         description: null,
       }, { transaction })
     )
   );
 
-  const trainingTypes = [
-    'Drone d’assaut terrestre',
-    'Fantassin plasmique',
-    'Infiltrateur holo-camouflage',
-    'Tireur à antimatière',
-    'Artilleur à railgun',
-    'Exo-sentinelle',
-    'Commandos nano-armure',
-    'Légionnaire quantique',
-  ];
-
   await Promise.all(
-    trainingTypes.map((name) =>
+    unitTypes.map((name) =>
       Training.create({
         user_id: userId,
         name,
         level: 0,
-        nextlevelcost: 0,
+        nextlevelcost: computeBlueprintLevelCost(
+          unitBlueprints.find((bp) => bp.type === name),
+          1,
+        ),
         description: null,
       }, { transaction })
     )

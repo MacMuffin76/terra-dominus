@@ -28,7 +28,7 @@ const createContainer = () => {
   const container = new Container();
 
   container.register('resourceService', () => require('./services/resourceService'));
-  container.register('buildingService', () => {
+   container.register('buildingService', () => {
     const BuildingService = require('./modules/buildings/application/BuildingService');
     const {
       BuildingRepository,
@@ -53,11 +53,16 @@ const createContainer = () => {
       transactionProvider,
     });
   });
+  container.register('blueprintRepository', () => {
+    const BlueprintRepository = require('./repositories/BlueprintRepository');
+    return new BlueprintRepository();
+  });
   container.register('userService', () => require('./services/userService'));
 
   container.register('resourceController', (c) => require('./controllers/resourceController')({ resourceService: c.resolve('resourceService') }));
   container.register('buildingController', (c) => require('./controllers/buildingController')({ buildingService: c.resolve('buildingService') }));
   container.register('authController', (c) => require('./controllers/authController')({ userService: c.resolve('userService') }));
+  container.register('blueprintController', (c) => require('./controllers/blueprintController')({ blueprintRepository: c.resolve('blueprintRepository') }));
 
   container.register('facilityController', () => require('./controllers/facilityController'));
   container.register('researchController', () => require('./controllers/researchController'));
