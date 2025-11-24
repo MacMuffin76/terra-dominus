@@ -7,6 +7,8 @@ const correlationMiddleware = require('./middleware/correlationMiddleware');
 const requestLogger = require('./middleware/requestLogger');
 const createApiRouter = require('./api');
 const { buildCorsOptions } = require('./utils/cors');
+const { metricsMiddleware, metricsHandler } = require('./observability/metrics');
+const createHealthRouter = require('./observability/healthRoutes');
 
 const createApp = (container) => {
   const app = express();
@@ -15,6 +17,10 @@ const createApp = (container) => {
   app.use(cors(buildCorsOptions()));
   app.use(correlationMiddleware);
   app.use(requestLogger);
+  app.use(metricsMiddleware);
+
+  app.get('/metrics', metricsHandler);
+  app.use(createHealthRouter());
 
   const apiLimiter = rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),

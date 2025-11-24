@@ -2,6 +2,7 @@ const User = require('../../models/User');
 const { getQueue, createWorker, queueNames, serializeJobData } = require('../queueConfig');
 const { getIO } = require('../../socket');
 const { getLogger } = require('../../utils/logger');
+const { trackProductionTick } = require('../../observability/metrics');
 
 const PRODUCTION_JOB_ID = 'production-tick';
 const DEFAULT_INTERVAL = Number(process.env.PRODUCTION_TICK_MS || 60000);
@@ -25,18 +26,20 @@ function createProductionWorker(container) {
     logger.error({ err }, 'Failed to schedule production tick');
   });
 
-  return createWorker(queueNames.PRODUCTION, async () => {
-    const resourceService = container.resolve('resourceService');
-    const io = getIO();
-    const users = await User.findAll({ attributes: ['id'] });
+  return createWorker(queueNames.PRODUCTION, async () =>
+    trackProductionTick(async () => {
+      const resourceService = container.resolve('resourceService');
+      const io = getIO();
+      const users = await User.findAll({ attributes: ['id'] });
 
-    for (const user of users) {
-      const resources = await resourceService.getUserResources(user.id);
-      if (io) {
-        io.to(`user_${user.id}`).emit('resources', resources);
+      for (const user of users) {
+        const resources = await resourceService.getUserResources(user.id);
+        if (io) {
+          io.to(`user_${user.id}`).emit('resources', resources);
+        }
       }
-    }
-  });
+    }),
+  );
 }
 
 module.exports = { createProductionWorker };
