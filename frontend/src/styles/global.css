@@ -374,6 +374,13 @@ button, input, select, textarea {
   font-size: var(--font-size-small);
 }
 
+.success-text {
+  color: var(--color-success);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
 .text-center {
   text-align: center;
 }
