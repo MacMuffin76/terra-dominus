@@ -36,6 +36,16 @@ const createApp = (container) => {
   const apiRouter = createApiRouter(container);
   app.use('/api/v1', apiLimiter, apiRouter);
 
+  // --- Ajout : middleware 404 JSON pour toutes les routes non matchées ---
+  app.use((req, res, next) => {
+    res.status(404).json({
+      error: 'Not Found',
+      message: 'Route non trouvée',
+      path: req.originalUrl,
+    });
+  });
+  // -----------------------------------------------------------------------
+
   app.use(validate.validationErrorHandler);
   app.use(errorHandler);
 

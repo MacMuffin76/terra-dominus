@@ -21,12 +21,12 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5000') do (
 
 echo Starting backend...
 pushd "%SCRIPT_DIR%backend"
-start "Backend" cmd /c "npm start"
+start "Backend" cmd /c "npm start dev"
 popd
 
 echo Starting frontend...
 pushd "%SCRIPT_DIR%frontend"
-start "Frontend" cmd /c "npm start"
+start "Frontend" cmd /c "npm start dev"
 popd
 
 echo Done. Backend and frontend relaunch initiated.
