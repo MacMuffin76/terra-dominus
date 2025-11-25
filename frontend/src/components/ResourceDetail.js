@@ -35,33 +35,49 @@ const ResourceDetail = ({
   onBuildingUpgraded,
   onBuildingDowngraded,
 }) => {
-  const [detail, setDetail] = useState(null);
+   const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { resources, setResources } = useResources();
 
-  const refreshBuilding = async () => {
-    const { data } = await axiosInstance.get(
-      `/resources/resource-buildings/${building.id}`
-    );
-    setDetail(data);
+  const refreshBuilding = async (signal) => {
+    setLoading(true);
+    setError(null);
 
-    const resType = buildingToResourceType[building.name];
-
-    if (resType) {
-      const updated = resources.map((r) =>
-        r.type === resType
-          ? {
-              ...r,
-              level: Number(data.level) || 0,
-            }
-          : r
+    try {
+      const { data } = await axiosInstance.get(
+        `/resources/resource-buildings/${building.id}`,
+        { signal }
       );
-      setResources(updated);
-      safeStorage.setItem('resourcesData', JSON.stringify(updated));
+      setDetail(data);
+
+      const resType = buildingToResourceType[building.name];
+
+      if (resType) {
+        const updated = resources.map((r) =>
+          r.type === resType
+            ? {
+                ...r,
+                level: Number(data.level) || 0,
+              }
+            : r
+        );
+        setResources(updated);
+        safeStorage.setItem('resourcesData', JSON.stringify(updated));
+      }
+    } catch (err) {
+      if (err.name === 'CanceledError') return;
+      setError(err.message || "Impossible de charger les détails du bâtiment.");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    refreshBuilding();
+    const controller = new AbortController();
+    refreshBuilding(controller.signal);
+
+    return () => controller.abort();
   }, [building.id]);
 
   const handleUpgrade = async () => {
@@ -115,6 +131,21 @@ const ResourceDetail = ({
     }
   };
 
+  if (loading) {
+    return <p>Chargement…</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="resource-detail resource-detail-error">
+        <p>{error}</p>
+        <Button onClick={() => refreshBuilding()} variant="secondary">
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
+  
   if (!detail) return <p>Chargement…</p>;
 
   const bgName = detail.name
