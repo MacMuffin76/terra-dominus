@@ -1,25 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import { safeStorage } from '../utils/safeStorage';
+import axiosInstance from '../utils/axiosInstance';
+import { getApiErrorMessage } from '../utils/apiErrorHandler';
 
 // Thunks
 export const login = createAsyncThunk('auth/login', async ({ username, password }, thunkAPI) => {
   try {
-    const response = await axios.post('/api/auth/login', { username, password });
+    const response = await axiosInstance.post('/auth/login', { username, password });
     safeStorage.setItem('userId', response.data.user.id); // Enregistrer l'ID utilisateur dans localStorage
     return response.data;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data);
+    return thunkAPI.rejectWithValue({ message: getApiErrorMessage(error) });
   }
 });
 
 export const registerUser = createAsyncThunk('auth/registerUser', async ({ username, email, password }, thunkAPI) => {
   try {
-    const response = await axios.post('/api/auth/register', { username, email, password });
+    const response = await axiosInstance.post('/auth/register', { username, email, password });
     safeStorage.setItem('userId', response.data.user.id); // Enregistrer l'ID utilisateur dans localStorage
     return response.data;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data);
+    return thunkAPI.rejectWithValue({ message: getApiErrorMessage(error) });
   }
 });
 
