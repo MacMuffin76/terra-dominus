@@ -3,9 +3,9 @@ import axiosInstance from '../utils/axiosInstance';
 import { logout } from './authSlice';
 
 // Thunk to fetch resources
-export const fetchResources = createAsyncThunk('resources/fetchResources', async (userId, thunkAPI) => {
+export const fetchResources = createAsyncThunk('resources/fetchResources', async (_, thunkAPI) => {
   try {
-    const response = await axiosInstance.get(`/resources/${userId}`);
+    const response = await axiosInstance.get('/resources/user-resources');
     return response.data || [];
   } catch (error) {
     const status = error.response?.status;

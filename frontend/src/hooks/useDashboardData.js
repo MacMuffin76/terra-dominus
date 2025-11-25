@@ -51,7 +51,7 @@ const useDashboardData = () => {
     }
 
     try {
-      await dispatch(fetchResources(userId)).unwrap();
+      await dispatch(fetchResources()).unwrap();
     } catch (err) {
       setError(
         err?.message ||
