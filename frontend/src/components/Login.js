@@ -4,6 +4,7 @@ import { login } from '../redux/authSlice';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import { safeStorage } from '../utils/safeStorage';
+import { Button, Card, Input } from './ui';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -30,30 +31,31 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, token]);
 
-  return (
+   return (
     <div className="auth-page full-height-center">
-      <div className="card auth-card">
+      <Card className="auth-card" title="Login">
         <form onSubmit={onSubmit} className="form-grid">
-          <h2 className="text-center">Login</h2>
-          <input
-            className="input"
+          <Input
             type="text"
             name="username"
+            label="Username"
             value={username}
             onChange={onChange}
             placeholder="Username"
             required
           />
-          <input
-            className="input"
+          <Input
             type="password"
             name="password"
+            label="Password"
             value={password}
             onChange={onChange}
             placeholder="Password"
             required
           />
-          <button className="btn btn-primary" type="submit">Login</button>
+          <Button variant="primary" type="submit" fullWidth>
+            Login
+          </Button>
           {error && (
             <p className="error-text">
               {error.message || 'Connexion échouée. Veuillez réessayer.'}
@@ -63,7 +65,7 @@ const Login = () => {
         <p className="helper-text text-center">
           Don't have an account? <a href="/register">Register here</a>
         </p>
-      </div>
+      </Card>
     </div>
   );
 };

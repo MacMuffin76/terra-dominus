@@ -6,6 +6,7 @@ import './FacilityDetail.css';
 import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
+import { Button } from './ui';
 
 // Formate un taux (si un jour tu as des valeurs /s sur les facilities)
 const formatRate = (value) => {
@@ -181,19 +182,17 @@ const FacilityDetail = ({
       </div>
 
       <div className="facility-buttons">
-        <button
+        <Button
           onClick={handleUpgrade}
           disabled={detail.inProgress}
-          className="facility-btn-upgrade"
+          variant="success"
+          size="lg"
         >
           Améliorer
-        </button>
-        <button
-          onClick={handleDowngrade}
-          className="facility-btn-downgrade"
-        >
+        </Button>
+        <Button onClick={handleDowngrade} variant="secondary" size="lg">
           Rétrograder
-        </button>
+        </Button>
       </div>
     </div>
   );

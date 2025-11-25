@@ -7,6 +7,7 @@ import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
 import PropTypes from 'prop-types';
+import { Button } from './ui';
 
 
 const buildingToResourceType = {
@@ -202,16 +203,17 @@ const ResourceDetail = ({
       </div>
 
       <div className="buttons">
-        <button
+        <Button
           onClick={handleUpgrade}
           disabled={detail.inProgress}
-          className="btn-upgrade"
+          variant="danger"
+          size="lg"
         >
           Améliorer
-        </button>
-        <button onClick={handleDowngrade} className="btn-downgrade">
+        </Button>
+        <Button onClick={handleDowngrade} variant="secondary" size="lg">
           Rétrograder
-        </button>
+        </Button>
       </div>
     </div>
   );

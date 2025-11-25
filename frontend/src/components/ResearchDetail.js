@@ -6,6 +6,8 @@ import './ResearchDetail.css';
 import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
+import { Button } from './ui';
+
 
 // Formate un montant de ressource (ENTIER + séparateur de milliers)
 const formatAmount = (value) => {
@@ -181,19 +183,17 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
       </div>
 
       <div className="research-buttons">
-        <button
+        <Button
           onClick={handleUpgrade}
           disabled={detail.inProgress}
-          className="research-btn-upgrade"
+          variant="primary"
+          size="lg"
         >
           Améliorer
-        </button>
-        <button
-          onClick={handleDestroy}
-          className="research-btn-destroy"
-        >
+        </Button>
+        <Button onClick={handleDestroy} variant="secondary" size="lg">
           Détruire
-        </button>
+        </Button>
       </div>
     </div>
   );

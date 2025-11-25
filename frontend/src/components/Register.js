@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../redux/authSlice';
 import { useNavigate } from 'react-router-dom';
 import './Register.css';
+import { Button, Card, Input } from './ui';
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -31,43 +32,44 @@ const Register = () => {
 
   return (
     <div className="auth-page full-height-center">
-      <div className="card auth-card">
+      <Card className="auth-card" title="Register">
         <form onSubmit={onSubmit} className="form-grid">
-          <h2 className="text-center">Register</h2>
-          <input
-            className="input"
+          <Input
             type="text"
             name="username"
+            label="Username"
             value={username}
             onChange={onChange}
             placeholder="Username"
             required
           />
-          <input
-            className="input"
+          <Input
             type="email"
             name="email"
+            label="Email"
             value={email}
             onChange={onChange}
             placeholder="Email"
             required
           />
-          <input
-            className="input"
+          <Input
             type="password"
             name="password"
+            label="Password"
             value={password}
             onChange={onChange}
             placeholder="Password"
             required
           />
-          <button className="btn btn-primary" type="submit">Register</button>
+          <Button variant="primary" type="submit" fullWidth>
+            Register
+          </Button>
           {error && <p className="error-text">{error.message}</p>}
         </form>
         <p className="helper-text text-center">
           Already have an account? <a href="/login">Login here</a>
         </p>
-      </div>
+      </Card>
     </div>
   );
 };
