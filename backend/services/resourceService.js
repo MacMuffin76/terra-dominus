@@ -603,4 +603,6 @@ module.exports = {
   destroyResourceBuilding,
   getUserResources,
   saveUserResources,
+  getAllowedResourceBuildingNames,
 };
+

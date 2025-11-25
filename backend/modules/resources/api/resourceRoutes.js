@@ -10,15 +10,6 @@ const createResourceRouter = (container) => {
   const router = Router();
   const controller = container.resolve('resourceController');
 
-  // 👇 LOG pour vérifier que ce fichier est bien chargé
-  console.log('[resourceRoutes] router initialized');
-
-  // ✅ Route de test NON protégée
-  router.get('/ping', (req, res) => {
-    console.log('[resourceRoutes] /ping called');
-    res.json({ status: 'OK', time: new Date().toISOString() });
-  });
-
   router.get('/resource-buildings/allowed', protect, controller.getAllowedResourceBuildings);
   router.get('/resource-buildings', protect, controller.getResourceBuildings);
   router.get('/resource-buildings/:id', protect, controller.getBuildingDetails);
