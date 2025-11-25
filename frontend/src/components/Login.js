@@ -31,31 +31,39 @@ const Login = () => {
   }, [isAuthenticated, navigate, token]);
 
   return (
-    <div className="login-container">
-      <form onSubmit={onSubmit}>
-        <h2>Login</h2>
-        <input
-          type="text"
-          name="username"
-          value={username}
-          onChange={onChange}
-          placeholder="Username"
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          value={password}
-          onChange={onChange}
-          placeholder="Password"
-          required
-        />
-        <button type="submit">Login</button>
-        {error && <p className="error">{error.message || 'Connexion échouée. Veuillez réessayer.'}</p>}
-      </form>
-      <p>
-        Don't have an account? <a href="/register">Register here</a>
-      </p>
+    <div className="auth-page full-height-center">
+      <div className="card auth-card">
+        <form onSubmit={onSubmit} className="form-grid">
+          <h2 className="text-center">Login</h2>
+          <input
+            className="input"
+            type="text"
+            name="username"
+            value={username}
+            onChange={onChange}
+            placeholder="Username"
+            required
+          />
+          <input
+            className="input"
+            type="password"
+            name="password"
+            value={password}
+            onChange={onChange}
+            placeholder="Password"
+            required
+          />
+          <button className="btn btn-primary" type="submit">Login</button>
+          {error && (
+            <p className="error-text">
+              {error.message || 'Connexion échouée. Veuillez réessayer.'}
+            </p>
+          )}
+        </form>
+        <p className="helper-text text-center">
+          Don't have an account? <a href="/register">Register here</a>
+        </p>
+      </div>
     </div>
   );
 };

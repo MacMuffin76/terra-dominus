@@ -30,39 +30,44 @@ const Register = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="register-container">
-      <form onSubmit={onSubmit}>
-        <h2>Register</h2>
-        <input
-          type="text"
-          name="username"
-          value={username}
-          onChange={onChange}
-          placeholder="Username"
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          value={email}
-          onChange={onChange}
-          placeholder="Email"
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          value={password}
-          onChange={onChange}
-          placeholder="Password"
-          required
-        />
-        <button type="submit">Register</button>
-        {error && <p className="error">{error.message}</p>}
-      </form>
-      <p>
-        Already have an account? <a href="/login">Login here</a>
-      </p>
+    <div className="auth-page full-height-center">
+      <div className="card auth-card">
+        <form onSubmit={onSubmit} className="form-grid">
+          <h2 className="text-center">Register</h2>
+          <input
+            className="input"
+            type="text"
+            name="username"
+            value={username}
+            onChange={onChange}
+            placeholder="Username"
+            required
+          />
+          <input
+            className="input"
+            type="email"
+            name="email"
+            value={email}
+            onChange={onChange}
+            placeholder="Email"
+            required
+          />
+          <input
+            className="input"
+            type="password"
+            name="password"
+            value={password}
+            onChange={onChange}
+            placeholder="Password"
+            required
+          />
+          <button className="btn btn-primary" type="submit">Register</button>
+          {error && <p className="error-text">{error.message}</p>}
+        </form>
+        <p className="helper-text text-center">
+          Already have an account? <a href="/login">Login here</a>
+        </p>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  --color-background: #0b1021;
+  --color-background-overlay: rgba(11, 16, 33, 0.85);
+  --color-surface: #141c2f;
+  --color-surface-raised: #1c2640;
+  --color-primary: #5ce1e6;
+  --color-primary-text: #0b132b;
+  --color-accent: #8be9fd;
+  --color-text: #e8edf5;
+  --color-muted-text: #9fb2c8;
+  --color-border: #23304d;
+  --color-success: #48bb78;
+  --color-warning: #f6ad55;
+  --color-error: #f56565;
+
+  --font-family-base: 'Roboto', 'Inter', Arial, sans-serif;
+  --font-size-base: 16px;
+  --font-size-body: 1rem;
+  --font-size-h1: 3rem;
+  --font-size-h2: 1.75rem;
+  --font-size-small: 0.9rem;
+
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.25);
+  --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Reset & Normalize */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--font-size-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  background: var(--color-background) url('/public/images/background.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--color-text);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 var(--spacing-md);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  text-shadow: 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+p {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-muted-text);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Style guide */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-raised));
+  color: var(--color-text);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: var(--color-primary-text);
+  border-color: transparent;
+}
+
+.input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-background-overlay);
+  color: var(--color-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(92, 225, 230, 0.25);
+}
+
+.card {
+  background: var(--color-background-overlay);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(6px);
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.helper-text {
+  font-size: var(--font-size-small);
+  color: var(--color-muted-text);
+}
+
+.error-text {
+  color: var(--color-error);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-small);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.full-height-center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
