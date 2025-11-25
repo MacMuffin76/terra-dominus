@@ -1,20 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
-  --color-background: #0b1021;
-  --color-background-overlay: rgba(11, 16, 33, 0.85);
-  --color-surface: #141c2f;
-  --color-surface-raised: #1c2640;
-  --color-primary: #5ce1e6;
-  --color-primary-text: #0b132b;
-  --color-accent: #8be9fd;
-  --color-text: #e8edf5;
-  --color-muted-text: #9fb2c8;
-  --color-border: #23304d;
-  --color-success: #48bb78;
-  --color-warning: #f6ad55;
-  --color-error: #f56565;
-
   --font-family-base: 'Roboto', 'Inter', Arial, sans-serif;
   --font-size-base: 16px;
   --font-size-body: 1rem;
@@ -34,6 +20,53 @@
 
   --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.25);
   --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.35);
+
+  /* Default to dark theme to avoid FOUC before JS runs */
+  --color-background: #0b1021;
+  --color-background-overlay: rgba(11, 16, 33, 0.85);
+  --color-surface: #141c2f;
+  --color-surface-raised: #1c2640;
+  --color-primary: #5ce1e6;
+  --color-primary-text: #0b132b;
+  --color-accent: #8be9fd;
+  --color-text: #e8edf5;
+  --color-muted-text: #9fb2c8;
+  --color-border: #23304d;
+  --color-success: #48bb78;
+  --color-warning: #f6ad55;
+  --color-error: #f56565;
+}
+
+body[data-theme='light'] {
+  --color-background: #f5f7fb;
+  --color-background-overlay: rgba(245, 247, 251, 0.9);
+  --color-surface: #ffffff;
+  --color-surface-raised: #edf1f9;
+  --color-primary: #2d6cdf;
+  --color-primary-text: #0b132b;
+  --color-accent: #5ce1e6;
+  --color-text: #0f172a;
+  --color-muted-text: #48566a;
+  --color-border: #d5dcec;
+  --color-success: #2f855a;
+  --color-warning: #d97706;
+  --color-error: #c53030;
+}
+
+body[data-theme='dark'] {
+  --color-background: #0b1021;
+  --color-background-overlay: rgba(11, 16, 33, 0.85);
+  --color-surface: #141c2f;
+  --color-surface-raised: #1c2640;
+  --color-primary: #5ce1e6;
+  --color-primary-text: #0b132b;
+  --color-accent: #8be9fd;
+  --color-text: #e8edf5;
+  --color-muted-text: #9fb2c8;
+  --color-border: #23304d;
+  --color-success: #48bb78;
+  --color-warning: #f6ad55;
+  --color-error: #f56565;
 }
 
 /* Reset & Normalize */
@@ -55,6 +88,7 @@ body {
   background: var(--color-background) url('/public/images/background.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--color-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 img {

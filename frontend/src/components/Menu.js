@@ -9,9 +9,11 @@ import SecurityIcon from '@mui/icons-material/Security';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import GroupIcon from '@mui/icons-material/Group';
 import './Menu.css';
+import { useTheme } from '../context/ThemeContext';
 
 const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleResize = () => {
@@ -73,6 +75,20 @@ const Menu = () => {
         id="primary-navigation"
       >
         <div className="menu-title">Main Menu</div>
+        <div className="menu-actions">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Passer en mode ${theme === 'dark' ? 'clair' : 'sombre'}`}
+            aria-pressed={theme === 'dark'}
+          >
+            <span className="theme-icon" aria-hidden>
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </span>
+            <span className="theme-label">{theme === 'dark' ? 'Mode sombre' : 'Mode clair'}</span>
+          </button>
+        </div>
         <ul className="menu-list">
           <li>
             <Link to="/dashboard" onClick={closeMenuOnNavigation}>
