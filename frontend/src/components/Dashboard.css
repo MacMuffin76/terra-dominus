@@ -94,3 +94,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+@media (max-width: 767px) {
+  .dashboard {
+    width: 100%;
+    margin-left: 0;
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .dashboard-content {
+    align-items: stretch;
+  }
+}

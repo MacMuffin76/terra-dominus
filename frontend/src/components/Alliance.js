@@ -7,7 +7,7 @@ const Alliance = () => {
     <div className="alliance-container">
       <Menu />
       <ResourcesWidget />
-      <div className="content">
+      <div className="alliance-content" id="main-content">
         <h1>Alliance</h1>
       </div>
     </div>

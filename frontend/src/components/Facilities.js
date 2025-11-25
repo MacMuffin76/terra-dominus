@@ -76,7 +76,10 @@ const Facilities = () => {
       <Menu />
       <ResourcesWidget />
 
-      <div className={`facilities-content ${selectedFacility ? 'with-details' : ''}`}>
+      <div
+        className={`facilities-content ${selectedFacility ? 'with-details' : ''}`}
+        id="main-content"
+      >
         <h1>Installations</h1>
 
         {selectedFacility && (

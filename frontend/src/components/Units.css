@@ -41,3 +41,22 @@
   border-radius: 8px;
   color: white;
 }
+
+@media (max-width: 767px) {
+  .units-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .units-list {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .unit-detail {
+    position: static;
+    transform: none;
+    margin-top: 16px;
+  }
+}

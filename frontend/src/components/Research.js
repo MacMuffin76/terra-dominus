@@ -46,7 +46,10 @@ const Research = () => {
     <div className="research-container">
       <Menu />
       <ResourcesWidget />
-      <div className={`research-content ${selectedResearch ? 'with-details' : ''}`}>
+      <div
+        className={`research-content ${selectedResearch ? 'with-details' : ''}`}
+        id="main-content"
+      >
         <h1>Recherche</h1>
 
         {selectedResearch && (

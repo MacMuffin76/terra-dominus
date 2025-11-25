@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -11,58 +11,136 @@ import GroupIcon from '@mui/icons-material/Group';
 import './Menu.css';
 
 const Menu = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(true);
+      } else {
+        setIsMenuOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen]);
+
+  const closeMenuOnNavigation = () => {
+    if (window.innerWidth < 768) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+
   return (
-    <div className="menu">
-      <div className="menu-title">Main Menu</div>
-      <Link to="/dashboard">
-        <DashboardIcon className="menu-icon" />
-        <div>
-          Tableau de bord
-        </div>
-      </Link>
-      <Link to="/resources">
-        <CategoryIcon className="menu-icon" />
-        <div>
-          Ressource
-        </div>
-      </Link>
-      <Link to="/facilities">
-        <BusinessIcon className="menu-icon" />
-        <div>
-          Installation
-        </div>
-      </Link>
-      <Link to="/research">
-        <ScienceIcon className="menu-icon" />
-        <div>
-          Recherche
-        </div>
-      </Link>
-      <Link to="/training">
-        <BuildIcon className="menu-icon" />
-        <div>
-          Centre d'entrainement
-        </div>
-      </Link>
-      <Link to="/defense">
-        <SecurityIcon className="menu-icon" />
-        <div>
-          Defense
-        </div>
-      </Link>
-      <Link to="/fleet">
-        <DirectionsBoatIcon className="menu-icon" />
-        <div>
-          Flotte
-        </div>
-      </Link>
-      <Link to="/alliance">
-        <GroupIcon className="menu-icon" />
-        <div>
-          Alliance
-        </div>
-      </Link>
-    </div>
+    <>
+      <a className="skip-link" href="#main-content">
+        Passer au contenu principal
+      </a>
+
+      <button
+        type="button"
+        className={`menu-toggle ${isMenuOpen ? 'open' : ''}`}
+        aria-expanded={isMenuOpen}
+        aria-controls="primary-navigation"
+        aria-label="Basculer la navigation"
+        onClick={toggleMenu}
+      >
+        <span className="menu-toggle-bar" />
+        <span className="menu-toggle-bar" />
+        <span className="menu-toggle-bar" />
+      </button>
+
+      <nav
+        className={`menu ${isMenuOpen ? 'open' : ''}`}
+        aria-label="Menu principal"
+        id="primary-navigation"
+      >
+        <div className="menu-title">Main Menu</div>
+        <ul className="menu-list">
+          <li>
+            <Link to="/dashboard" onClick={closeMenuOnNavigation}>
+              <DashboardIcon className="menu-icon" />
+              <div>
+                Tableau de bord
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/resources" onClick={closeMenuOnNavigation}>
+              <CategoryIcon className="menu-icon" />
+              <div>
+                Ressource
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/facilities" onClick={closeMenuOnNavigation}>
+              <BusinessIcon className="menu-icon" />
+              <div>
+                Installation
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/research" onClick={closeMenuOnNavigation}>
+              <ScienceIcon className="menu-icon" />
+              <div>
+                Recherche
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/training" onClick={closeMenuOnNavigation}>
+              <BuildIcon className="menu-icon" />
+              <div>
+                Centre d'entrainement
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/defense" onClick={closeMenuOnNavigation}>
+              <SecurityIcon className="menu-icon" />
+              <div>
+                Defense
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/fleet" onClick={closeMenuOnNavigation}>
+              <DirectionsBoatIcon className="menu-icon" />
+              <div>
+                Flotte
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/alliance" onClick={closeMenuOnNavigation}>
+              <GroupIcon className="menu-icon" />
+              <div>
+                Alliance
+              </div>
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    </>
   );
 };
 

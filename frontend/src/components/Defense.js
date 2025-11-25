@@ -45,7 +45,10 @@ const Defense = () => {
     <div className="defense-container">
       <Menu />
       <ResourcesWidget />
-      <div className={`defense-content ${selectedDefense ? 'with-details' : ''}`}>
+      <div
+        className={`defense-content ${selectedDefense ? 'with-details' : ''}`}
+        id="main-content"
+      >
         <h1>Défenses</h1>
         {error && <p className="error-message">{error}</p>}
 

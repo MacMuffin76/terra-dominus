@@ -154,3 +154,27 @@ body {
 .resource-detail button:hover {
   background-color: #777; /* Couleur de fond des boutons au survol */
 }
+
+@media (max-width: 767px) {
+  .resources-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .resources-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .building-card {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .resource-detail {
+    position: static;
+    transform: none;
+  }
+}

@@ -38,7 +38,7 @@ const Units = () => {
       <Menu />
       <ResourcesWidget />
 
-      <div className="units-content">
+      <div className="units-content" id="main-content">
         <h1>Unités</h1>
 
         <div className="units-list">

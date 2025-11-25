@@ -79,6 +79,7 @@ const Training = () => {
         className={`training-content ${
           selectedTraining ? 'with-details' : ''
         }`}
+        id="main-content"
       >
         <h1>Centres d&apos;entraînement</h1>
 

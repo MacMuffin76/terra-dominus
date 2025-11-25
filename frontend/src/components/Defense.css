@@ -128,3 +128,27 @@ body {
 .defense-detail button:hover {
   background-color: #777;
 }
+
+@media (max-width: 767px) {
+  .defense-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .defense-list {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .defense-card {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .defense-detail {
+    position: static;
+    transform: none;
+  }
+}

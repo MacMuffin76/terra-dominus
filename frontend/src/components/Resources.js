@@ -64,7 +64,10 @@ const Resources = () => {
     <div className="resources-container">
       <Menu />
       <ResourcesWidget />
-      <div className={`resources-content ${selectedBuilding ? 'with-details' : ''}`}>
+      <div
+        className={`resources-content ${selectedBuilding ? 'with-details' : ''}`}
+        id="main-content"
+      >
         <h1>Ressources</h1>
 
         <div className="resources-status">

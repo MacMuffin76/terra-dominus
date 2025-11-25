@@ -7,9 +7,27 @@
   height: 100vh; /* Prendre toute la hauteur de l'écran */
 }
 
+.fleet-content {
+  width: calc(100% - 250px);
+  max-width: 1200px;
+  padding: 20px;
+}
+
 .fleet-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
   margin: 20px 0;
+}
+
+@media (max-width: 767px) {
+  .fleet-container {
+    margin-left: 0;
+    height: auto;
+  }
+
+  .fleet-content {
+    width: 100%;
+    padding: 20px 16px;
+  }
 }

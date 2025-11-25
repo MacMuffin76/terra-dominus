@@ -132,3 +132,27 @@ body {
 .training-detail button:hover {
   background-color: #777;
 }
+
+@media (max-width: 767px) {
+  .training-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .training-list {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .training-card {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .training-detail {
+    position: static;
+    transform: none;
+  }
+}

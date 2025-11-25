@@ -6,3 +6,21 @@
   margin-left: 250px; /* Espace réservé pour le menu */
   height: 100vh; /* Prendre toute la hauteur de l'écran */
 }
+
+.alliance-content {
+  width: calc(100% - 250px);
+  max-width: 1200px;
+  padding: 20px;
+}
+
+@media (max-width: 767px) {
+  .alliance-container {
+    margin-left: 0;
+    height: auto;
+  }
+
+  .alliance-content {
+    width: 100%;
+    padding: 20px 16px;
+  }
+}

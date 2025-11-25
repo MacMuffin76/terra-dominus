@@ -22,7 +22,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <Menu />
-      <div className="dashboard-content">
+      <div className="dashboard-content" id="main-content">
         <div className="dashboard-header">
           <h1>Tableau de bord</h1>
           <p className="dashboard-connection">{connectionStatus}</p>

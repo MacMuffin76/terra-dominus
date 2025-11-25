@@ -128,3 +128,27 @@ body {
 .research-detail button:hover {
   background-color: #777;
 }
+
+@media (max-width: 767px) {
+  .research-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .research-list {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .research-card {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .research-detail {
+    position: static;
+    transform: none;
+  }
+}
