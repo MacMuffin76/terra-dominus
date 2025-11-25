@@ -13,3 +13,13 @@
 .App p {
   color: var(--color-muted-text);
 }
+
+.app-toast {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 640px;
+  width: calc(100% - 2 * var(--spacing-lg));
+  z-index: 2000;
+}

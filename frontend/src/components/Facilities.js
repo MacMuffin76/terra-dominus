@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import './Facilities.css';
 import FacilityDetail from './FacilityDetail';
 import ResourcesWidget from './ResourcesWidget';
+import { Alert, Loader, Skeleton } from './ui';
 
 const Facilities = () => {
   const [data, setData] = useState([]);
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // 1) Ordre fixe souhaité
   const allowedFacilities = [
@@ -16,24 +19,30 @@ const Facilities = () => {
     'Terrain d\'Entraînement'
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: facilities } = await axiosInstance.get(
-          '/facilities/facility-buildings'
-        );
-        // 2) Filtrer les facilities autorisées
-        const filtered = facilities.filter(f =>
-          allowedFacilities.includes(f.name)
-        );
-        setData(filtered);
-      } catch (error) {
-        console.error('Error fetching facility buildings:', error);
-        setData([]);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: facilities } = await axiosInstance.get(
+        '/facilities/facility-buildings'
+      );
+      // 2) Filtrer les facilities autorisées
+      const filtered = facilities.filter(f =>
+        allowedFacilities.includes(f.name)
+      );
+      setData(filtered);
+    } catch (err) {
+      console.error('Error fetching facility buildings:', err);
+      setError("Impossible de charger les installations.");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // 3) Helpers pour gestion du click et callbacks
   const handleFacilityClick = facility =>
@@ -82,6 +91,16 @@ const Facilities = () => {
       >
         <h1>Installations</h1>
 
+        {loading && <Loader label="Chargement des installations" />}
+        {error && (
+          <Alert
+            type="error"
+            title="Installations"
+            message={error}
+            onAction={fetchData}
+          />
+        )}
+
         {selectedFacility && (
           <FacilityDetail
             facility={selectedFacility}
@@ -91,19 +110,25 @@ const Facilities = () => {
         )}
 
         <div className="facilities-list">
-          {ordered.map(facility => (
+          {(loading ? Array.from({ length: 3 }) : ordered).map((facility, idx) => (
             <div
-              key={facility.id}
+              key={facility?.id || `facility-skeleton-${idx}`}
               className="facility-card"
-              onClick={() => handleFacilityClick(facility)}
+              onClick={() => facility && handleFacilityClick(facility)}
             >
-              <img
-                src={`/images/facilities/${formatFileName(facility.name)}.png`}
-                alt={facility.name}
-                className="facility-image"
-              />
-              <h3>{facility.name}</h3>
-              <p>Level: {facility.level}</p>
+              {loading ? (
+                <Skeleton width="100%" height="200px" />
+              ) : (
+                <img
+                  src={`/images/facilities/${formatFileName(facility.name)}.png`}
+                  alt={facility.name}
+                  className="facility-image"
+                />
+              )}
+              <h3>{loading ? <Skeleton width="60%" /> : facility.name}</h3>
+              <p>
+                {loading ? <Skeleton width="40%" /> : `Level: ${facility.level}`}
+              </p>
             </div>
           ))}
         </div>

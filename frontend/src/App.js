@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Snackbar, Alert } from '@mui/material';
+import { Alert } from './components/ui';
 import Dashboard from './components/Dashboard';
 import Resources from './components/Resources';
 import Facilities from './components/Facilities';
@@ -109,16 +109,18 @@ function App() {
             />
             <Route path="/" element={<Home />} />
           </Routes>
-          <Snackbar
-            open={Boolean(combinedError)}
-            autoHideDuration={6000}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert severity="error" onClose={handleClose} sx={{ width: '100%' }}>
-              {combinedError}
-            </Alert>
-          </Snackbar>
+          {combinedError && (
+            <div className="app-toast">
+              <Alert
+                type="error"
+                title="Erreur réseau"
+                message={combinedError}
+                onAction={handleClose}
+                actionLabel="Compris"
+                onClose={handleClose}
+              />
+            </div>
+          )}
         </div>
       </Router>
     </ResourcesProvider>

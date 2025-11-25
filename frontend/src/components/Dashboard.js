@@ -4,12 +4,14 @@ import React from 'react';
 import Menu from './Menu';
 import './Dashboard.css';
 import useDashboardData from '../hooks/useDashboardData';
+import { Alert, Loader, Skeleton } from './ui';
 
 const Dashboard = () => {
-  const { dashboard, resources, loading, connectionStatus } = useDashboardData();
+  const { dashboard, resources, loading, connectionStatus, error, refresh } = useDashboardData();
   const { user, buildings, units } = dashboard;
 
-  if (loading && !user?.username) return <div>Loading...</div>;
+  if (loading && !user?.username)
+    return <Loader center label="Chargement du tableau de bord" size="lg" />;
 
   const formatFileName = (name) =>
     name
@@ -27,13 +29,26 @@ const Dashboard = () => {
           <h1>Tableau de bord</h1>
           <p className="dashboard-connection">{connectionStatus}</p>
         </div>
+        {error && (
+          <div className="dashboard-alert">
+            <Alert
+              type="error"
+              title="Données du tableau de bord"
+              message={error}
+              onAction={refresh}
+              actionLabel="Rafraîchir"
+            />
+          </div>
+        )}
         <div className="dashboard-modules">
           <div className="dashboard-module">
             <h2>Informations</h2>
-            <p>Pseudo: {user?.username}</p>
-            <p>Level: {user?.level}</p>
-            <p>Points d'expérience: {user?.points_experience}</p>
-            <p>Rang: {user?.rang}</p>
+            <p>Pseudo: {user?.username || <Skeleton width={120} />}</p>
+            <p>Level: {user?.level ?? <Skeleton width={80} />}</p>
+            <p>
+              Points d'expérience: {user?.points_experience ?? <Skeleton width={100} />}
+            </p>
+            <p>Rang: {user?.rang || <Skeleton width={80} />}</p>
           </div>
 
           <div className="dashboard-module dashboard-resources">

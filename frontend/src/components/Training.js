@@ -1,35 +1,41 @@
 // frontend/src/components/Training.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import './Training.css';
 import ResourcesWidget from './ResourcesWidget';
 import TrainingDetail from './TrainingDetail';
+import { Alert, Loader, Skeleton } from './ui';
 
 const Training = () => {
   const [trainings, setTrainings] = useState([]);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Chargement des centres d’entraînement du joueur
-  useEffect(() => {
-    const fetchTrainings = async () => {
-      try {
-        const { data } = await axiosInstance.get(
-          '/training/training-centers'
-        );
-        setTrainings(data);
-      } catch (err) {
-        console.error('Error fetching training centers:', err);
-        setError(
-          "Erreur lors du chargement des centres d'entraînement"
-        );
-      }
-    };
-
-    fetchTrainings();
+  const fetchTrainings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await axiosInstance.get(
+        '/training/training-centers'
+      );
+      setTrainings(data);
+    } catch (err) {
+      console.error('Error fetching training centers:', err);
+      setError(
+        "Erreur lors du chargement des centres d'entraînement"
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchTrainings();
+  }, [fetchTrainings]);
 
   // Sélection / désélection d’un centre d’entraînement
   const handleTrainingClick = (training) => {
@@ -83,7 +89,15 @@ const Training = () => {
       >
         <h1>Centres d&apos;entraînement</h1>
 
-        {error && <p className="error-message">{error}</p>}
+        {loading && <Loader label="Chargement des centres" />}
+        {error && (
+          <Alert
+            type="error"
+            title="Centres d'entraînement"
+            message={error}
+            onAction={fetchTrainings}
+          />
+        )}
 
         {selectedTraining && (
           <TrainingDetail
@@ -93,19 +107,23 @@ const Training = () => {
         )}
 
         <div className="training-list">
-          {trainings.map((training) => (
+          {(loading ? Array.from({ length: 4 }) : trainings).map((training, idx) => (
             <div
-              key={training.id}
+              key={training?.id || `training-skeleton-${idx}`}
               className="training-card"
-              onClick={() => handleTrainingClick(training)}
+              onClick={() => training && handleTrainingClick(training)}
             >
-              <img
-                src={`/images/training/${formatFileName(training.name)}.png`}
-                alt={training.name}
-                className="training-image"
-              />
-              <h3>{training.name}</h3>
-              <p>Niveau : {training.level ?? 0}</p>
+              {loading ? (
+                <Skeleton width="100%" height="180px" />
+              ) : (
+                <img
+                  src={`/images/training/${formatFileName(training.name)}.png`}
+                  alt={training.name}
+                  className="training-image"
+                />
+              )}
+              <h3>{loading ? <Skeleton width="65%" /> : training.name}</h3>
+              <p>{loading ? <Skeleton width="45%" /> : `Niveau : ${training.level ?? 0}`}</p>
             </div>
           ))}
         </div>

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import './Resources.css';
 import ResourceDetail from './ResourceDetail';
 import ResourcesWidget from './ResourcesWidget';
 import { useResources } from '../context/ResourcesContext';
+import { Alert, Loader, Skeleton } from './ui';
 
 const Resources = () => {
   const [data, setData] = useState([]);
@@ -14,31 +15,34 @@ const Resources = () => {
   const [error, setError] = useState(null);
   const { resources } = useResources();
 
-  const orderBuildings = (list, allowed) =>
-    allowed.map(n => list.find(b => b.name === n)).filter(Boolean);
+  const orderBuildings = useCallback(
+    (list, allowed) => allowed.map(n => list.find(b => b.name === n)).filter(Boolean),
+    []
+  );
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [{ data: allowed }, { data: buildings }] = await Promise.all([
+        axiosInstance.get('/resources/resource-buildings/allowed'),
+        axiosInstance.get('/resources/resource-buildings'),
+      ]);
+
+      setAllowedBuildings(allowed);
+      const filtered = buildings.filter(b => allowed.includes(b.name));
+      setData(orderBuildings(filtered, allowed));
+    } catch (err) {
+      console.error('Error fetching resource buildings:', err);
+      setError("Une erreur est survenue lors du chargement des bâtiments.");
+    } finally {
+      setLoading(false);
+    }
+  }, [orderBuildings]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [{ data: allowed }, { data: buildings }] = await Promise.all([
-          axiosInstance.get('/resources/resource-buildings/allowed'),
-          axiosInstance.get('/resources/resource-buildings'),
-        ]);
-
-        setAllowedBuildings(allowed);
-        const filtered = buildings.filter(b => allowed.includes(b.name));
-        setData(orderBuildings(filtered, allowed));
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching resource buildings:', err);
-        setError("Une erreur est survenue lors du chargement des bâtiments.");
-        setLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleClick = b => setSel(prev => prev?.id === b.id ? null : b);
   const handleUp = updated => handleUpdate(updated);
@@ -71,10 +75,16 @@ const Resources = () => {
         <h1>Ressources</h1>
 
         <div className="resources-status">
-          {loading && (
-            <div className="loader" aria-label="Chargement des bâtiments"></div>
+          {loading && <Loader label="Chargement des bâtiments" />}
+          {error && (
+            <Alert
+              type="error"
+              title="Bâtiments de ressources"
+              message={error}
+              onAction={fetchData}
+              actionLabel="Réessayer"
+            />
           )}
-          {error && <div className="error-message">{error}</div>}
         </div>
 
         {selectedBuilding && (
@@ -87,20 +97,44 @@ const Resources = () => {
 
         <div className="resources-list">
           <div className="resources-row">
-            {firstRow.map(b => (
-              <div key={b.id} className="building-card" onClick={() => handleClick(b)}>
-                <img src={`/images/buildings/${fmt(b.name)}.png`} alt={b.name} className="building-image" />
-                <h3>{b.name}</h3>
-                <p>Level: {b.level}</p>
+            {(loading ? Array.from({ length: 3 }) : firstRow).map((b, index) => (
+              <div
+                key={b?.id || `res-skeleton-${index}`}
+                className="building-card"
+                onClick={() => b && handleClick(b)}
+              >
+                {loading ? (
+                  <Skeleton width="100%" height="200px" />
+                ) : (
+                  <img
+                    src={`/images/buildings/${fmt(b.name)}.png`}
+                    alt={b.name}
+                    className="building-image"
+                  />
+                )}
+                <h3>{loading ? <Skeleton width="70%" /> : b.name}</h3>
+                <p>{loading ? <Skeleton width="50%" /> : `Level: ${b.level}`}</p>
               </div>
             ))}
           </div>
           <div className="resources-row">
-            {secondRow.map(b => (
-              <div key={b.id} className="building-card" onClick={() => handleClick(b)}>
-                <img src={`/images/buildings/${fmt(b.name)}.png`} alt={b.name} className="building-image" />
-                <h3>{b.name}</h3>
-                <p>Level: {b.level}</p>
+            {(loading ? Array.from({ length: 3 }) : secondRow).map((b, index) => (
+              <div
+                key={b?.id || `res-skeleton-2-${index}`}
+                className="building-card"
+                onClick={() => b && handleClick(b)}
+              >
+                {loading ? (
+                  <Skeleton width="100%" height="200px" />
+                ) : (
+                  <img
+                    src={`/images/buildings/${fmt(b.name)}.png`}
+                    alt={b.name}
+                    className="building-image"
+                  />
+                )}
+                <h3>{loading ? <Skeleton width="70%" /> : b.name}</h3>
+                <p>{loading ? <Skeleton width="50%" /> : `Level: ${b.level}`}</p>
               </div>
             ))}
           </div>

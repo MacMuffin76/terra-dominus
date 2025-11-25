@@ -33,6 +33,14 @@
   color: var(--color-muted-text);
 }
 
+.dashboard-alert {
+  width: 100%;
+}
+
+.dashboard-alert .ui-alert {
+  width: 100%;
+}
+
 .dashboard-modules {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

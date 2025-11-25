@@ -1,29 +1,38 @@
 // frontend/src/components/Research.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import './Research.css';
 import ResearchDetail from './ResearchDetail';
 import ResourcesWidget from './ResourcesWidget';
+import { Alert, Loader, Skeleton } from './ui';
 
 const Research = () => {
   const [data, setData] = useState([]);
   const [selectedResearch, setSelectedResearch] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get('/research/research-items');
+      // On prend toutes les recherches renvoyées par l'API, sans filtre
+      setData(response.data);
+    } catch (err) {
+      console.error('Error fetching research items:', err);
+      setError('Impossible de charger les recherches.');
+      setData([]); // En cas d'erreur, on définit data comme un tableau vide
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axiosInstance.get('/research/research-items');
-        // On prend toutes les recherches renvoyées par l'API, sans filtre
-        setData(response.data);
-      } catch (error) {
-        console.error('Error fetching research items:', error);
-        setData([]); // En cas d'erreur, on définit data comme un tableau vide
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleResearchClick = (research) => {
     if (selectedResearch && selectedResearch.id === research.id) {
@@ -52,24 +61,38 @@ const Research = () => {
       >
         <h1>Recherche</h1>
 
+        {loading && <Loader label="Chargement des recherches" />}
+        {error && (
+          <Alert
+            type="error"
+            title="Recherches"
+            message={error}
+            onAction={fetchData}
+          />
+        )}
+
         {selectedResearch && (
           <ResearchDetail research={selectedResearch} />
         )}
 
         <div className="research-list">
-          {data.map((research) => (
+          {(loading ? Array.from({ length: 6 }) : data).map((research, idx) => (
             <div
-              key={research.id}
+              key={research?.id || `research-skeleton-${idx}`}
               className="research-card"
-              onClick={() => handleResearchClick(research)}
+              onClick={() => research && handleResearchClick(research)}
             >
-              <img
-                src={`/images/research/${formatFileName(research.name)}.png`}
-                alt={research.name}
-                className="research-image"
-              />
-              <h3>{research.name}</h3>
-              <p>Niveau: {research.level}</p>
+              {loading ? (
+                <Skeleton width="100%" height="180px" />
+              ) : (
+                <img
+                  src={`/images/research/${formatFileName(research.name)}.png`}
+                  alt={research.name}
+                  className="research-image"
+                />
+              )}
+              <h3>{loading ? <Skeleton width="70%" /> : research.name}</h3>
+              <p>{loading ? <Skeleton width="40%" /> : `Niveau: ${research.level}`}</p>
             </div>
           ))}
         </div>
