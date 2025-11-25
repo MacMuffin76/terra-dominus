@@ -15,6 +15,7 @@ DROP TABLE IF EXISTS fleet_units;
 DROP TABLE IF EXISTS fleets;
 DROP TABLE IF EXISTS combat_logs;
 DROP TABLE IF EXISTS action_logs;
+DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS resource_costs;
 DROP TABLE IF EXISTS resource_production;
 DROP TABLE IF EXISTS facilities;
@@ -45,6 +46,21 @@ CREATE TABLE users (
     CONSTRAINT uq_users_username UNIQUE (username),
     CONSTRAINT uq_users_email UNIQUE (email)
 );
+
+-- ================================================
+-- REFRESH TOKENS
+-- ================================================
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    replaced_by_token VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 
 -- ================================================
 -- ENTITIES (catalogue générique)
