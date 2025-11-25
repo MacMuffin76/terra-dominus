@@ -1,11 +1,8 @@
 // frontend/src/App.js
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { fetchResources } from './redux/resourceSlice';
-import { loginSuccess } from './redux/authSlice';
-import axiosInstance from './utils/axiosInstance';
+import { Snackbar, Alert } from '@mui/material';
 import Dashboard from './components/Dashboard';
 import Resources from './components/Resources';
 import Facilities from './components/Facilities';
@@ -16,32 +13,18 @@ import Fleet from './components/Fleet';
 import Alliance from './components/Alliance';
 import Login from './components/Login';
 import Register from './components/Register';
-import WebSocketComponent from './components/WebSocketComponent';
-import { ResourcesProvider } from './context/ResourcesContext'; // <-- Ajouté ici
+import { ResourcesProvider } from './context/ResourcesContext';
 import PrivateRoute from './components/PrivateRoute';
 import './App.css';
+import useDashboardData from './hooks/useDashboardData';
 
 function App() {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      dispatch(fetchResources(userId));
-
-      axiosInstance.get(`/api/auth/user/${userId}`).then(response => {
-        dispatch(loginSuccess(response.data.user));
-      }).catch(error => {
-        console.error('Failed to fetch user data:', error);
-      });
-    }
-  }, [dispatch]);
+  const { error, clearError } = useDashboardData();
 
   return (
     <ResourcesProvider>
       <Router>
         <div className="App">
-          <WebSocketComponent />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -111,10 +94,19 @@ function App() {
             />
             <Route path="/" element={<Login />} />
           </Routes>
+          <Snackbar
+            open={Boolean(error)}
+            autoHideDuration={6000}
+            onClose={clearError}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert severity="error" onClose={clearError} sx={{ width: '100%' }}>
+              {error}
+            </Alert>
+          </Snackbar>
         </div>
       </Router>
     </ResourcesProvider>
-
   );
 }
 

@@ -1,47 +1,42 @@
 // frontend/src/context/ResourcesContext.js
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import React, { createContext, useContext, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchResources, updateResources } from '../redux/resourceSlice';
 
 const ResourcesContext = createContext();
 
 export const ResourcesProvider = ({ children }) => {
-  const [resources, setResources] = useState([]);
+  const dispatch = useDispatch();
+  const resources = useSelector((state) => state.resources.resources || []);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Chargement depuis le backend
-  const fetchResourcesFromServer = async () => {
+  const refetchResources = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    setLoading(true);
     try {
-      const { data } = await axiosInstance.get('/resources/user-resources');
-
-      const normalized = (data || []).map((r) => ({
-        ...r,
-        amount: Number(r.amount) || 0,
-        // level n'est pas stocké sur la ressource côté BDD
-        level: Number(r.level) || 0,
-      }));
-
-      setResources(normalized);
+      await dispatch(fetchResources(userId)).unwrap();
+      setError(null);
     } catch (err) {
-      console.error('Error fetching resources from server:', err);
+      setError(err?.message || 'Impossible de rafraîchir les ressources.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    // 1er chargement
-    fetchResourcesFromServer();
-
-    // Refresh périodique (toutes les 3 secondes, par ex.)
-    const interval = setInterval(fetchResourcesFromServer, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const setResources = (payload) => dispatch(updateResources(payload));
 
   return (
     <ResourcesContext.Provider
       value={{
         resources,
         setResources,
-        refetchResources: fetchResourcesFromServer,
+        refetchResources,
+        loading,
+        error,
       }}
     >
       {children}

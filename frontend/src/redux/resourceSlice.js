@@ -6,7 +6,7 @@ import { logout } from './authSlice';
 export const fetchResources = createAsyncThunk('resources/fetchResources', async (userId, thunkAPI) => {
   try {
     const response = await axiosInstance.get(`/resources/${userId}`);
-    return response.data;
+    return response.data || [];
   } catch (error) {
     const status = error.response?.status;
 
@@ -15,7 +15,8 @@ export const fetchResources = createAsyncThunk('resources/fetchResources', async
       return thunkAPI.rejectWithValue({ status, message: 'Non autorisé : veuillez vous reconnecter.' });
     }
 
-    const message = error.response?.data?.message || error.message || 'Une erreur est survenue lors du chargement des ressources.';
+    const message =
+      error.response?.data?.message || error.message || 'Une erreur est survenue lors du chargement des ressources.';
     return thunkAPI.rejectWithValue({ status: status || 500, message });
   }
 });
@@ -23,13 +24,13 @@ export const fetchResources = createAsyncThunk('resources/fetchResources', async
 const resourceSlice = createSlice({
   name: 'resources',
   initialState: {
-    resources: {},
+    resources: [],
     loading: false,
     error: null,
   },
   reducers: {
     updateResources(state, action) {
-      state.resources = action.payload;
+      state.resources = action.payload || [];
     },
   },
   extraReducers: (builder) => {
@@ -39,12 +40,12 @@ const resourceSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchResources.fulfilled, (state, action) => {
-        state.resources = action.payload;
+        state.resources = action.payload || [];
         state.loading = false;
       })
       .addCase(fetchResources.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || action.error.message;
       });
   },
 });

@@ -1,40 +1,17 @@
 // src/components/Dashboard.js
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Menu from './Menu';
-import axiosInstance from '../utils/axiosInstance';
-import { useResources } from '../context/ResourcesContext';
 import './Dashboard.css';
+import useDashboardData from '../hooks/useDashboardData';
 
 const Dashboard = () => {
-  const [data, setData] = useState(null);
-  const { resources, setResources } = useResources();
+  const { dashboard, resources, loading, connectionStatus } = useDashboardData();
+  const { user, buildings, units } = dashboard;
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await axiosInstance.get('/dashboard');
-        setData(response.data);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    })();
-  }, []);
+  if (loading && !user?.username) return <div>Loading...</div>;
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await axiosInstance.get('/resources/user-resources');
-        setResources(data);
-      } catch (err) {
-        console.error('Error fetching user resources:', err);
-      }
-    })();
-  }, []);
-
-  if (!data) return <div>Loading...</div>;
-
-  const formatFileName = name =>
+  const formatFileName = (name) =>
     name
       .toLowerCase()
       .normalize('NFD')
@@ -48,21 +25,21 @@ const Dashboard = () => {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h1>Tableau de bord</h1>
+          <p className="dashboard-connection">{connectionStatus}</p>
         </div>
         <div className="dashboard-modules">
-
           <div className="dashboard-module">
             <h2>Informations</h2>
-            <p>Pseudo: {data.user.username}</p>
-            <p>Level: {data.user.level}</p>
-            <p>Points d'expérience: {data.user.points_experience}</p>
-            <p>Rang: {data.user.rang}</p>
+            <p>Pseudo: {user?.username}</p>
+            <p>Level: {user?.level}</p>
+            <p>Points d'expérience: {user?.points_experience}</p>
+            <p>Rang: {user?.rang}</p>
           </div>
 
           <div className="dashboard-module dashboard-resources">
             <h2>Ressources</h2>
             <ul>
-              {resources.map(r => {
+              {resources.map((r) => {
                 const amt = Math.floor(Number(r.amount) || 0);
                 return (
                   <li key={r.type}>
@@ -83,7 +60,7 @@ const Dashboard = () => {
           <div className="dashboard-module dashboard-buildings">
             <h2>Bâtiments</h2>
             <ul>
-              {data.buildings.map(b => (
+              {buildings.map((b) => (
                 <li key={b.id}>
                   <img
                     src={`./images/buildings/${formatFileName(b.name)}.png`}
@@ -101,7 +78,7 @@ const Dashboard = () => {
           <div className="dashboard-module dashboard-units">
             <h2>Unités</h2>
             <ul>
-              {data.units.map(u => (
+              {units.map((u) => (
                 <li key={u.id}>
                   <img
                     src={`./images/training/${formatFileName(u.name)}.png`}
@@ -115,7 +92,6 @@ const Dashboard = () => {
               ))}
             </ul>
           </div>
-
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../utils/axiosInstance';
 
 export const fetchDashboardData = createAsyncThunk('dashboard/fetchDashboardData', async () => {
-  const response = await axios.get('/api/dashboard');
+  const response = await axios.get('/dashboard');
   return response.data;
 });
 
@@ -12,6 +12,7 @@ const dashboardSlice = createSlice({
     user: {},
     resources: [],
     buildings: [],
+    units: [],
     messages: [],
     status: 'idle',
     error: null,
@@ -24,10 +25,12 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload.user;
-        state.resources = action.payload.resources;
-        state.buildings = action.payload.buildings;
-        state.messages = action.payload.messages;
+        state.user = action.payload.user || {};
+        state.resources = action.payload.resources || [];
+        state.buildings = action.payload.buildings || [];
+        state.units = action.payload.units || [];
+        state.messages = action.payload.messages || [];
+        state.error = null;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.status = 'failed';
