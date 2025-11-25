@@ -13,6 +13,7 @@ import Fleet from './components/Fleet';
 import Alliance from './components/Alliance';
 import Login from './components/Login';
 import Register from './components/Register';
+import Home from './pages/Home';
 import { ResourcesProvider } from './context/ResourcesContext';
 import PrivateRoute from './components/PrivateRoute';
 import './App.css';
@@ -106,7 +107,7 @@ function App() {
                 </PrivateRoute>
               )}
             />
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Home />} />
           </Routes>
           <Snackbar
             open={Boolean(combinedError)}
