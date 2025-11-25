@@ -12,7 +12,7 @@ const Loader = ({ label = 'Chargement...', size = 'md', center = false }) => {
 
   return (
     <div className={className} role="status" aria-live="polite">
-      <span className="ui-loader-spinner" aria-hidden="true" />
+      <span className="ui-loader-spinner" aria-hidden="true" data-testid="loader-spinner" />
       {label && <span className="ui-loader-label">{label}</span>}
     </div>
   );

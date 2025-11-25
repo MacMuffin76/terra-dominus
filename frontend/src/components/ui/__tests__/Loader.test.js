@@ -17,5 +17,6 @@ describe('Loader', () => {
     const loader = screen.getByRole('status');
     expect(loader).toHaveAttribute('aria-live', 'polite');
     expect(loader.querySelector('.ui-loader-spinner')).toBeTruthy();
+    expect(screen.getByTestId('loader-spinner')).toBeInTheDocument();
   });
 });

@@ -5,6 +5,21 @@ on:
   pull_request:
 
 jobs:
+  frontend-a11y-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install frontend dependencies
+        run: npm install
+      - name: Run accessibility lint
+        run: npm run lint:a11y
+
   frontend-unit:
     runs-on: ubuntu-latest
     defaults:

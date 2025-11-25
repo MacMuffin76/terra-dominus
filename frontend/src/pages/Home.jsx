@@ -62,11 +62,11 @@ const metrics = [
 
 const Home = () => {
   return (
-    <div className="home-page">
+    <main className="home-page" id="main-content" role="main" aria-labelledby="home-title">
       <section className="hero">
         <div className="hero-panel">
           <span className="pill">Stratégie temps réel</span>
-          <h1>Dominez votre univers avec Terra Dominus</h1>
+          <h1 id="home-title">Dominez votre univers avec Terra Dominus</h1>
           <p>
             Préparez vos troupes, orchestrez la production et dirigez l\'expansion de votre empire grâce à
             une interface moderne conçue pour les commandants exigeants.
@@ -130,7 +130,7 @@ const Home = () => {
         <div className="card-grid">
           {benefits.map((benefit) => (
             <div className="info-card" key={benefit.title}>
-              <div className="icon-badge" aria-hidden>
+              <div className="icon-badge" aria-hidden="true">
                 {benefit.icon}
               </div>
               <h3>{benefit.title}</h3>
@@ -152,7 +152,7 @@ const Home = () => {
         <div className="card-grid">
           {productHighlights.map((highlight) => (
             <div className="info-card" key={highlight.title}>
-              <div className="icon-badge" aria-hidden>
+              <div className="icon-badge" aria-hidden="true">
                 {highlight.icon}
               </div>
               <h3>{highlight.title}</h3>
@@ -206,7 +206,7 @@ const Home = () => {
           </Link>
         </div>
       </section>
-    </div>
+    </main>
   );
 };
 

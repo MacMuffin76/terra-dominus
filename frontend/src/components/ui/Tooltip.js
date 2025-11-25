@@ -5,9 +5,9 @@ import PropTypes from 'prop-types';
  * Affiche un tooltip simple au survol ou au focus clavier.
  */
 const Tooltip = ({ content, children }) => (
-  <span className="tooltip" tabIndex={0} aria-label={typeof content === 'string' ? content : undefined}>
+  <span className="tooltip" role="presentation">
     {children}
-    <span className="tooltip-bubble">{content}</span>
+    <span className="tooltip-bubble" aria-live="polite">{content}</span>
   </span>
 );
 

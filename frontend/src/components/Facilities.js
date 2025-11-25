@@ -111,10 +111,14 @@ const Facilities = () => {
 
         <div className="facilities-list">
           {(loading ? Array.from({ length: 3 }) : ordered).map((facility, idx) => (
-            <div
+            <button
+              type="button"
               key={facility?.id || `facility-skeleton-${idx}`}
-              className="facility-card"
+              className={`facility-card ${selectedFacility?.id === facility?.id ? 'selected' : ''}`}
               onClick={() => facility && handleFacilityClick(facility)}
+              aria-pressed={selectedFacility?.id === facility?.id}
+              aria-label={facility ? `${facility.name}, niveau ${facility.level}` : 'Chargement des installations'}
+              disabled={!facility}
             >
               {loading ? (
                 <Skeleton width="100%" height="200px" />
@@ -129,7 +133,7 @@ const Facilities = () => {
               <p>
                 {loading ? <Skeleton width="40%" /> : `Level: ${facility.level}`}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

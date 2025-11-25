@@ -46,21 +46,42 @@ body {
 }
 
 .facility-card {
-  width: calc(33.333% - 40px); /* Ajustez la largeur pour s'assurer que trois cartes s'affichent par ligne */
+  width: calc(33.333% - 24px);
   margin: 10px;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 12px; /* Rounded corners */
+  font: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border-radius: 12px;
   overflow: hidden;
-  background-color: #1c1c1c; /* Background color for the card */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  height: 280px; /* Fixed height for uniform size */
+  background: linear-gradient(140deg, var(--color-surface), var(--color-surface-raised));
+  border: 1px solid var(--color-border);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  min-height: 280px;
+  color: var(--color-text);
 }
 
 .facility-card:hover {
-  transform: translateY(-10px); /* Slight lift on hover */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+  transform: translateY(-6px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
+  border-color: var(--color-primary);
+}
+
+.facility-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  transform: translateY(-6px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.facility-card.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 12px 24px rgba(92, 225, 230, 0.25);
+}
+
+.facility-card:disabled {
+  cursor: progress;
+  opacity: 0.85;
 }
 
 .facility-image {
@@ -73,12 +94,12 @@ body {
 .facility-card h3 {
   margin: 5px 0; /* Reduced margin for less height */
   font-size: 1em; /* Adjusted font size */
-  color: #fff; /* White text color */
+  color: var(--color-text);
 }
 
 .facility-card p {
   margin: 3px 0; /* Reduced margin for less height */
-  color: #bbb; /* Light grey text color */
+  color: var(--color-muted-text);
   font-size: 0.9em; /* Adjusted font size */
 }
 

@@ -83,7 +83,7 @@ const Menu = () => {
             aria-label={`Passer en mode ${theme === 'dark' ? 'clair' : 'sombre'}`}
             aria-pressed={theme === 'dark'}
           >
-            <span className="theme-icon" aria-hidden>
+            <span className="theme-icon" aria-hidden="true">
               {theme === 'dark' ? '🌙' : '☀️'}
             </span>
             <span className="theme-label">{theme === 'dark' ? 'Mode sombre' : 'Mode clair'}</span>

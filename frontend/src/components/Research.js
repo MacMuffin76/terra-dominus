@@ -77,10 +77,14 @@ const Research = () => {
 
         <div className="research-list">
           {(loading ? Array.from({ length: 6 }) : data).map((research, idx) => (
-            <div
+            <button
+              type="button"
               key={research?.id || `research-skeleton-${idx}`}
-              className="research-card"
+              className={`research-card ${selectedResearch?.id === research?.id ? 'selected' : ''}`}
               onClick={() => research && handleResearchClick(research)}
+              aria-pressed={selectedResearch?.id === research?.id}
+              aria-label={research ? `${research.name}, niveau ${research.level}` : 'Chargement des recherches'}
+              disabled={!research}
             >
               {loading ? (
                 <Skeleton width="100%" height="180px" />
@@ -93,7 +97,7 @@ const Research = () => {
               )}
               <h3>{loading ? <Skeleton width="70%" /> : research.name}</h3>
               <p>{loading ? <Skeleton width="40%" /> : `Niveau: ${research.level}`}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

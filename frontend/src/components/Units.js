@@ -43,10 +43,13 @@ const Units = () => {
 
         <div className="units-list">
           {units.map((unit) => (
-            <div
+            <button
+              type="button"
               key={unit.id}
-              className="unit-card"
+              className={`unit-card ${selected?.id === unit.id ? 'selected' : ''}`}
               onClick={() => setSelected(unit)}
+              aria-pressed={selected?.id === unit.id}
+              aria-label={`${unit.name}, quantité ${unit.quantity}`}
             >
               <img
                 src={`/images/training/${formatFileName(unit.name)}.png`}
@@ -55,7 +58,7 @@ const Units = () => {
               />
               <h3>{unit.name}</h3>
               <p>Quantité : {unit.quantity}</p>
-            </div>
+            </button>
           ))}
         </div>
 

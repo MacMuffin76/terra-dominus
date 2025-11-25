@@ -108,10 +108,14 @@ const Training = () => {
 
         <div className="training-list">
           {(loading ? Array.from({ length: 4 }) : trainings).map((training, idx) => (
-            <div
+            <button
+              type="button"
               key={training?.id || `training-skeleton-${idx}`}
-              className="training-card"
+              className={`training-card ${selectedTraining?.id === training?.id ? 'selected' : ''}`}
               onClick={() => training && handleTrainingClick(training)}
+              aria-pressed={selectedTraining?.id === training?.id}
+              aria-label={training ? `${training.name}, niveau ${training.level ?? 0}` : 'Chargement des centres'}
+              disabled={!training}
             >
               {loading ? (
                 <Skeleton width="100%" height="180px" />
@@ -124,7 +128,7 @@ const Training = () => {
               )}
               <h3>{loading ? <Skeleton width="65%" /> : training.name}</h3>
               <p>{loading ? <Skeleton width="45%" /> : `Niveau : ${training.level ?? 0}`}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

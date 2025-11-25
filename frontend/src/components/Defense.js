@@ -71,10 +71,14 @@ const Defense = () => {
 
         <div className="defense-list">
           {(loading ? Array.from({ length: 4 }) : data).map((def, idx) => (
-            <div
+            <button
+              type="button"
               key={def?.id || `defense-skeleton-${idx}`}
-              className="defense-card"
+              className={`defense-card ${selectedDefense?.id === def?.id ? 'selected' : ''}`}
               onClick={() => def && handleDefenseClick(def)}
+              aria-pressed={selectedDefense?.id === def?.id}
+              aria-label={def ? `${def.name}, quantité ${def.quantity}` : 'Chargement des défenses'}
+              disabled={!def}
             >
               {loading ? (
                 <Skeleton width="100%" height="160px" />
@@ -87,7 +91,7 @@ const Defense = () => {
               )}
               <h3>{loading ? <Skeleton width="60%" /> : def.name}</h3>
               <p>{loading ? <Skeleton width="50%" /> : `Quantité: ${def.quantity}`}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
