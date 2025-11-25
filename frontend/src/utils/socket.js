@@ -1,6 +1,7 @@
 // frontend/src/utils/socket.js
 
 import { io } from 'socket.io-client';
+import { safeStorage } from './safeStorage';
 
 const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
 const socket = io(socketUrl);
@@ -11,7 +12,7 @@ export const sendUserId = (userId, event) => {
 
 // Envoyer l'ID de l'utilisateur lors de la connexion
 socket.on('connect', () => {
-    const userId = localStorage.getItem('userId'); // Assurez-vous que l'ID utilisateur est stocké de manière sécurisée
+    const userId = safeStorage.getItem('userId'); // Assurez-vous que l'ID utilisateur est stocké de manière sécurisée
     if (userId) {
         sendUserId(userId, 'user_connected');
     }
@@ -19,7 +20,7 @@ socket.on('connect', () => {
 
 // Envoyer l'ID de l'utilisateur lors de la déconnexion
 window.addEventListener('beforeunload', () => {
-    const userId = localStorage.getItem('userId');
+    const userId = safeStorage.getItem('userId');
     if (userId) {
         sendUserId(userId, 'user_disconnected');
     }
@@ -27,7 +28,7 @@ window.addEventListener('beforeunload', () => {
 
 // Envoyer l'ID de l'utilisateur lors du changement de page
 window.addEventListener('hashchange', () => {
-    const userId = localStorage.getItem('userId');
+    const userId = safeStorage.getItem('userId');
     if (userId) {
         sendUserId(userId, 'page_change');
     }

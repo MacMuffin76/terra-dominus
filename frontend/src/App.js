@@ -1,6 +1,6 @@
 // frontend/src/App.js
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Snackbar, Alert } from '@mui/material';
 import Dashboard from './components/Dashboard';
@@ -17,9 +17,23 @@ import { ResourcesProvider } from './context/ResourcesContext';
 import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 import useDashboardData from './hooks/useDashboardData';
+import { API_ERROR_EVENT_NAME } from './utils/apiErrorHandler';
 
 function App() {
+  const [apiError, setApiError] = useState(null);
   const { error, clearError } = useDashboardData();
+
+  useEffect(() => {
+    const handleApiError = (event) => setApiError(event.detail);
+    window.addEventListener(API_ERROR_EVENT_NAME, handleApiError);
+    return () => window.removeEventListener(API_ERROR_EVENT_NAME, handleApiError);
+  }, []);
+
+  const combinedError = apiError || error;
+  const handleClose = () => {
+    clearError();
+    setApiError(null);
+  };
 
   return (
     <ResourcesProvider>
@@ -95,13 +109,13 @@ function App() {
             <Route path="/" element={<Login />} />
           </Routes>
           <Snackbar
-            open={Boolean(error)}
+            open={Boolean(combinedError)}
             autoHideDuration={6000}
-            onClose={clearError}
+            onClose={handleClose}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           >
-            <Alert severity="error" onClose={clearError} sx={{ width: '100%' }}>
-              {error}
+            <Alert severity="error" onClose={handleClose} sx={{ width: '100%' }}>
+              {combinedError}
             </Alert>
           </Snackbar>
         </div>

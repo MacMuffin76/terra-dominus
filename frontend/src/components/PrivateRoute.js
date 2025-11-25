@@ -1,10 +1,11 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, useLocation } from 'react-router-dom';
+import { safeStorage } from '../utils/safeStorage';
 
 const PrivateRoute = ({ children }) => {
   const { token, isAuthenticated } = useSelector((state) => state.auth);
-  const storedToken = localStorage.getItem('jwtToken');
+  const storedToken = safeStorage.getItem('jwtToken');
   const location = useLocation();
 
   if (!token && !storedToken && !isAuthenticated) {

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../redux/authSlice';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import { safeStorage } from '../utils/safeStorage';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -24,7 +25,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      localStorage.setItem('jwtToken', token); // Stocker le token dans localStorage
+      safeStorage.setItem('jwtToken', token); // Stocker le token dans localStorage même si localStorage est indisponible
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate, token]);
@@ -50,7 +51,7 @@ const Login = () => {
           required
         />
         <button type="submit">Login</button>
-        {error && <p className="error">{error.message}</p>}
+        {error && <p className="error">{error.message || 'Connexion échouée. Veuillez réessayer.'}</p>}
       </form>
       <p>
         Don't have an account? <a href="/register">Register here</a>

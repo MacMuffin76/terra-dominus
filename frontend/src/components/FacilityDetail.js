@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import './FacilityDetail.css';
 import { useResources } from '../context/ResourcesContext';
+import { getApiErrorMessage } from '../utils/apiErrorHandler';
+import { safeStorage } from '../utils/safeStorage';
 
 // Formate un taux (si un jour tu as des valeurs /s sur les facilities)
 const formatRate = (value) => {
@@ -62,7 +64,7 @@ const FacilityDetail = ({
           return r;
         });
         setResources(updatedResources);
-        localStorage.setItem(
+        safeStorage.setItem(
           'resourcesData',
           JSON.stringify(updatedResources)
         );
@@ -71,8 +73,8 @@ const FacilityDetail = ({
       await refreshFacility();
       onFacilityUpgraded && onFacilityUpgraded(detail);
     } catch (err) {
-      console.error('Erreur upgrade facility:', err);
-      alert(err.response?.data?.message || "Erreur lors de l’amélioration");
+      const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
+      alert(message);
     }
   };
 
@@ -84,8 +86,8 @@ const FacilityDetail = ({
       await refreshFacility();
       onFacilityDowngraded && onFacilityDowngraded(detail);
     } catch (err) {
-      console.error('Erreur downgrade facility:', err);
-      alert(err.response?.data?.message || 'Erreur lors du rétrogradage');
+      const message = getApiErrorMessage(err, 'Erreur lors du rétrogradage');
+      alert(message);
     }
   };
 

@@ -5,6 +5,7 @@ import axiosInstance from '../utils/axiosInstance';
 import { fetchDashboardData } from '../redux/dashboardSlice';
 import { fetchResources, updateResources } from '../redux/resourceSlice';
 import { loginSuccess } from '../redux/authSlice';
+import { safeStorage } from '../utils/safeStorage';
 
 const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
@@ -22,8 +23,8 @@ const useDashboardData = () => {
   const [connectionStatus, setConnectionStatus] = useState('Initialisation de la connexion...');
   const [notifications, setNotifications] = useState([]);
 
-  const userId = authUser?.id || localStorage.getItem('userId');
-  const storedToken = token || localStorage.getItem('jwtToken');
+  const userId = authUser?.id || safeStorage.getItem('userId');
+  const storedToken = token || safeStorage.getItem('jwtToken');
 
   const loadUser = useCallback(async () => {
     if (!userId) return;

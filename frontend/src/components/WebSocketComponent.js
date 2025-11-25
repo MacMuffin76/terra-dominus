@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
+import { safeStorage } from '../utils/safeStorage';
 
 const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
@@ -11,7 +12,7 @@ const WebSocketComponent = () => {
   const [notifications, setNotifications] = useState([]);
 
   const { token: authToken } = useSelector((state) => state.auth);
-  const storedToken = authToken || localStorage.getItem('jwtToken');
+  const storedToken = authToken || safeStorage.getItem('jwtToken');
 
   const socket = useMemo(() => {
     if (!storedToken) {

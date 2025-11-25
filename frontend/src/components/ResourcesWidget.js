@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { useResources } from '../context/ResourcesContext';
 import './ResourcesWidget.css';
+import { getApiErrorMessage } from '../utils/apiErrorHandler';
+import { safeStorage } from '../utils/safeStorage';
 
 const ResourcesWidget = () => {
   const { resources, setResources } = useResources();
@@ -27,10 +29,10 @@ const ResourcesWidget = () => {
         }));
 
         setResources(normalized);
-        localStorage.setItem('resourcesData', JSON.stringify(normalized));
+        safeStorage.setItem('resourcesData', JSON.stringify(normalized));
         lastTick = Date.now();
       } catch (err) {
-        console.error('Error fetching resources:', err);
+        getApiErrorMessage(err, 'Impossible de charger les ressources.');
       }
     };
 
@@ -54,7 +56,7 @@ const ResourcesWidget = () => {
           };
         });
 
-        localStorage.setItem('resourcesData', JSON.stringify(updated));
+        safeStorage.setItem('resourcesData', JSON.stringify(updated));
         return updated;
       });
     }, 1000);

@@ -4,6 +4,10 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import './ResourceDetail.css';
 import { useResources } from '../context/ResourcesContext';
+import { getApiErrorMessage } from '../utils/apiErrorHandler';
+import { safeStorage } from '../utils/safeStorage';
+import PropTypes from 'prop-types';
+
 
 const buildingToResourceType = {
   "Mine d'or": 'or',
@@ -51,7 +55,7 @@ const ResourceDetail = ({
           : r
       );
       setResources(updated);
-      localStorage.setItem('resourcesData', JSON.stringify(updated));
+      safeStorage.setItem('resourcesData', JSON.stringify(updated));
     }
   };
 
@@ -82,7 +86,7 @@ const ResourceDetail = ({
           return r;
         });
         setResources(updatedResources);
-        localStorage.setItem(
+        safeStorage.setItem(
           'resourcesData',
           JSON.stringify(updatedResources)
         );
@@ -91,10 +95,11 @@ const ResourceDetail = ({
       await refreshBuilding();
       onBuildingUpgraded(detail);
     } catch (err) {
-      console.error('Erreur upgrade:', err);
-      alert(err.response?.data?.message || "Erreur lors de l’amélioration");
+      const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
+      alert(message);
     }
   };
+
 
   const handleDowngrade = async () => {
     try {
@@ -104,8 +109,8 @@ const ResourceDetail = ({
       await refreshBuilding();
       onBuildingDowngraded(detail);
     } catch (err) {
-      console.error('Erreur downgrade:', err);
-      alert(err.response?.data?.message || 'Erreur lors du rétrogradage');
+      const message = getApiErrorMessage(err, 'Erreur lors du rétrogradage');
+      alert(message);
     }
   };
 
@@ -210,6 +215,16 @@ const ResourceDetail = ({
       </div>
     </div>
   );
+};
+
+ResourceDetail.propTypes = {
+  building: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    level: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }).isRequired,
+  onBuildingUpgraded: PropTypes.func.isRequired,
+  onBuildingDowngraded: PropTypes.func.isRequired,
 };
 
 export default ResourceDetail;

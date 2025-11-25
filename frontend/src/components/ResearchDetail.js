@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import './ResearchDetail.css';
 import { useResources } from '../context/ResourcesContext';
+import { getApiErrorMessage } from '../utils/apiErrorHandler';
+import { safeStorage } from '../utils/safeStorage';
 
 // Formate un montant de ressource (ENTIER + séparateur de milliers)
 const formatAmount = (value) => {
@@ -24,7 +26,7 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
       );
       setDetail(data);
     } catch (error) {
-      console.error('Error fetching research details:', error);
+      getApiErrorMessage(error, 'Impossible de récupérer cette recherche.');
     }
   };
 
@@ -59,7 +61,7 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
         });
 
         setResources(updatedResources);
-        localStorage.setItem(
+        safeStorage.setItem(
           'resourcesData',
           JSON.stringify(updatedResources)
         );
@@ -68,8 +70,8 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
       await refreshResearch();
       onResearchUpgraded && onResearchUpgraded(detail);
     } catch (err) {
-      console.error('Erreur upgrade research:', err);
-      alert(err.response?.data?.message || "Erreur lors de l’amélioration");
+      const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
+      alert(message);
     }
   };
 
@@ -81,8 +83,8 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
       );
       onResearchDestroyed && onResearchDestroyed(detail);
     } catch (err) {
-      console.error('Erreur destroy research:', err);
-      alert(err.response?.data?.message || 'Erreur lors de la destruction');
+      const message = getApiErrorMessage(err, 'Erreur lors de la destruction');
+      alert(message);
     }
   };
 
