@@ -1,13 +1,16 @@
 // frontend/src/components/ResourceDetail.js
-
-import React, { useEffect, useState } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import React, { useEffect, useMemo, useState } from 'react';
 import './ResourceDetail.css';
 import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
 import PropTypes from 'prop-types';
-import { Button } from './ui';
+import { Button, Loader } from './ui';
+import {
+  downgradeResourceBuilding,
+  getResourceBuildingDetail,
+  upgradeResourceBuilding,
+} from '../api/resourceBuildings';
 
 
 const buildingToResourceType = {
@@ -34,21 +37,35 @@ const ResourceDetail = ({
   building,
   onBuildingUpgraded,
   onBuildingDowngraded,
-}) => {
-   const [detail, setDetail] = useState(null);
+}) => {const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
   const { resources, setResources } = useResources();
 
-  const refreshBuilding = async (signal) => {
-    setLoading(true);
+  const isBuilding = useMemo(
+    () => detail?.status === 'building',
+    [detail?.status]
+  );
+
+  const formatRemaining = (seconds) => {
+    if (seconds === null || seconds === undefined) return '--:--:--';
+    const safeSeconds = Math.max(0, seconds);
+    const hrs = String(Math.floor(safeSeconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(safeSeconds % 60).padStart(2, '0');
+
+    return `${hrs}:${mins}:${secs}`;
+  };
+
+  const refreshBuilding = async (signal, { silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
-      const { data } = await axiosInstance.get(
-        `/resources/resource-buildings/${building.id}`,
-        { signal }
-      );
+      const data = await getResourceBuildingDetail(building.id, signal);
       setDetail(data);
 
       const resType = buildingToResourceType[building.name];
@@ -65,9 +82,11 @@ const ResourceDetail = ({
         setResources(updated);
         safeStorage.setItem('resourcesData', JSON.stringify(updated));
       }
+      return data;
     } catch (err) {
-      if (err.name === 'CanceledError') return;
+      if (err.name === 'CanceledError') return null;
       setError(err.message || "Impossible de charger les détails du bâtiment.");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -80,15 +99,16 @@ const ResourceDetail = ({
     return () => controller.abort();
   }, [building.id]);
 
-  const handleUpgrade = async () => {
+ const handleUpgrade = async () => {
     try {
-      const { data } = await axiosInstance.post(
-        `/resources/resource-buildings/${building.id}/upgrade`
-      );
+      const upgradeData = await upgradeResourceBuilding(building.id);
 
-      if (data.message) {
-        alert(data.message);
-      } else if (detail) {
+      if (!upgradeData || !detail) {
+        await refreshBuilding();
+        return;
+      }
+
+      if (detail) {
         // Déduction des ressources côté front (visuel)
         const costList = detail.nextLevelCost || [];
         const updatedResources = resources.map((r) => {
@@ -109,8 +129,14 @@ const ResourceDetail = ({
         );
       }
 
-      await refreshBuilding();
-      onBuildingUpgraded(detail);
+      const updatedDetail = await refreshBuilding();
+      if (updatedDetail) {
+        onBuildingUpgraded(updatedDetail);
+      }
+
+      if (upgradeData.message && upgradeData.status !== 'building') {
+        alert(upgradeData.message);
+      }
     } catch (err) {
       const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
       alert(message);
@@ -120,16 +146,48 @@ const ResourceDetail = ({
 
   const handleDowngrade = async () => {
     try {
-      await axiosInstance.post(
-        `/resources/resource-buildings/${building.id}/downgrade`
-      );
-      await refreshBuilding();
-      onBuildingDowngraded(detail);
+      await downgradeResourceBuilding(building.id);
+      const updatedDetail = await refreshBuilding();
+      if (updatedDetail) {
+        onBuildingDowngraded(updatedDetail);
+      }
     } catch (err) {
       const message = getApiErrorMessage(err, 'Erreur lors du rétrogradage');
       alert(message);
     }
   };
+  useEffect(() => {
+    if (!detail?.constructionEndsAt) {
+      setRemainingSeconds(null);
+      return undefined;
+    }
+
+    const end = new Date(detail.constructionEndsAt).getTime();
+    const updateRemaining = () => {
+      const diffSeconds = Math.ceil((end - Date.now()) / 1000);
+      setRemainingSeconds(Math.max(0, diffSeconds));
+    };
+
+    updateRemaining();
+    const intervalId = setInterval(updateRemaining, 1000);
+    return () => clearInterval(intervalId);
+  }, [detail?.constructionEndsAt]);
+
+  useEffect(() => {
+    if (isBuilding && remainingSeconds === 0) {
+      refreshBuilding();
+    }
+  }, [isBuilding, remainingSeconds]);
+
+  useEffect(() => {
+    if (!isBuilding) return undefined;
+
+    const intervalId = setInterval(() => {
+      refreshBuilding(undefined, { silent: true });
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [isBuilding]);
 
   if (loading) {
     return <p>Chargement…</p>;
@@ -170,6 +228,18 @@ const ResourceDetail = ({
         <div className="resource-detail-subtitle">
           NIVEAU {detail.level}
         </div>
+        
+        {isBuilding && (
+          <div className="resource-detail-status" aria-live="polite">
+            <span className="badge badge-building">Construction en cours</span>
+            <div className="timer-wrapper">
+              <Loader size="sm" label="" />
+              <span className="timer-value">
+                Fin dans : {formatRemaining(remainingSeconds)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="building-stats">
@@ -236,7 +306,7 @@ const ResourceDetail = ({
       <div className="buttons">
         <Button
           onClick={handleUpgrade}
-          disabled={detail.inProgress}
+          disabled={isBuilding}
           variant="danger"
           size="lg"
         >

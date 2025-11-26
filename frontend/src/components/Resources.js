@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
-import axiosInstance from '../utils/axiosInstance';
 import './Resources.css';
 import ResourceDetail from './ResourceDetail';
 import ResourcesWidget from './ResourcesWidget';
 import { Alert, Loader, Skeleton } from './ui';
+import {
+  getAllowedResourceBuildings,
+  getResourceBuildings,
+} from '../api/resourceBuildings';
 
 const Resources = () => {
   const [data, setData] = useState([]);
@@ -22,9 +25,9 @@ const Resources = () => {
     setLoading(true);
     setError(null);
     try {
-      const [{ data: allowed }, { data: buildings }] = await Promise.all([
-        axiosInstance.get('/resources/resource-buildings/allowed'),
-        axiosInstance.get('/resources/resource-buildings'),
+      const [allowed, buildings] = await Promise.all([
+        getAllowedResourceBuildings(),
+        getResourceBuildings(),
       ]);
 
       setAllowedBuildings(allowed);

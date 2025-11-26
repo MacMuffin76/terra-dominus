@@ -44,6 +44,49 @@
   letter-spacing: 3px;
 }
 
+.resource-detail-status {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-building {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd166;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.timer-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-wrapper .ui-loader {
+  width: 20px;
+  height: 20px;
+}
+
+.timer-value {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
 .resource-detail-subtitle {
   margin-top: 4px;
   font-size: 14px;
