@@ -38,6 +38,29 @@ const Building = sequelize.define('Building', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  build_status: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const start = this.getDataValue('build_start');
+      const duration = Number(this.getDataValue('build_duration')) || 0;
+
+      if (!start || !duration) return 'idle';
+
+      const end = new Date(start.getTime() + duration * 1000);
+      return end > new Date() ? 'in_progress' : 'ready';
+    },
+  },
+  constructionEndsAt: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const start = this.getDataValue('build_start');
+      const duration = Number(this.getDataValue('build_duration')) || 0;
+
+      if (!start || !duration) return null;
+
+      return new Date(start.getTime() + duration * 1000);
+    },
+  },
   building_type_id: {
     type: DataTypes.INTEGER,
     allowNull: false,

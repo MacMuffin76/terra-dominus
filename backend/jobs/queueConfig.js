@@ -6,6 +6,7 @@ const queueNames = {
   CONSTRUCTION: 'construction',
   PRODUCTION: 'production',
   COMBAT: 'combat',
+  RESOURCE_UPGRADE: 'resource-upgrade',
 };
 
 const connection = {

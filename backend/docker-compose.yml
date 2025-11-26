@@ -1,0 +1,8 @@
+services:
+  redis:
+    image: redis:6.2
+    container_name: terra_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped

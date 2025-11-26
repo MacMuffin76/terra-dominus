@@ -3,6 +3,7 @@ const Resource = require('../../../models/Resource');
 const Building = require('../../../models/Building');
 const ResourceCost = require('../../../models/ResourceCost');
 const Entity = require('../../../models/Entity');
+const { getQueue, queueNames, serializeJobData } = require('../../../jobs/queueConfig');
 const { getUserMainCity } = require('../../../utils/cityUtils');
 const { getProductionPerSecond, getBuildDurationSeconds } = require('../../../utils/balancing');
 const { calculateEnergyProduction } = require('../../../utils/resourceProduction');
@@ -63,6 +64,38 @@ class ResourceService {
     });
   }
 
+  getBuildingState(building) {
+    const start = building.build_start ? new Date(building.build_start) : null;
+    const duration = Number(building.build_duration) || 0;
+    const now = new Date();
+
+    let status = 'idle';
+    let constructionEndsAt = null;
+
+    if (start && duration) {
+      constructionEndsAt = new Date(start.getTime() + duration * 1000);
+      status = constructionEndsAt > now ? 'in_progress' : 'ready';
+    }
+
+    const etaSeconds = constructionEndsAt
+      ? Math.max(0, Math.ceil((constructionEndsAt.getTime() - now.getTime()) / 1000))
+      : 0;
+
+    return { status, constructionEndsAt, etaSeconds };
+  }
+
+  scheduleResourceUpgradeJob({ buildingId, userId, cityId, delayMs }) {
+    const queue = getQueue(queueNames.RESOURCE_UPGRADE);
+
+    return queue.add(
+      'resource-building-upgrade',
+      serializeJobData({ buildingId, userId, cityId }),
+      {
+        delay: Math.max(0, delayMs),
+      }
+    );
+  }
+
   async getResourceBuildings(userId) {
     const city = await this.withCity(userId);
 
@@ -74,6 +107,17 @@ class ResourceService {
         },
       },
       order: [['id', 'ASC']],
+    });
+
+    
+    return buildings.map((building) => {
+      const { status, constructionEndsAt, etaSeconds } = this.getBuildingState(building);
+      return {
+        ...building.toJSON(),
+        status,
+        constructionEndsAt,
+        remainingTime: etaSeconds,
+      };
     });
   }
 
@@ -93,24 +137,7 @@ class ResourceService {
       throw error;
     }
 
-    let inProgress = false;
-    let remainingTime = 0;
-
-    if (building.build_start && building.build_duration) {
-      const now = Date.now();
-      const started = new Date(building.build_start).getTime();
-      const elapsed = (now - started) / 1000;
-      const total = Number(building.build_duration) || 0;
-
-      if (elapsed < total) {
-        inProgress = true;
-        remainingTime = Math.ceil(total - elapsed);
-      } else {
-        building.build_start = null;
-        building.build_duration = null;
-        await building.save();
-      }
-    }
+    const { status, constructionEndsAt, etaSeconds } = this.getBuildingState(building);
 
     const currentLevel = Number(building.level) || 0;
     const nextLevel = currentLevel + 1;
@@ -141,8 +168,9 @@ class ResourceService {
       level: currentLevel,
       build_start: building.build_start,
       build_duration: building.build_duration,
-      inProgress,
-      remainingTime,
+      status,
+      constructionEndsAt,
+      remainingTime: etaSeconds,
       production_rate,
       next_production_rate,
       buildDuration,
@@ -163,32 +191,30 @@ class ResourceService {
             throw error;
           }
 
-          if (building.build_start && building.build_duration) {
-            const now = Date.now();
-            const started = new Date(building.build_start).getTime();
-            const elapsed = (now - started) / 1000;
-            const total = Number(building.build_duration) || 0;
+          const { status } = this.getBuildingState(building);
 
-            if (elapsed < total) {
-              const error = new Error('Construction déjà en cours pour ce bâtiment.');
-              error.status = 400;
-              throw error;
-            } else {
-              const currentVersion = Number(building.version) || 0;
-              const [affected] = await Building.update(
-                {
-                  build_start: null,
-                  build_duration: null,
-                  version: currentVersion + 1,
-                },
-                {
-                  where: { id: building.id, version: currentVersion },
-                  transaction,
-                }
-              );
-              this.assertOptimisticUpdate(affected);
-              building = await this.reloadBuildingWithLock(city.id, buildingId, transaction);
-            }
+          if (status === 'in_progress') {
+            const error = new Error('Construction déjà en cours pour ce bâtiment.');
+            error.status = 400;
+            throw error;
+          }
+
+          if (status === 'ready') {
+            const currentVersion = Number(building.version) || 0;
+            const [affected] = await Building.update(
+              {
+                build_start: null,
+                build_duration: null,
+                level: Number(building.level) + 1,
+                version: currentVersion + 1,
+              },
+              {
+                where: { id: building.id, version: currentVersion },
+                transaction,
+              }
+            );
+            this.assertOptimisticUpdate(affected);
+            building = await this.reloadBuildingWithLock(city.id, buildingId, transaction);
           }
 
           const currentLevel = Number(building.level) || 0;
@@ -250,7 +276,6 @@ class ResourceService {
 
           const [affected, updatedBuildings] = await Building.update(
             {
-              level: nextLevel,
               build_start,
               build_duration: buildDuration,
               version: currentVersion + 1,
@@ -265,14 +290,25 @@ class ResourceService {
           this.assertOptimisticUpdate(affected);
           const updatedBuilding = updatedBuildings?.[0] || (await this.reloadBuildingWithLock(city.id, buildingId, transaction));
 
+          transaction.afterCommit(() =>
+            this.scheduleResourceUpgradeJob({
+              buildingId: updatedBuilding.id,
+              userId,
+              cityId: city.id,
+              delayMs: buildDuration * 1000,
+            })
+          );
+
           return {
-            message: 'Bâtiment amélioré.',
+            message: 'Amélioration en cours.',
             id: updatedBuilding.id,
             name: updatedBuilding.name,
-            level: Number(updatedBuilding.level) || nextLevel,
+            level: Number(updatedBuilding.level) || currentLevel,
             build_start: updatedBuilding.build_start,
             build_duration: updatedBuilding.build_duration,
             buildDuration,
+            status: 'in_progress',
+            constructionEndsAt: updatedBuilding.constructionEndsAt,
           };
         });
       } catch (err) {
@@ -300,6 +336,13 @@ class ResourceService {
       if (!building) {
         const error = new Error('Bâtiment introuvable.');
         error.status = 404;
+        throw error;
+      }
+
+      const { status } = this.getBuildingState(building);
+      if (status === 'in_progress') {
+        const error = new Error('Impossible de modifier un bâtiment en construction.');
+        error.status = 400;
         throw error;
       }
 
@@ -345,8 +388,75 @@ class ResourceService {
       throw error;
     }
 
+    const { status } = this.getBuildingState(building);
+    if (status === 'in_progress') {
+      const error = new Error('Impossible de détruire un bâtiment en construction.');
+      error.status = 400;
+      throw error;
+    }
+
+
     await building.destroy();
     return { message: 'Bâtiment détruit.' };
+  }
+
+  async finalizeResourceUpgrade(buildingId, userId) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        return await this.transactionProvider(async (transaction) => {
+          const building = await Building.findOne({
+            where: { id: buildingId },
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
+
+          if (!building) {
+            const error = new Error('Bâtiment introuvable.');
+            error.status = 404;
+            throw error;
+          }
+
+          const { status, constructionEndsAt } = this.getBuildingState(building);
+
+          if (status === 'idle') {
+            return building;
+          }
+
+          if (status === 'in_progress' && constructionEndsAt && constructionEndsAt > new Date()) {
+            const delayMs = constructionEndsAt.getTime() - Date.now();
+            transaction.afterCommit(() =>
+              this.scheduleResourceUpgradeJob({ buildingId, userId, cityId: building.city_id, delayMs })
+            );
+            return building;
+          }
+
+          const currentLevel = Number(building.level) || 0;
+          const currentVersion = Number(building.version) || 0;
+          const [affected, updatedBuildings] = await Building.update(
+            {
+              level: currentLevel + 1,
+              build_start: null,
+              build_duration: null,
+              version: currentVersion + 1,
+            },
+            {
+              where: { id: building.id, version: currentVersion },
+              transaction,
+              returning: true,
+            }
+          );
+
+          this.assertOptimisticUpdate(affected);
+          return updatedBuildings?.[0] || (await this.reloadBuildingWithLock(building.city_id, building.id, transaction));
+        });
+      } catch (err) {
+        if (err.status === 409 && attempt < 2) {
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new Error('Unable to finalize building upgrade');
   }
 
   async getUserResources(userId) {
@@ -382,44 +492,34 @@ class ResourceService {
       for (const building of buildings) {
         let effectiveLevel = Number(building.level) || 0;
 
-        if (building.build_start && building.build_duration) {
-          const started = new Date(building.build_start).getTime();
-          const elapsed = (now.getTime() - started) / 1000;
-          const total = Number(building.build_duration) || 0;
+        const { status, constructionEndsAt } = this.getBuildingState(building);
 
-          if (elapsed >= total) {
-            const currentVersion = Number(building.version) || 0;
-            buildingUpdates.push({
-              id: building.id,
-              version: currentVersion,
-            });
+        if (status !== 'idle' && constructionEndsAt && constructionEndsAt <= now) {
+          const currentVersion = Number(building.version) || 0;
+          const [affected] = await Building.update(
+            {
+              build_start: null,
+              build_duration: null,
+              level: effectiveLevel + 1,
+              version: currentVersion + 1,
+            },
+            {
+              where: { id: building.id, version: currentVersion },
+              transaction,
+            }
+          );
 
-            building.build_start = null;
-            building.build_duration = null;
-            building.version = currentVersion + 1;
-          } else {
-            effectiveLevel = Math.max(0, effectiveLevel - 1);
-          }
+          this.assertOptimisticUpdate(affected);
+          effectiveLevel += 1;
+          building.build_start = null;
+          building.build_duration = null;
+          building.version = currentVersion + 1;
         }
 
         effectiveLevelsByName.set(building.name, effectiveLevel);
       }
 
-      for (const bUpdate of buildingUpdates) {
-        const [affected] = await Building.update(
-          {
-            build_start: null,
-            build_duration: null,
-            version: bUpdate.version + 1,
-          },
-          {
-            where: { id: bUpdate.id, version: bUpdate.version },
-            transaction,
-          }
-        );
-
-        this.assertOptimisticUpdate(affected);
-      }
+      
 
       const hangarLevel = effectiveLevelsByName.get('Hangar') || 0;
       const reservoirLevel = effectiveLevelsByName.get('Réservoir') || 0;
