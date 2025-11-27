@@ -41,7 +41,8 @@ const ResourceDetail = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
-  const { resources, setResources } = useResources();
+  const [ resources, setResources ] = useResources();
+
 
   const isBuilding = useMemo(
     () => detail?.status === 'building',
@@ -58,39 +59,57 @@ const ResourceDetail = ({
     return `${hrs}:${mins}:${secs}`;
   };
 
-  const refreshBuilding = async (signal, { silent = false } = {}) => {
-    if (!silent) {
-      setLoading(true);
+const refreshBuilding = async (signal, { silent = false } = {}) => {
+  if (!building || !building.id) return null;
+
+  if (!silent) {
+    setLoading(true);
+  }
+  setError(null);
+
+  try {
+    const data = await getResourceBuildingDetail(building.id, signal);
+
+    if (!data) return null;
+
+    setDetail(data);
+
+    if (data.isUnderConstruction && data.remainingSeconds) {
+      setRemainingSeconds(data.remainingSeconds);
+    } else {
+      setRemainingSeconds(null);
     }
-    setError(null);
 
-    try {
-      const data = await getResourceBuildingDetail(building.id, signal);
-      setDetail(data);
+    if (data.resources) {
+      setResources((prevResources) => {
+        const updatedResources = prevResources.map((res) => {
+          const updated = data.resources.find((r) => r.type === res.type);
+          return updated ? { ...res, ...updated } : res;
+        });
 
-      const resType = buildingToResourceType[building.name];
-
-      if (resType) {
-        const updated = resources.map((r) =>
-          r.type === resType
-            ? {
-                ...r,
-                level: Number(data.level) || 0,
-              }
-            : r
-        );
-        setResources(updated);
-        safeStorage.setItem('resourcesData', JSON.stringify(updated));
-      }
-      return data;
-    } catch (err) {
-      if (err.name === 'CanceledError') return null;
-      setError(err.message || "Impossible de charger les détails du bâtiment.");
-      return null;
-    } finally {
-      setLoading(false);
+        safeStorage.setItem("resources", JSON.stringify(updatedResources));
+        return updatedResources;
+      });
     }
-  };
+
+    return data;
+  } catch (err) {
+    if (err.name === 'CanceledError') return null;
+
+    console.error("Erreur lors du rafraîchissement du bâtiment :", err);
+    setError(
+      getApiErrorMessage(
+        err,
+        "Impossible de rafraîchir le bâtiment. Veuillez réessayer."
+      )
+    );
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   useEffect(() => {
     const controller = new AbortController();
