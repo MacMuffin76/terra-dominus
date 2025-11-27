@@ -1,4 +1,4 @@
-const { getLogger } = require('../utils/logger');
+const { getLogger } = require('./utils/logger');
 
 const createAuthController = ({ userService }) => {
   const logger = getLogger({ module: 'AuthController' });
