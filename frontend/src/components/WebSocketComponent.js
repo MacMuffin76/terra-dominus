@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import { safeStorage } from '../utils/safeStorage';
 
-const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://51.178.53.24:5000';
 
 const WebSocketComponent = () => {
   const [connectionStatus, setConnectionStatus] = useState('En attente d\'authentification...');

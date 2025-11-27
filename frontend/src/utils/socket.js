@@ -3,8 +3,11 @@
 import { io } from 'socket.io-client';
 import { safeStorage } from './safeStorage';
 
-const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
-const socket = io(socketUrl);
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || window.location.origin;
+export const socket = io(SOCKET_URL, {
+  path: "/socket.io",
+  transports: ["websocket"],
+});
 
 export const sendUserId = (userId, event) => {
     socket.emit('message', JSON.stringify({ event, userId }));
