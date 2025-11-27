@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 18
       - name: Install frontend dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Run accessibility lint
         run: npm run lint:a11y
 
@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 18
       - name: Install frontend dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Run UI unit tests
         env:
           CI: true
