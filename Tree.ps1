@@ -1,37 +1,54 @@
+# ===================================================================
+#  Tree.ps1 - Export de l'arborescence G:\terra-dominus dans structure.txt
+#  - Exclut : G:\terra-dominus\node_modules
+#             G:\terra-dominus\frontend\node_modules
+#             G:\terra-dominus\backend\node_modules
+# ===================================================================
+
+param(
+    [string]$RootPath = "G:\terra-dominus",
+    [string]$OutputFile = "structure.txt"
+)
+
 function Get-FolderStructure {
     param (
-        [string]$Path = ".",
-        [int]$IndentLevel = 0
+        [string]$Path,
+        [int]$IndentLevel
     )
 
-    # Obtenir les éléments dans le chemin spécifié
-    $items = Get-ChildItem -Path $Path
+    # Récupère les fichiers et dossiers, triés : dossiers d'abord
+    $items = Get-ChildItem -Path $Path -Force | Sort-Object PSIsContainer, Name
 
     foreach ($item in $items) {
-        # Vérifier si l'élément doit être exclu
-        if ($item.FullName -like "G:\terra-dominus\node_modules*" -or
-            $item.FullName -like "G:\terra-dominus\frontend\node_modules*" -or
-            $item.FullName -like "G:\terra-dominus\backend\node_modules*") {
-            continue  # Ignorer cet élément et passer au suivant
+
+        # Exclusions des node_modules
+        if ($item.FullName -like "$RootPath\node_modules*" -or
+            $item.FullName -like "$RootPath\frontend\node_modules*" -or
+            $item.FullName -like "$RootPath\backend\node_modules*") {
+            continue
         }
 
-        # Construire l'indentation
-        $indent = " " * $IndentLevel * 2
+        # Indentation
+        $indent = " " * ($IndentLevel * 2)
 
-        # Afficher le nom de l'élément
-        Write-Output "$indent$item"
+        # Préfixe simple pour différencier dossier/fichier
+        if ($item.PSIsContainer) {
+            $line = "$indent+ $($item.Name)"
+        } else {
+            $line = "$indent- $($item.Name)"
+        }
 
-        # Récursivement afficher les sous-répertoires
+        Write-Output $line
+
+        # Récursion sur les sous-dossiers
         if ($item.PSIsContainer) {
             Get-FolderStructure -Path $item.FullName -IndentLevel ($IndentLevel + 1)
         }
     }
 }
 
-# Exemple d'utilisation : Afficher la structure du répertoire E:\terra-dominus
-# Rediriger la sortie vers un fichier texte
-Get-FolderStructure -Path "G:\terra-dominus" | Out-File -FilePath "structure.txt"
+# Lancer la construction et écrire dans le fichier texte
+Get-FolderStructure -Path $RootPath -IndentLevel 0 | Out-File -FilePath $OutputFile -Encoding UTF8
 
-# Afficher le contenu du fichier
-notepad.exe "structure.txt"
-
+# Ouvrir le fichier dans le bloc-notes
+Start-Process notepad.exe $OutputFile
