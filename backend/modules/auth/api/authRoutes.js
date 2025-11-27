@@ -1,43 +1,32 @@
-// modules/auth/api/authRoutes.js
+// backend/modules/auth/api/authRoutes.js
 
-const express = require("express");
-const router = express.Router();
+const express = require('express');
+const validate = require('../../../middleware/validate');
+const {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+} = require('../../../validation/authValidation');
 
-const authController = require("../../../controllers/authController");
-const validate = require("../../../middleware/validate");
-const authMiddleware = require("../../../middleware/authMiddleware");
-const authValidation = require("../../../validation/authValidation");
+/**
+ * Router d’auth basé sur le container (même pattern que les autres modules)
+ * @param {AwilixContainer} container
+ * @returns {express.Router}
+ */
+module.exports = (container) => {
+  const router = express.Router();
 
-// Routes d’authentification
+  // On récupère le contrôleur injecté par le container
+  const controller = container.resolve('authController');
 
-// Inscription
-router.post(
-  "/register",
-  validate(authValidation.registerSchema),
-  authController.register
-);
+  // POST /api/v1/auth/register
+  router.post('/register', validate(registerSchema), controller.registerUser);
 
-// Login
-router.post(
-  "/login",
-  validate(authValidation.loginSchema),
-  authController.login
-);
+  // POST /api/v1/auth/login
+  router.post('/login', validate(loginSchema), controller.loginUser);
 
-// Refresh token
-router.post(
-  "/refresh-token",
-  validate(authValidation.refreshTokenSchema),
-  authController.refreshToken
-);
+  // POST /api/v1/auth/refresh
+  router.post('/refresh', validate(refreshSchema), controller.refreshSession);
 
-// Logout (nécessite d’être connecté)
-router.post("/logout", authMiddleware, authController.logout);
-
-// Récupérer le profil utilisateur connecté
-router.get("/me", authMiddleware, authController.getCurrentUser);
-
-// Récupérer un utilisateur par id (optionnel, si contrôleur existant)
-router.get("/user/:id", authMiddleware, authController.getUserById);
-
-module.exports = router;
+  return router;
+};
