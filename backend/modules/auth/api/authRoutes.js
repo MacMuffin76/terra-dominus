@@ -1,14 +1,43 @@
-const express = require('express');
-const validate = require('../../../middleware/validate');
-const { registerSchema, loginSchema, refreshSchema } = require('../../../validation/authValidation');
+// modules/auth/api/authRoutes.js
 
-module.exports = (container) => {
-  const router = express.Router();
-  const controller = container.resolve('authController');
+const express = require("express");
+const router = express.Router();
 
-  router.post('/register', validate(registerSchema), controller.registerUser);
-  router.post('/login', validate(loginSchema), controller.loginUser);
-  router.post('/refresh', validate(refreshSchema), controller.refreshSession);
+const authController = require("../../../controllers/authController");
+const validate = require("../../../middleware/validate");
+const authMiddleware = require("../../../middleware/authMiddleware");
+const authValidation = require("../../../validation/authValidation");
 
-  return router;
-};
+// Routes d’authentification
+
+// Inscription
+router.post(
+  "/register",
+  validate(authValidation.registerSchema),
+  authController.register
+);
+
+// Login
+router.post(
+  "/login",
+  validate(authValidation.loginSchema),
+  authController.login
+);
+
+// Refresh token
+router.post(
+  "/refresh-token",
+  validate(authValidation.refreshTokenSchema),
+  authController.refreshToken
+);
+
+// Logout (nécessite d’être connecté)
+router.post("/logout", authMiddleware, authController.logout);
+
+// Récupérer le profil utilisateur connecté
+router.get("/me", authMiddleware, authController.getCurrentUser);
+
+// Récupérer un utilisateur par id (optionnel, si contrôleur existant)
+router.get("/user/:id", authMiddleware, authController.getUserById);
+
+module.exports = router;
