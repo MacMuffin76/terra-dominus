@@ -1,6 +1,6 @@
 // frontend/src/context/ResourcesContext.js
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchResources, updateResources } from '../redux/resourceSlice';
 import { safeStorage } from '../utils/safeStorage';
