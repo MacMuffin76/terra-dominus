@@ -9,7 +9,6 @@ import { safeStorage } from '../utils/safeStorage';
 
 const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
 
-
 let socketClient = null;
 let listenersCount = 0;
 let hasBootstrapped = false;
@@ -21,17 +20,18 @@ const useDashboardData = () => {
   const { token, user: authUser } = useSelector((state) => state.auth);
 
   const [error, setError] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState('Initialisation de la connexion...');
+  const [connectionStatus, setConnectionStatus] = useState(
+    'Initialisation de la connexion...'
+  );
   const [notifications, setNotifications] = useState([]);
 
   const userId = authUser?.id || safeStorage.getItem('userId');
   const storedToken = token || safeStorage.getItem('jwtToken');
 
   const loadUser = useCallback(async () => {
-    if (!userId) return;
-
     try {
-      const response = await axiosInstance.get(`/auth/user/${userId}`);
+      // Utilise la route correcte du backend : /auth/me
+      const response = await axiosInstance.get('/auth/me');
       dispatch(loginSuccess(response.data.user));
     } catch (err) {
       setError(
@@ -39,35 +39,39 @@ const useDashboardData = () => {
           "Impossible de récupérer les informations de l'utilisateur pour le tableau de bord."
       );
     }
-  }, [dispatch, userId]);
+  }, [dispatch]);
 
-  const bootstrapDashboard = useCallback(async (force = false) => {
-    if (!userId || (hasBootstrapped && !force)) return;
-    hasBootstrapped = true;
+  const bootstrapDashboard = useCallback(
+    async (force = false) => {
+      if (!userId || (hasBootstrapped && !force)) return;
+      hasBootstrapped = true;
 
-    try {
-      await dispatch(fetchDashboardData()).unwrap();
-    } catch (err) {
-      setError(err.message || 'Le chargement du tableau de bord a échoué.');
-    }
+      try {
+        await dispatch(fetchDashboardData()).unwrap();
+      } catch (err) {
+        setError(err.message || 'Le chargement du tableau de bord a échoué.');
+      }
 
-    try {
-      await dispatch(fetchResources()).unwrap();
-    } catch (err) {
-      setError(
-        err?.message ||
-          "Une erreur est survenue lors du chargement des ressources. Veuillez réessayer."
-      );
-    }
+      try {
+        await dispatch(fetchResources()).unwrap();
+      } catch (err) {
+        setError(
+          err?.message ||
+            "Une erreur est survenue lors du chargement des ressources. Veuillez réessayer."
+        );
+      }
 
-    await loadUser();
-  }, [dispatch, loadUser, userId]);
+      await loadUser();
+    },
+    [dispatch, loadUser, userId]
+  );
 
   const socket = useMemo(() => {
     if (!storedToken) return null;
 
     if (!socketClient) {
       socketClient = io(socketUrl, {
+        path: '/socket.io', // important pour passer par Nginx
         transports: ['websocket'],
         auth: { token: storedToken },
         withCredentials: true,
@@ -96,15 +100,18 @@ const useDashboardData = () => {
       socket.emit('user_connected');
     };
 
-    const handleDisconnect = () => setConnectionStatus('Déconnecté du serveur Socket.io');
-    const handleConnectError = (err) => setConnectionStatus(`Erreur de connexion : ${err.message}`);
+    const handleDisconnect = () =>
+      setConnectionStatus('Déconnecté du serveur Socket.io');
+    const handleConnectError = (err) =>
+      setConnectionStatus(`Erreur de connexion : ${err.message}`);
     const handleReconnectAttempt = (attempt) =>
       setConnectionStatus(`Tentative de reconnexion (${attempt})...`);
     const handleReconnect = (attempt) =>
       setConnectionStatus(`Reconnecté après ${attempt} tentative(s)`);
 
     const handleResources = (payload = []) => dispatch(updateResources(payload));
-    const handleNotification = (payload) => setNotifications((prev) => [...prev, payload]);
+    const handleNotification = (payload) =>
+      setNotifications((prev) => [...prev, payload]);
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
