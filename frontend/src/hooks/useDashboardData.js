@@ -7,7 +7,8 @@ import { fetchResources, updateResources } from '../redux/resourceSlice';
 import { loginSuccess } from '../redux/authSlice';
 import { safeStorage } from '../utils/safeStorage';
 
-const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
+
 
 let socketClient = null;
 let listenersCount = 0;
