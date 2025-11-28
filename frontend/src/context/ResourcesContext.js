@@ -41,6 +41,19 @@ export const ResourcesProvider = ({ children }) => {
     }
   };
 
+  // ⏳ Polling toutes les 60 secondes
+  useEffect(() => {
+    // premier chargement
+    refetchResources();
+
+    // ensuite toutes les minutes
+    const interval = setInterval(() => {
+      refetchResources();
+    }, 60000); // 60 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <ResourcesContext.Provider
       value={{
