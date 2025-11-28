@@ -12,7 +12,6 @@ import {
   upgradeResourceBuilding,
 } from '../api/resourceBuildings';
 
-
 const buildingToResourceType = {
   "Mine d'or": 'or',
   'Mine de métal': 'metal',
@@ -37,12 +36,12 @@ const ResourceDetail = ({
   building,
   onBuildingUpgraded,
   onBuildingDowngraded,
-}) => {const [detail, setDetail] = useState(null);
+}) => {
+  const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
-  const [ resources, setResources ] = useResources();
-
+  const { resources, setResources } = useResources(); // ✅ objet et plus tableau
 
   const isBuilding = useMemo(
     () => detail?.status === 'building',
@@ -59,57 +58,55 @@ const ResourceDetail = ({
     return `${hrs}:${mins}:${secs}`;
   };
 
-const refreshBuilding = async (signal, { silent = false } = {}) => {
-  if (!building || !building.id) return null;
+  const refreshBuilding = async (signal, { silent = false } = {}) => {
+    if (!building || !building.id) return null;
 
-  if (!silent) {
-    setLoading(true);
-  }
-  setError(null);
-
-  try {
-    const data = await getResourceBuildingDetail(building.id, signal);
-
-    if (!data) return null;
-
-    setDetail(data);
-
-    if (data.isUnderConstruction && data.remainingSeconds) {
-      setRemainingSeconds(data.remainingSeconds);
-    } else {
-      setRemainingSeconds(null);
+    if (!silent) {
+      setLoading(true);
     }
+    setError(null);
 
-    if (data.resources) {
-      setResources((prevResources) => {
-        const updatedResources = prevResources.map((res) => {
-          const updated = data.resources.find((r) => r.type === res.type);
-          return updated ? { ...res, ...updated } : res;
+    try {
+      const data = await getResourceBuildingDetail(building.id, signal);
+
+      if (!data) return null;
+
+      setDetail(data);
+
+      if (data.isUnderConstruction && data.remainingSeconds) {
+        setRemainingSeconds(data.remainingSeconds);
+      } else {
+        setRemainingSeconds(null);
+      }
+
+      if (data.resources) {
+        setResources((prevResources) => {
+          const updatedResources = prevResources.map((res) => {
+            const updated = data.resources.find((r) => r.type === res.type);
+            return updated ? { ...res, ...updated } : res;
+          });
+
+          safeStorage.setItem('resources', JSON.stringify(updatedResources));
+          return updatedResources;
         });
+      }
 
-        safeStorage.setItem("resources", JSON.stringify(updatedResources));
-        return updatedResources;
-      });
+      return data;
+    } catch (err) {
+      if (err.name === 'CanceledError') return null;
+
+      console.error("Erreur lors du rafraîchissement du bâtiment :", err);
+      setError(
+        getApiErrorMessage(
+          err,
+          "Impossible de rafraîchir le bâtiment. Veuillez réessayer."
+        )
+      );
+      return null;
+    } finally {
+      setLoading(false);
     }
-
-    return data;
-  } catch (err) {
-    if (err.name === 'CanceledError') return null;
-
-    console.error("Erreur lors du rafraîchissement du bâtiment :", err);
-    setError(
-      getApiErrorMessage(
-        err,
-        "Impossible de rafraîchir le bâtiment. Veuillez réessayer."
-      )
-    );
-    return null;
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -118,7 +115,7 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
     return () => controller.abort();
   }, [building.id]);
 
- const handleUpgrade = async () => {
+  const handleUpgrade = async () => {
     try {
       const upgradeData = await upgradeResourceBuilding(building.id);
 
@@ -142,10 +139,7 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
           return r;
         });
         setResources(updatedResources);
-        safeStorage.setItem(
-          'resourcesData',
-          JSON.stringify(updatedResources)
-        );
+        safeStorage.setItem('resourcesData', JSON.stringify(updatedResources));
       }
 
       const updatedDetail = await refreshBuilding();
@@ -162,7 +156,6 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
     }
   };
 
-
   const handleDowngrade = async () => {
     try {
       await downgradeResourceBuilding(building.id);
@@ -175,6 +168,7 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
       alert(message);
     }
   };
+
   useEffect(() => {
     if (!detail?.constructionEndsAt) {
       setRemainingSeconds(null);
@@ -222,7 +216,7 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
       </div>
     );
   }
-  
+
   if (!detail) return <p>Chargement…</p>;
 
   const bgName = detail.name
@@ -247,7 +241,7 @@ const refreshBuilding = async (signal, { silent = false } = {}) => {
         <div className="resource-detail-subtitle">
           NIVEAU {detail.level}
         </div>
-        
+
         {isBuilding && (
           <div className="resource-detail-status" aria-live="polite">
             <span className="badge badge-building">Construction en cours</span>

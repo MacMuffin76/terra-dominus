@@ -1,10 +1,8 @@
 // frontend/src/components/ResourcesWidget.js
 
 import React, { useEffect } from 'react';
-import axiosInstance from '../utils/axiosInstance';
 import { useResources } from '../context/ResourcesContext';
 import './ResourcesWidget.css';
-import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
 
 const ResourcesWidget = () => {
@@ -16,27 +14,6 @@ const ResourcesWidget = () => {
   useEffect(() => {
     let intervalId;
     let lastTick = Date.now();
-
-    // Chargement initial : récupère les ressources calculées par le backend
-    const fetchResources = async () => {
-      try {
-        const { data } = await axiosInstance.get('/resources/user-resources');
-
-        const normalized = data.map((r) => ({
-          ...r,
-          amount: Number(r.amount) || 0,
-          production_rate: Number(r.production_rate) || 0,
-        }));
-
-        setResources(normalized);
-        safeStorage.setItem('resourcesData', JSON.stringify(normalized));
-        lastTick = Date.now();
-      } catch (err) {
-        getApiErrorMessage(err, 'Impossible de charger les ressources.');
-      }
-    };
-
-    fetchResources();
 
     // Intervalle d'affichage : incrémente visuellement toutes les secondes
     intervalId = setInterval(() => {
@@ -65,7 +42,19 @@ const ResourcesWidget = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [setResources]);
+
+    // On veut que cet effet ne tourne qu'une seule fois au montage.
+    // Le contexte se charge déjà de rafraîchir les ressources via l'API.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!resources || resources.length === 0) {
+    return (
+      <div className="resources-widget">
+        <span>Chargement des ressources...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="resources-widget">
