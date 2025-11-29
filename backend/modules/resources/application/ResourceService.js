@@ -99,7 +99,7 @@ class ResourceService {
   async getResourceBuildings(userId) {
     const city = await this.withCity(userId);
 
-    return Building.findAll({
+    let buildings = await Building.findAll({
       where: {
         city_id: city.id,
         name: {
@@ -109,7 +109,28 @@ class ResourceService {
       order: [['id', 'ASC']],
     });
 
-    
+    // Si aucun bâtiment n'existe, créer les bâtiments de base
+    if (buildings.length === 0) {
+      const defaultBuildings = [
+        { name: "Mine d'or", level: 1 },
+        { name: 'Mine de métal', level: 1 },
+        { name: 'Extracteur', level: 1 },
+        { name: 'Centrale électrique', level: 1 },
+        { name: 'Hangar', level: 1 },
+        { name: 'Réservoir', level: 1 }
+      ];
+
+      buildings = await Promise.all(
+        defaultBuildings.map(b =>
+          Building.create({
+            city_id: city.id,
+            name: b.name,
+            level: b.level,
+          })
+        )
+      );
+    }
+
     return buildings.map((building) => {
       const { status, constructionEndsAt, etaSeconds } = this.getBuildingState(building);
       return {

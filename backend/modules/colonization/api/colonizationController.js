@@ -7,8 +7,51 @@ const logger = getLogger({ module: 'ColonizationController' });
  */
 const createColonizationController = ({ colonizationService }) => {
   /**
-   * POST /api/colonization/start
-   * Démarre une mission de colonisation
+   * @openapi
+   * /api/v1/colonization/start:
+   *   post:
+   *     summary: Démarrer une mission de colonisation
+   *     tags: [Colonization]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - departureCityId
+   *               - targetSlotId
+   *             properties:
+   *               departureCityId:
+   *                 type: integer
+   *                 description: ID de la ville de départ
+   *               targetSlotId:
+   *                 type: integer
+   *                 description: ID du slot cible pour la nouvelle ville
+   *     responses:
+   *       201:
+   *         description: Mission de colonisation démarrée avec succès
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 mission:
+   *                   type: object
+   *                   properties:
+   *                     id:
+   *                       type: integer
+   *                     status:
+   *                       type: string
+   *                     arrivalTime:
+   *                       type: string
+   *                       format: date-time
+   *       400:
+   *         description: Paramètres invalides ou conditions non remplies
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const startColonization = async (req, res) => {
     try {
@@ -41,8 +84,42 @@ const createColonizationController = ({ colonizationService }) => {
   };
 
   /**
-   * GET /api/colonization/missions
-   * Récupère les missions de colonisation du joueur
+   * @openapi
+   * /api/v1/colonization/missions:
+   *   get:
+   *     summary: Récupérer les missions de colonisation du joueur
+   *     tags: [Colonization]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [pending, in_progress, completed, cancelled]
+   *         description: Filtrer par statut de mission
+   *     responses:
+   *       200:
+   *         description: Liste des missions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   id:
+   *                     type: integer
+   *                   status:
+   *                     type: string
+   *                   departureTime:
+   *                     type: string
+   *                     format: date-time
+   *                   arrivalTime:
+   *                     type: string
+   *                     format: date-time
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const getUserMissions = async (req, res) => {
     try {
@@ -63,8 +140,36 @@ const createColonizationController = ({ colonizationService }) => {
   };
 
   /**
-   * DELETE /api/colonization/missions/:id
-   * Annule une mission de colonisation
+   * @openapi
+   * /api/v1/colonization/missions/{id}:
+   *   delete:
+   *     summary: Annuler une mission de colonisation
+   *     tags: [Colonization]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID de la mission à annuler
+   *     responses:
+   *       200:
+   *         description: Mission annulée avec succès
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                 refundedUnits:
+   *                   type: object
+   *       400:
+   *         description: Mission impossible à annuler
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const cancelMission = async (req, res) => {
     try {

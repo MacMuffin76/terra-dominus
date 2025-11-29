@@ -63,4 +63,15 @@ const WorldGrid = sequelize.define(
   }
 );
 
+/**
+ * Associations
+ */
+WorldGrid.associate = function(models) {
+  // WorldGrid peut avoir un CitySlot
+  WorldGrid.hasOne(models.CitySlot, {
+    foreignKey: 'grid_id',
+    as: 'citySlot'
+  });
+};
+
 module.exports = WorldGrid;

@@ -3,36 +3,39 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './Research.css';
 import ResearchDetail from './ResearchDetail';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader, Skeleton } from './ui';
+import { Alert, Loader } from './ui';
+import ResearchCard from './research/ResearchCard';
 
 const Research = () => {
+  const { error, catchError } = useAsyncError('Research');
   const [data, setData] = useState([]);
   const [selectedResearch, setSelectedResearch] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await axiosInstance.get('/research/research-items');
-      // On prend toutes les recherches renvoyées par l'API, sans filtre
       setData(response.data);
-    } catch (err) {
-      console.error('Error fetching research items:', err);
-      setError('Impossible de charger les recherches.');
-      setData([]); // En cas d'erreur, on définit data comme un tableau vide
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleResearchClick = (research) => {
     if (selectedResearch && selectedResearch.id === research.id) {
@@ -54,14 +57,12 @@ const Research = () => {
   return (
     <div className="research-container">
       <Menu />
-      <ResourcesWidget />
-      <div
-        className={`research-content ${selectedResearch ? 'with-details' : ''}`}
-        id="main-content"
-      >
-        <h1>Recherche</h1>
+      <div className="research-content" id="main-content">
+        <ResourcesWidget />
+        <div className="research-header">
+          <h1 className="research-title">🔬 RECHERCHE</h1>
+        </div>
 
-        {loading && <Loader label="Chargement des recherches" />}
         {error && (
           <Alert
             type="error"
@@ -71,35 +72,26 @@ const Research = () => {
           />
         )}
 
+        <div className="research-grid">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <ResearchCard key={`skeleton-${idx}`} loading={true} />
+            ))
+          ) : (
+            data.map((research) => (
+              <ResearchCard
+                key={research.id}
+                research={research}
+                isSelected={selectedResearch?.id === research.id}
+                onClick={handleResearchClick}
+              />
+            ))
+          )}
+        </div>
+
         {selectedResearch && (
           <ResearchDetail research={selectedResearch} />
         )}
-
-        <div className="research-list">
-          {(loading ? Array.from({ length: 6 }) : data).map((research, idx) => (
-            <button
-              type="button"
-              key={research?.id || `research-skeleton-${idx}`}
-              className={`research-card ${selectedResearch?.id === research?.id ? 'selected' : ''}`}
-              onClick={() => research && handleResearchClick(research)}
-              aria-pressed={selectedResearch?.id === research?.id}
-              aria-label={research ? `${research.name}, niveau ${research.level}` : 'Chargement des recherches'}
-              disabled={!research}
-            >
-              {loading ? (
-                <Skeleton width="100%" height="180px" />
-              ) : (
-                <img
-                  src={`/images/research/${formatFileName(research.name)}.png`}
-                  alt={research.name}
-                  className="research-image"
-                />
-              )}
-              <h3>{loading ? <Skeleton width="70%" /> : research.name}</h3>
-              <p>{loading ? <Skeleton width="40%" /> : `Niveau: ${research.level}`}</p>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

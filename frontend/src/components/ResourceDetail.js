@@ -4,6 +4,8 @@ import './ResourceDetail.css';
 import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import PropTypes from 'prop-types';
 import { Button, Loader } from './ui';
 import {
@@ -37,9 +39,9 @@ const ResourceDetail = ({
   onBuildingUpgraded,
   onBuildingDowngraded,
 }) => {
+  const { error, catchError, clearError } = useAsyncError('ResourceDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
   const { resources, setResources } = useResources(); // ✅ objet et plus tableau
 
@@ -64,7 +66,7 @@ const ResourceDetail = ({
     if (!silent) {
       setLoading(true);
     }
-    setError(null);
+    clearError();
 
     try {
       const data = await getResourceBuildingDetail(building.id, signal);
@@ -95,13 +97,13 @@ const ResourceDetail = ({
     } catch (err) {
       if (err.name === 'CanceledError') return null;
 
-      console.error("Erreur lors du rafraîchissement du bâtiment :", err);
-      setError(
-        getApiErrorMessage(
-          err,
-          "Impossible de rafraîchir le bâtiment. Veuillez réessayer."
-        )
-      );
+      logger.error('ResourceDetail', 'Error refreshing building', { buildingId: building?.id, error: err });
+      
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
+      
       return null;
     } finally {
       setLoading(false);
@@ -110,8 +112,16 @@ const ResourceDetail = ({
 
   useEffect(() => {
     const controller = new AbortController();
-    refreshBuilding(controller.signal);
-
+    
+    const loadData = async () => {
+      try {
+        await refreshBuilding(controller.signal);
+      } catch (err) {
+        // Erreurs déjà gérées dans refreshBuilding
+      }
+    };
+    
+    loadData();
     return () => controller.abort();
   }, [building.id]);
 
@@ -188,15 +198,26 @@ const ResourceDetail = ({
 
   useEffect(() => {
     if (isBuilding && remainingSeconds === 0) {
-      refreshBuilding();
+      const refresh = async () => {
+        try {
+          await refreshBuilding();
+        } catch (err) {
+          // Erreur déjà gérée
+        }
+      };
+      refresh();
     }
   }, [isBuilding, remainingSeconds]);
 
   useEffect(() => {
     if (!isBuilding) return undefined;
 
-    const intervalId = setInterval(() => {
-      refreshBuilding(undefined, { silent: true });
+    const intervalId = setInterval(async () => {
+      try {
+        await refreshBuilding(undefined, { silent: true });
+      } catch (err) {
+        // Erreur déjà gérée
+      }
     }, 15000);
 
     return () => clearInterval(intervalId);
@@ -210,7 +231,7 @@ const ResourceDetail = ({
     return (
       <div className="resource-detail resource-detail-error">
         <p>{error}</p>
-        <Button onClick={() => refreshBuilding()} variant="secondary">
+        <Button onClick={() => refreshBuilding().catch(() => {})} variant="secondary">
           Réessayer
         </Button>
       </div>

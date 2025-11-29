@@ -1,16 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './Facilities.css';
-import FacilityDetail from './FacilityDetail';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader, Skeleton } from './ui';
+import { Alert, Loader } from './ui';
+import FacilityCard from './facilities/FacilityCard';
+import FacilityDetailModal from './facilities/FacilityDetailModal';
 
 const Facilities = () => {
+  const { error, catchError } = useAsyncError('Facilities');
   const [data, setData] = useState([]);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // 1) Ordre fixe souhaité
   const allowedFacilities = [
@@ -19,30 +22,46 @@ const Facilities = () => {
     'Terrain d\'Entraînement'
   ];
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async (signal) => {
     setLoading(true);
-    setError(null);
+    
     try {
       const { data: facilities } = await axiosInstance.get(
-        '/facilities/facility-buildings'
+        '/facilities/facility-buildings',
+        { signal }
       );
-      // 2) Filtrer les facilities autorisées
-      const filtered = facilities.filter(f =>
-        allowedFacilities.includes(f.name)
-      );
-      setData(filtered);
+      
+      // Vérifier si le composant est toujours monté
+      if (!signal?.aborted) {
+        // 2) Filtrer les facilities autorisées
+        const filtered = facilities.filter(f =>
+          allowedFacilities.includes(f.name)
+        );
+        setData(filtered);
+        setLoading(false);
+      }
     } catch (err) {
-      console.error('Error fetching facility buildings:', err);
-      setError("Impossible de charger les installations.");
-      setData([]);
-    } finally {
-      setLoading(false);
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
+        await catchError(async () => { throw err; }, { 
+          toast: true, 
+          logError: true 
+        }).catch(() => {}); // Ignorer le re-throw
+      }
     }
-  }, []);
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    
+    return () => {
+      controller.abort(); // Annuler la requête au démontage
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 3) Helpers pour gestion du click et callbacks
   const handleFacilityClick = facility =>
@@ -83,59 +102,55 @@ const Facilities = () => {
   return (
     <div className="facilities-container">
       <Menu />
-      <ResourcesWidget />
 
-      <div
-        className={`facilities-content ${selectedFacility ? 'with-details' : ''}`}
-        id="main-content"
-      >
-        <h1>Installations</h1>
+      <div className="facilities-content" id="main-content">
+        <ResourcesWidget />
+        <div className="facilities-header">
+          <h1 className="facilities-title">🏛️ INSTALLATIONS</h1>
+        </div>
 
-        {loading && <Loader label="Chargement des installations" />}
+        {loading && <Loader label="Chargement des installations..." />}
+        
         {error && (
           <Alert
             type="error"
             title="Installations"
             message={error}
-            onAction={fetchData}
+            onAction={() => fetchData().catch(() => {})}
           />
         )}
 
+        <div className="facilities-grid">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, idx) => (
+              <FacilityCard key={`skeleton-${idx}`} loading={true} />
+            ))
+          ) : ordered.length > 0 ? (
+            ordered.map((facility) => (
+              <FacilityCard
+                key={facility.id}
+                facility={facility}
+                isSelected={selectedFacility?.id === facility.id}
+                onClick={handleFacilityClick}
+              />
+            ))
+          ) : (
+            !error && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                <p>Aucune installation disponible</p>
+              </div>
+            )
+          )}
+        </div>
+
         {selectedFacility && (
-          <FacilityDetail
+          <FacilityDetailModal
             facility={selectedFacility}
+            onClose={() => setSelectedFacility(null)}
             onFacilityUpgraded={handleFacilityUpgraded}
             onFacilityDowngraded={handleFacilityDowngraded}
           />
         )}
-
-        <div className="facilities-list">
-          {(loading ? Array.from({ length: 3 }) : ordered).map((facility, idx) => (
-            <button
-              type="button"
-              key={facility?.id || `facility-skeleton-${idx}`}
-              className={`facility-card ${selectedFacility?.id === facility?.id ? 'selected' : ''}`}
-              onClick={() => facility && handleFacilityClick(facility)}
-              aria-pressed={selectedFacility?.id === facility?.id}
-              aria-label={facility ? `${facility.name}, niveau ${facility.level}` : 'Chargement des installations'}
-              disabled={!facility}
-            >
-              {loading ? (
-                <Skeleton width="100%" height="200px" />
-              ) : (
-                <img
-                  src={`/images/facilities/${formatFileName(facility.name)}.png`}
-                  alt={facility.name}
-                  className="facility-image"
-                />
-              )}
-              <h3>{loading ? <Skeleton width="60%" /> : facility.name}</h3>
-              <p>
-                {loading ? <Skeleton width="40%" /> : `Level: ${facility.level}`}
-              </p>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

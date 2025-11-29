@@ -41,6 +41,28 @@ const createResourceController = ({ resourceService }) => {
     }
   };
 
+  /**
+   * @openapi
+   * /api/v1/resources/buildings/{id}/upgrade:
+   *   post:
+   *     summary: Améliorer un bâtiment de ressources
+   *     tags: [Resources]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Bâtiment amélioré avec succès
+   *       400:
+   *         description: Ressources insuffisantes ou niveau max atteint
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   const upgradeBuilding = async (req, res) => {
     try {
       const result = await resourceService.upgradeResourceBuilding(req.user.id, req.params.id);
@@ -80,6 +102,33 @@ const createResourceController = ({ resourceService }) => {
     }
   };
 
+  /**
+   * @openapi
+   * /api/v1/resources:
+   *   get:
+   *     summary: Récupérer les ressources de l'utilisateur
+   *     tags: [Resources]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Ressources de l'utilisateur
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 wood:
+   *                   type: number
+   *                 stone:
+   *                   type: number
+   *                 iron:
+   *                   type: number
+   *                 food:
+   *                   type: number
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   const getUserResources = async (req, res) => {
     try {
       const resources = await resourceService.getUserResources(req.user.id);

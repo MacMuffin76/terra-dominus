@@ -4,15 +4,24 @@ module.exports = (container) => {
   const router = express.Router();
   const combatController = container.resolve('combatController');
   const { protect } = require('../../../middleware/authMiddleware');
-  // Attaques
-  router.post('/attack', protect, combatController.launchAttack);
-  router.get('/attacks', protect, combatController.getUserAttacks);
-  router.post('/attack/:id/cancel', protect, combatController.cancelAttack);
-  router.get('/report/:attackId', protect, combatController.getCombatReport);
+  const { strictLimiter, moderateLimiter } = require('../../../middleware/rateLimiters');
+  const { zodValidate } = require('../../../middleware/zodValidate');
+  const { 
+    launchAttackSchema, 
+    cancelAttackSchema,
+    getAttacksSchema,
+    launchSpyMissionSchema 
+  } = require('../../../validation/combatSchemas');
+  
+  // Attaques - Actions critiques avec rate limiting strict
+  router.post('/attack', strictLimiter, protect, zodValidate(launchAttackSchema), combatController.launchAttack);
+  router.get('/attacks', moderateLimiter, protect, zodValidate(getAttacksSchema), combatController.getUserAttacks);
+  router.post('/attack/:id/cancel', strictLimiter, protect, zodValidate(cancelAttackSchema), combatController.cancelAttack);
+  router.get('/report/:attackId', moderateLimiter, protect, combatController.getCombatReport);
 
-  // Espionnage
-  router.post('/spy', protect, combatController.launchSpyMission);
-  router.get('/spy-missions', protect, combatController.getUserSpyMissions);
+  // Espionnage - Actions critiques avec rate limiting strict
+  router.post('/spy', strictLimiter, protect, zodValidate(launchSpyMissionSchema), combatController.launchSpyMission);
+  router.get('/spy-missions', moderateLimiter, protect, combatController.getUserSpyMissions);
 
   return router;
 };

@@ -1,167 +1,85 @@
-/* Reset CSS */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Facilities - Terra UI */
 
-body {
-  margin: 0;
-  padding: 0;
-  background: none;
-}
-
-/* Autres règles CSS existantes */
 .facilities-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: var(--bg-void);
+  min-height: 100vh;
 }
 
 .facilities-content {
-  width: calc(100% - 250px); /* Prenez en compte la largeur du menu latéral */
-  max-width: 1200px;
-  padding: 20px;
-  position: relative; /* Assurez-vous que le contenu est positionné relativement */
-  margin-left: 250px; /* Ajustez cette valeur pour prendre en compte le menu latéral */
+  width: calc(100% - 280px);
+  max-width: 1600px;
+  margin-left: 280px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
+  box-sizing: border-box;
 }
 
-
-.facilities-content h1 {
-  margin-bottom: 100px; /* Espace entre le titre et le contenu */
-  text-align: center; /* Centre le titre */
-}
-
-.facilities-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 20px; /* Add space between items */
-  margin-top: 100px; /* Ajustez cette valeur pour descendre les images initialement */
-  transition: transform 0.3s ease;
-}
-
-.facilities-content.with-details .facilities-list {
-  transform: translateY(300px); /* Ajustez cette valeur pour correspondre à la hauteur du panneau de détails */
-}
-
-.facility-card {
-  width: calc(33.333% - 24px);
-  margin: 10px;
+.facilities-header {
+  width: 100%;
   text-align: center;
-  cursor: pointer;
-  font: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(140deg, var(--color-surface), var(--color-surface-raised));
-  border: 1px solid var(--color-border);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
-  min-height: 280px;
-  color: var(--color-text);
+  padding: 0;
+  margin-bottom: var(--spacing-xl);
 }
 
-.facility-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
-  border-color: var(--color-primary);
+.facilities-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--neon-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: var(--text-glow);
+  margin: 0;
+  animation: neon-pulse 3s ease-in-out infinite;
 }
 
-.facility-card:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 4px;
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-}
-
-.facility-card.selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 12px 24px rgba(92, 225, 230, 0.25);
-}
-
-.facility-card:disabled {
-  cursor: progress;
-  opacity: 0.85;
-}
-
-.facility-image {
+.facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-xl);
   width: 100%;
-  height: 200px; /* Fixed height for images */
-  object-fit: cover; /* Ensures the image covers the area */
-  border-bottom: 2px solid #444; /* Bottom border for separation */
 }
 
-.facility-card h3 {
-  margin: 5px 0; /* Reduced margin for less height */
-  font-size: 1em; /* Adjusted font size */
-  color: var(--color-text);
+/* Animations */
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px var(--neon-primary),
+      0 0 20px var(--neon-primary),
+      0 0 30px var(--neon-primary);
+  }
+  50% {
+    text-shadow: 
+      0 0 20px var(--neon-primary),
+      0 0 30px var(--neon-primary),
+      0 0 40px var(--neon-primary),
+      0 0 50px var(--neon-primary);
+  }
 }
 
-.facility-card p {
-  margin: 3px 0; /* Reduced margin for less height */
-  color: var(--color-muted-text);
-  font-size: 0.9em; /* Adjusted font size */
-}
-
-.facility-detail {
-  position: absolute;
-  top: 150px; /* Ajustez cette valeur pour placer le panneau de détails */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1000px;
-  padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #070707; /* Couleur de fond noir */
-  color: #fff; /* Couleur du texte blanche pour contraste */
-  z-index: 10;
-}
-
-.facility-detail h2 {
-  margin-top: 0;
-  color: #fff; /* Couleur du texte blanche pour contraste */
-}
-
-.facility-detail p {
-  margin: 5px 0;
-}
-
-.facility-detail button {
-  margin: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #555; /* Couleur de fond des boutons */
-  color: #fff; /* Couleur du texte des boutons */
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-.facility-detail button:hover {
-  background-color: #777; /* Couleur de fond des boutons au survol */
+/* Responsive */
+@media (max-width: 1200px) {
+  .facilities-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
   .facilities-content {
     width: 100%;
     margin-left: 0;
-    padding: 20px 16px;
+    padding: var(--spacing-lg) var(--spacing-md);
   }
 
-  .facilities-row {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
+  .facilities-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
   }
 
-  .facility-card {
-    width: 100%;
-    max-width: 360px;
-  }
-
-  .facility-detail {
-    position: static;
-    transform: none;
+  .facilities-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
   }
 }

@@ -1,4 +1,5 @@
 const { getLogger } = require('../../../utils/logger');
+const { cacheWrapper, invalidateCache } = require('../../../utils/cache');
 const City = require('../../../models/City');
 const Research = require('../../../models/Research');
 const {
@@ -23,8 +24,20 @@ class WorldService {
   /**
    * Récupère la portion visible de la carte pour un joueur
    * Applique le fog of war basé sur les villes du joueur
+   * @cache 5 minutes TTL
    */
   async getVisibleWorld(userId, bounds = null) {
+    const cacheKey = `world:visible:${userId}:${JSON.stringify(bounds || {})}`;
+    
+    return cacheWrapper(cacheKey, 300, async () => {
+      return this._getVisibleWorldUncached(userId, bounds);
+    });
+  }
+
+  /**
+   * Version non-cachée de getVisibleWorld (logique interne)
+   */
+  async _getVisibleWorldUncached(userId, bounds = null) {
     try {
       // Récupérer les villes du joueur
       const userCities = await City.findAll({
@@ -132,6 +145,9 @@ class WorldService {
       if (newlyExploredIds.length > 0) {
         await this.worldRepository.markTilesAsExplored(userId, newlyExploredIds);
         logger.info(`User ${userId} explored ${newlyExploredIds.length} new tiles`);
+        
+        // Invalider le cache pour cet utilisateur
+        await invalidateCache(`world:visible:${userId}:*`);
       }
 
       return {

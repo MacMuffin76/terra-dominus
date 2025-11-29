@@ -2,12 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './TrainingDetail.css';
 
 const formatNumber = (value) =>
   new Intl.NumberFormat('fr-FR').format(Number(value || 0));
 
 const TrainingDetail = ({ training, onTrainingUpdated }) => {
+  const { error, catchError } = useAsyncError('TrainingDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,57 +25,57 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
       if (onTrainingUpdated) {
         onTrainingUpdated(data);
       }
-    } catch (error) {
-      console.error('Error fetching training details: ', error);
-      alert("Erreur lors du chargement des détails de l'entraînement");
+    } catch (err) {
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
     }
   };
 
   useEffect(() => {
     refreshTraining();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [training?.id]);
 
-  const handleUpgrade = async () => {
-    if (!detail) return;
-    setLoading(true);
-    try {
-      const { data } = await axiosInstance.post(
-        `/training/training-centers/${training.id}/upgrade`
-      );
-      setDetail(data);
-      if (onTrainingUpdated) {
-        onTrainingUpdated(data);
+  const handleUpgrade = catchError(
+    async () => {
+      if (!detail) return;
+      setLoading(true);
+      try {
+        const { data } = await axiosInstance.post(
+          `/training/training-centers/${training.id}/upgrade`
+        );
+        setDetail(data);
+        if (onTrainingUpdated) {
+          onTrainingUpdated(data);
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error upgrading training: ', error);
-      alert(
-        error.response?.data?.message ||
-          "Erreur lors de l'amélioration du centre d'entraînement"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    { toast: true, logError: true }
+  );
 
-  const handleDestroy = async () => {
-    if (!window.confirm('Supprimer ce centre d’entraînement ?')) return;
+  const handleDestroy = catchError(
+    async () => {
+      if (!window.confirm('Supprimer ce centre d\'entraînement ?')) return;
 
-    setLoading(true);
-    try {
-      await axiosInstance.post(
-        `/training/training-centers/${training.id}/destroy`
-      );
-      if (onTrainingUpdated) {
-        onTrainingUpdated(null); // le parent saura retirer la carte
+      setLoading(true);
+      try {
+        await axiosInstance.post(
+          `/training/training-centers/${training.id}/destroy`
+        );
+        if (onTrainingUpdated) {
+          onTrainingUpdated(null); // le parent saura retirer la carte
+        }
+        setDetail(null);
+      } finally {
+        setLoading(false);
       }
-      setDetail(null);
-    } catch (error) {
-      console.error('Error destroying training: ', error);
-      alert("Erreur lors de la suppression du centre d'entraînement");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    { toast: true, logError: true }
+  );
 
   if (!detail) {
     return (

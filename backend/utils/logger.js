@@ -55,7 +55,12 @@ const logger = pino(
   pino.multistream(streams),
 );
 
-const runWithContext = (context, fn) => contextStorage.run(context, fn);
+const runWithContext = (contextOrFn, maybeFn) => {
+  if (typeof maybeFn === 'function') {
+    return contextStorage.run(contextOrFn, maybeFn); // Cas avec 2 args: runWithContext(context, fn)
+  }
+  return contextOrFn(); // Cas avec 1 arg: runWithContext(fn)
+};
 
 const getLogger = (bindings = {}) => logger.child(bindings);
 

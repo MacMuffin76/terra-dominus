@@ -1,16 +1,17 @@
+/* WorldMap.css - Terra UI Enhanced */
+
 .worldmap-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: var(--color-background);
-  color: var(--color-text);
+  background: var(--bg-void);
+  color: var(--text-primary);
 }
 
 .worldmap-content {
   flex: 1;
-  padding: 20px;
-  margin-left: 200px;
-  margin-top: 60px;
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
+  margin-left: 250px;
   display: flex;
   flex-direction: column;
 }
@@ -19,36 +20,54 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 0;
+  margin-bottom: var(--spacing-xl);
 }
 
 .worldmap-header h1 {
   margin: 0;
-  font-size: 2rem;
-  color: var(--color-primary);
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--neon-primary);
+  animation: neon-pulse 2s ease-in-out infinite;
 }
 
 .worldmap-stats {
   display: flex;
-  gap: 20px;
-  font-size: 0.9rem;
+  gap: var(--spacing-lg);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
 }
 
 .worldmap-stats span {
-  background: var(--color-surface);
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  background: var(--bg-card);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.worldmap-stats span:hover {
+  border-color: var(--neon-primary);
+  color: var(--neon-primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
 }
 
 .worldmap-canvas-container {
   position: relative;
   flex: 1;
-  background: #1a1a1a;
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
+  background: var(--bg-panel);
+  border: 2px solid rgba(0, 217, 255, 0.3);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 600px;
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.2);
 }
 
 .worldmap-canvas-container canvas {
@@ -59,30 +78,38 @@
 
 .worldmap-tile-info {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-primary);
-  border-radius: 12px;
-  padding: 20px;
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
+  background: var(--bg-card);
+  border: 2px solid var(--neon-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
   min-width: 250px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(0, 217, 255, 0.5);
   z-index: 10;
+  backdrop-filter: blur(10px);
 }
 
 .worldmap-tile-info h3 {
-  margin: 0 0 15px 0;
-  color: var(--color-primary);
-  font-size: 1.3rem;
+  margin: 0 0 var(--spacing-lg) 0;
+  font-family: var(--font-display);
+  color: var(--neon-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .worldmap-tile-info p {
-  margin: 8px 0;
-  font-size: 0.95rem;
+  margin: var(--spacing-sm) 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
 }
 
 .worldmap-tile-info strong {
-  color: var(--color-primary);
+  color: var(--neon-primary);
+  font-weight: 600;
 }
 
 .btn-colonize,
@@ -123,20 +150,25 @@
 
 .worldmap-legend {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
-  padding: 15px;
+  bottom: var(--spacing-xl);
+  left: var(--spacing-xl);
+  background: var(--bg-card);
+  border: 2px solid rgba(0, 217, 255, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
   min-width: 180px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 .worldmap-legend h4 {
-  margin: 0 0 10px 0;
-  color: var(--color-primary);
-  font-size: 1.1rem;
+  margin: 0 0 var(--spacing-md) 0;
+  font-family: var(--font-display);
+  color: var(--neon-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .legend-item {

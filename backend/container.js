@@ -67,10 +67,17 @@ const createContainer = () => {
     return new CombatSimulationService({ battleReportRepository: c.resolve('battleReportRepository') });
   });
   container.register('userService', () => require('./services/userService'));
+  container.register('tokenService', () => {
+    const { getTokenService } = require('./services/TokenService');
+    return getTokenService();
+  });
 
   container.register('resourceController', (c) => require('./controllers/resourceController')({ resourceService: c.resolve('resourceService') }));
   container.register('buildingController', (c) => require('./controllers/buildingController')({ buildingService: c.resolve('buildingService') }));
-  container.register('authController', (c) => require('./controllers/authController')({ userService: c.resolve('userService') }));
+  container.register('authController', (c) => require('./controllers/authController')({ 
+    userService: c.resolve('userService'),
+    tokenService: c.resolve('tokenService')
+  }));
   container.register('blueprintController', (c) => require('./controllers/blueprintController')({ blueprintRepository: c.resolve('blueprintRepository') }));
 
   container.register('facilityController', () => require('./controllers/facilityController'));
@@ -172,6 +179,45 @@ const createContainer = () => {
     const createTradeController = require('./modules/trade/api/tradeController');
     return createTradeController({
       tradeService: c.resolve('tradeService'),
+    });
+  });
+
+  // Alliance module (alliances/guildes)
+  container.register('allianceService', () => {
+    const AllianceService = require('./modules/alliances/application/AllianceService');
+    return new AllianceService();
+  });
+
+  container.register('allianceController', (c) => {
+    const createAllianceController = require('./modules/alliances/api/allianceController');
+    return createAllianceController({
+      allianceService: c.resolve('allianceService'),
+    });
+  });
+
+  // City module (specializations)
+  container.register('cityService', () => {
+    const CityService = require('./modules/cities/application/CityService');
+    return new CityService();
+  });
+
+  container.register('cityController', (c) => {
+    const createCityController = require('./modules/cities/api/cityController');
+    return createCityController({
+      cityService: c.resolve('cityService'),
+    });
+  });
+
+  // Market module (trading system)
+  container.register('marketService', () => {
+    const MarketService = require('./modules/market/application/MarketService');
+    return new MarketService();
+  });
+
+  container.register('marketController', (c) => {
+    const createMarketController = require('./modules/market/api/marketController');
+    return createMarketController({
+      marketService: c.resolve('marketService'),
     });
   });
 

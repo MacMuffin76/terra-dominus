@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUserAttacks, launchAttack, cancelAttack, getCombatReport } from '../api/combat';
 import { getUserCities } from '../api/world';
+import CombatReportModal from './CombatReportModal';
 import './Combat.css';
 
 const CombatPanel = () => {
@@ -9,6 +10,7 @@ const CombatPanel = () => {
   const [selectedTab, setSelectedTab] = useState('ongoing'); // ongoing, history, launch
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
 
   // Form data pour lancer une attaque
   const [attackForm, setAttackForm] = useState({
@@ -76,7 +78,7 @@ const CombatPanel = () => {
   const handleViewReport = async (attackId) => {
     try {
       const report = await getCombatReport(attackId);
-      alert(JSON.stringify(report, null, 2)); // TODO: Créer un modal pour afficher le rapport
+      setSelectedReport(report);
     } catch (err) {
       setError(err.message);
     }
@@ -282,6 +284,13 @@ const CombatPanel = () => {
         {!loading && selectedTab === 'history' && renderHistory()}
         {!loading && selectedTab === 'launch' && renderLaunchForm()}
       </div>
+
+      {selectedReport && (
+        <CombatReportModal 
+          report={selectedReport} 
+          onClose={() => setSelectedReport(null)} 
+        />
+      )}
     </div>
   );
 };

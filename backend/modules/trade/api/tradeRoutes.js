@@ -4,15 +4,23 @@ module.exports = (container) => {
   const router = express.Router();
   const tradeController = container.resolve('tradeController');
   const { protect } = require('../../../middleware/authMiddleware');
+  const { strictLimiter, moderateLimiter, flexibleLimiter } = require('../../../middleware/rateLimiters');
+  const { zodValidate } = require('../../../middleware/zodValidate');
+  const { 
+    createTradeRouteSchema, 
+    updateTradeRouteSchema,
+    sendConvoySchema 
+  } = require('../../../validation/tradeSchemas');
+  
   // Routes commerciales
-  router.post('/routes', protect, tradeController.establishRoute);
-  router.get('/routes', protect, tradeController.getUserRoutes);
-  router.put('/routes/:id', protect, tradeController.updateRoute);
-  router.delete('/routes/:id', protect, tradeController.deleteRoute);
+  router.post('/routes', strictLimiter, protect, zodValidate(createTradeRouteSchema), tradeController.establishRoute);
+  router.get('/routes', moderateLimiter, protect, tradeController.getUserRoutes);
+  router.put('/routes/:id', flexibleLimiter, protect, zodValidate(updateTradeRouteSchema), tradeController.updateRoute);
+  router.delete('/routes/:id', strictLimiter, protect, tradeController.deleteRoute);
 
-  // Convois
-  router.post('/convoys', protect, tradeController.sendConvoy);
-  router.get('/routes/:id/convoys', protect, tradeController.getRouteConvoys);
+  // Convois - Actions de jeu fréquentes mais contrôlées
+  router.post('/convoys', flexibleLimiter, protect, zodValidate(sendConvoySchema), tradeController.sendConvoy);
+  router.get('/routes/:id/convoys', moderateLimiter, protect, tradeController.getRouteConvoys);
 
   return router;
 };

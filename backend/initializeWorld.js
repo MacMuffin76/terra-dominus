@@ -5,22 +5,24 @@
 
 const sequelize = require('./db');
 const { WorldGrid, CitySlot } = require('./models');
+const { getLogger } = require('./utils/logger');
 
+const logger = getLogger({ module: 'InitializeWorld' });
 const WORLD_SIZE = 100; // Grille de 100x100
 const CITY_SLOTS_COUNT = 500; // 500 emplacements de villes possibles
 
 async function initializeWorldGrid() {
-  console.log('🌍 Initialisation de la grille du monde...');
+  logger.info('Initialisation de la grille du monde');
   
   try {
     // Vérifier si la grille existe déjà
     const existingTiles = await WorldGrid.count();
     if (existingTiles > 0) {
-      console.log(`✅ La grille existe déjà (${existingTiles} tiles). Aucune action nécessaire.`);
+      logger.info({ existingTiles }, 'La grille existe déjà. Aucune action nécessaire');
       return;
     }
 
-    console.log(`Génération de ${WORLD_SIZE * WORLD_SIZE} tiles...`);
+    logger.info({ totalTiles: WORLD_SIZE * WORLD_SIZE }, 'Génération des tiles');
     
     const tiles = [];
     const terrainTypes = ['plains', 'forest', 'mountain', 'desert', 'water'];
@@ -47,15 +49,15 @@ async function initializeWorldGrid() {
     }
 
     // Insérer par batch de 1000 pour éviter les timeouts
-    console.log('Insertion des tiles par batch...');
+    logger.info('Insertion des tiles par batch');
     const batchSize = 1000;
     for (let i = 0; i < tiles.length; i += batchSize) {
       const batch = tiles.slice(i, i + batchSize);
       await WorldGrid.bulkCreate(batch);
-      console.log(`  Progression: ${Math.min(i + batchSize, tiles.length)}/${tiles.length}`);
+      logger.debug({ progress: Math.min(i + batchSize, tiles.length), total: tiles.length }, 'Progression insertion');
     }
 
-    console.log('✅ Grille générée avec succès !');
+    logger.info('Grille générée avec succès');
 
     // Générer les emplacements de villes
     console.log(`\n🏙️  Génération de ${CITY_SLOTS_COUNT} emplacements de villes...`);
@@ -85,10 +87,11 @@ async function initializeWorldGrid() {
 
     await CitySlot.bulkCreate(citySlots);
 
-    console.log('✅ Emplacements de villes générés avec succès !');
-    console.log('\n🎉 Initialisation terminée !');
-    console.log(`   - ${WORLD_SIZE * WORLD_SIZE} tiles de terrain`);
-    console.log(`   - ${CITY_SLOTS_COUNT} emplacements de villes disponibles`);
+    logger.info('Emplacements de villes générés avec succès');
+    logger.info({
+      tiles: WORLD_SIZE * WORLD_SIZE,
+      citySlots: CITY_SLOTS_COUNT
+    }, 'Initialisation terminée');
     
   } catch (error) {
     console.error('❌ Erreur lors de l\'initialisation:', error);
@@ -101,10 +104,10 @@ async function initializeWorldGrid() {
 // Exécuter le script
 initializeWorldGrid()
   .then(() => {
-    console.log('\n✨ Script terminé avec succès');
+    logger.info('Script terminé avec succès');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n💥 Erreur fatale:', error);
+    logger.error({ err: error }, 'Erreur fatale');
     process.exit(1);
   });

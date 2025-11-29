@@ -13,6 +13,9 @@ const createWorldRouter = require('../modules/world/api/worldRoutes');
 const createColonizationRouter = require('../modules/colonization/api/colonizationRoutes');
 const createCombatRouter = require('../modules/combat/api/combatRoutes');
 const createTradeRouter = require('../modules/trade/api/tradeRoutes');
+const createAllianceRouter = require('../modules/alliances/api/allianceRoutes');
+const createCityRouter = require('../modules/cities/api/cityRoutes');
+const createMarketRouter = require('../modules/market/api/marketRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
@@ -28,7 +31,15 @@ const createApiRouter = (container) => {
   router.use('/colonization', createColonizationRouter(container));
   router.use('/combat', createCombatRouter(container));
   router.use('/trade', createTradeRouter(container));
-  router.use('/cities', require('../modules/cities/api/citiesRoutes')());
+  router.use('/alliances', createAllianceRouter({
+    allianceController: container.resolve('allianceController'),
+    authMiddleware: require('../middleware/authMiddleware')
+  }));
+  router.use('/cities', createCityRouter(container.resolve('cityController')));
+  router.use('/market', createMarketRouter({
+    marketController: container.resolve('marketController'),
+    authMiddleware: require('../middleware/authMiddleware')
+  }));
   router.use('/', createDashboardRouter(container));
   router.use('/', createUnitRouter(container));
   router.use('/admin', createBlueprintAdminRouter(container));

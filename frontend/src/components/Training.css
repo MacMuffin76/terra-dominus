@@ -1,120 +1,53 @@
-/* frontend/src/components/Training.css */
+/* frontend/src/components/Training.css - Terra UI */
 
-/* Reset CSS */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background: none;
-}
-
-/* Container principal : Menu à gauche, contenu à droite */
 .training-container {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
+  background: var(--bg-void);
+  min-height: 100vh;
 }
 
-/* Contenu à droite (après le Menu) */
 .training-content {
   width: calc(100% - 250px);
-  max-width: 1200px;
+  max-width: 1400px;
   position: relative;
-  margin-left: 250px; /* largeur du Menu */
-  padding: 20px;
+  margin-left: 250px;
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
 }
 
-.training-content h1 {
-  margin-bottom: 100px;
-  text-align: center;
-}
-
-
-/* Grille 4 colonnes, 2 lignes */
-.training-list {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: auto;
-  gap: 40px;
-  margin-top: 20px;
-  justify-items: center;
-}
-
-/* Décalage vers le bas quand on affiche le détail */
-.training-content.with-details .training-list {
+.training-content.with-details .training-grid {
   transform: translateY(300px);
   transition: transform 0.3s ease;
 }
 
-/* Carte d'unité */
-.training-card {
-  width: 100%;
-  max-width: 220px;
-  margin: 0 auto;
+.training-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.training-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--neon-primary);
   text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(140deg, var(--color-surface), var(--color-surface-raised));
-  border: 1px solid var(--color-border);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
-  min-height: 280px;
-  font: inherit;
-  color: var(--color-text);
+  margin: 0;
+  animation: neon-pulse 2s ease-in-out infinite;
 }
 
-.training-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
-  border-color: var(--color-primary);
+.training-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-xl);
 }
 
-.training-card:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 4px;
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-}
-
-.training-card.selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 12px 24px rgba(92, 225, 230, 0.25);
-}
-
-.training-card:disabled {
-  cursor: progress;
-  opacity: 0.85;
-}
-
-/* Image en haut de la carte */
-.training-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-bottom: 2px solid #444;
-}
-
-/* Nom de l'unité */
-.training-card h3 {
-  margin: 10px 0 5px;
-  font-size: 1em;
-  color: var(--color-text);
-}
-
-/* Quantité */
-.training-card p {
-  margin: 0 0 12px;
-  color: var(--color-muted-text);
-  font-size: 0.9em;
-}
-
-/* Détail d'unité (popup) */
 .training-detail {
   position: absolute;
   top: 150px;
@@ -122,54 +55,35 @@ body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 1000px;
-  padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #070707;
-  color: #fff;
   z-index: 10;
 }
 
-.training-detail h2 {
-  margin-top: 0;
-  color: #fff;
+@media (max-width: 1200px) {
+  .training-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.training-detail p {
-  margin: 5px 0;
-}
-
-.training-detail button {
-  margin: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #555;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-.training-detail button:hover {
-  background-color: #777;
+@media (max-width: 992px) {
+  .training-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 767px) {
   .training-content {
     width: 100%;
     margin-left: 0;
-    padding: 20px 16px;
+    padding: var(--spacing-lg) var(--spacing-md);
   }
 
-  .training-list {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
+  .training-title {
+    font-size: 1.875rem;
   }
 
-  .training-card {
-    width: 100%;
-    max-width: 360px;
+  .training-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
   }
 
   .training-detail {

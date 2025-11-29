@@ -1,4 +1,5 @@
 const { runWithContext } = require('../../../utils/logger');
+const { Op } = require('sequelize');
 
 /**
  * TradeRepository - Gestion des routes commerciales et convois
@@ -125,7 +126,7 @@ class TradeRepository {
       return this.TradeConvoy.findAll({
         where: {
           status: 'traveling',
-          arrival_time: { [this.TradeConvoy.sequelize.Op.lte]: new Date() }
+          arrival_time: { [Op.lte]: new Date() }
         },
         include: [
           { model: this.TradeRoute, as: 'route' },
@@ -151,19 +152,20 @@ class TradeRepository {
   async getRoutesReadyForAutoTransfer() {
     return runWithContext(async () => {
       const now = new Date();
+      const { sequelize } = this.TradeRoute;
 
       return this.TradeRoute.findAll({
         where: {
           status: 'active',
           route_type: 'internal',
-          [this.TradeRoute.sequelize.Op.or]: [
+          [Op.or]: [
             { last_convoy_time: null },
-            this.TradeRoute.sequelize.where(
-              this.TradeRoute.sequelize.literal(
+            sequelize.where(
+              sequelize.literal(
                 `EXTRACT(EPOCH FROM (NOW() - last_convoy_time))`
               ),
               '>=',
-              this.TradeRoute.sequelize.col('transfer_frequency')
+              sequelize.col('transfer_frequency')
             )
           ]
         },

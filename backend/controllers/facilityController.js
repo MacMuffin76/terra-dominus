@@ -17,11 +17,33 @@ exports.getFacilityBuildings = async (req, res) => {
       return res.status(404).json({ message: 'Pas de ville trouvée' });
     }
 
-  const facilities = await Facility.findAll({
-    where: { city_id: city.id },
-  });
+    let facilities = await Facility.findAll({
+      where: { city_id: city.id },
+    });
 
-  res.json(facilities);
+    // Si aucune installation n'existe, créer les installations de base
+    if (facilities.length === 0) {
+      const defaultFacilities = [
+        { name: 'Centre de Commandement', level: 1 },
+        { name: 'Laboratoire de Recherche', level: 0 },
+        { name: "Terrain d'Entraînement", level: 0 }
+      ];
+
+      const createdFacilities = await Promise.all(
+        defaultFacilities.map(f =>
+          Facility.create({
+            city_id: city.id,
+            name: f.name,
+            level: f.level,
+          })
+        )
+      );
+
+      (req.logger || logger).info({ cityId: city.id, userId: req.user.id }, 'Default facilities created');
+      facilities = createdFacilities;
+    }
+
+    res.json(facilities);
   } catch (error) {
     (req.logger || logger).error({ err: error }, 'Error fetching facility buildings');
     res.status(500).json({ message: 'Error fetching facility buildings' });

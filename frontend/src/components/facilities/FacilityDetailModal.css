@@ -1,0 +1,251 @@
+/* src/components/facilities/FacilityDetailModal.css */
+
+.terra-facility-modal {
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.terra-facility-modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  background: var(--bg-panel);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terra-facility-modal-icon {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  background: var(--bg-void);
+  border: 2px solid var(--neon-primary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+}
+
+.terra-facility-modal-icon img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.terra-facility-modal-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.terra-facility-modal-title h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.terra-facility-modal-body {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.terra-facility-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.terra-facility-modal-section h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--neon-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.terra-facility-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.terra-facility-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--spacing-md);
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+.terra-facility-info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.terra-facility-info-item .label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.terra-facility-info-item .value {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.terra-facility-costs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.terra-facility-cost-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.terra-facility-cost-item.affordable {
+  border-color: var(--neon-success);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.terra-facility-cost-item.not-affordable {
+  border-color: var(--neon-danger);
+  background: rgba(255, 68, 68, 0.05);
+  opacity: 0.7;
+}
+
+.terra-facility-cost-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.terra-facility-cost-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.terra-facility-cost-details .resource-name {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.terra-facility-cost-details .resource-amount {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.terra-facility-cost-item .status-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.terra-facility-cost-item.affordable .status-icon {
+  color: var(--neon-success);
+}
+
+.terra-facility-cost-item.not-affordable .status-icon {
+  color: var(--neon-danger);
+}
+
+.terra-facility-modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-panel);
+}
+
+.terra-facility-modal-loading,
+.terra-facility-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  min-height: 200px;
+  gap: var(--spacing-md);
+}
+
+.terra-facility-modal-loading p,
+.terra-facility-modal-error p {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .terra-facility-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .terra-facility-modal-header {
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+  }
+
+  .terra-facility-modal-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .terra-facility-modal-icon img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .terra-facility-modal-title h2 {
+    font-size: 1.25rem;
+  }
+
+  .terra-facility-modal-body {
+    padding: var(--spacing-lg);
+  }
+
+  .terra-facility-modal-actions {
+    flex-direction: column;
+    padding: var(--spacing-lg);
+  }
+
+  .terra-facility-modal-actions .terra-btn {
+    width: 100%;
+  }
+}

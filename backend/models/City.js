@@ -39,6 +39,15 @@ const City = sequelize.define('City', {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  specialization: {
+    type: DataTypes.ENUM('none', 'military', 'economic', 'industrial', 'research'),
+    allowNull: false,
+    defaultValue: 'none',
+  },
+  specialized_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,

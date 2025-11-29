@@ -38,6 +38,17 @@ const SpyMission = require('./SpyMission');
 const TradeRoute = require('./TradeRoute');
 const TradeConvoy = require('./TradeConvoy');
 
+// Import des modèles alliances
+const Alliance = require('./Alliance');
+const AllianceMember = require('./AllianceMember');
+const AllianceInvitation = require('./AllianceInvitation');
+const AllianceJoinRequest = require('./AllianceJoinRequest');
+const AllianceDiplomacy = require('./AllianceDiplomacy');
+
+// Import des modèles marché
+const MarketOrder = require('./MarketOrder');
+const MarketTransaction = require('./MarketTransaction');
+
 // Initialiser les nouveaux modèles (classes)
 Attack.init(sequelize);
 AttackWave.init(sequelize);
@@ -74,7 +85,14 @@ const models = {
   DefenseReport,
   SpyMission,
   TradeRoute,
-  TradeConvoy
+  TradeConvoy,
+  Alliance,
+  AllianceMember,
+  AllianceInvitation,
+  AllianceJoinRequest,
+  AllianceDiplomacy,
+  MarketOrder,
+  MarketTransaction
 };
 
 // Ajouter sequelize et Sequelize pour les associations

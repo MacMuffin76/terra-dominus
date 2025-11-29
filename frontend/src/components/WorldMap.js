@@ -5,7 +5,11 @@ import { getVisibleWorld, getAvailableCitySlots, getTileInfo, startColonization 
 import { getUserCities, getMaxCitiesLimit } from '../api/world';
 import { Alert, Loader } from './ui';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { getLogger } from '../utils/logger';
 import './WorldMap.css';
+
+const logger = getLogger('WorldMap');
 
 const CELL_SIZE = 30; // Taille d'une case en pixels
 const TERRAIN_COLORS = {
@@ -18,6 +22,7 @@ const TERRAIN_COLORS = {
 };
 
 const WorldMap = () => {
+  const { error, loading: asyncLoading, catchError, clearError } = useAsyncError('WorldMap');
   const [worldData, setWorldData] = useState(null);
   const [cities, setCities] = useState([]);
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -25,7 +30,6 @@ const WorldMap = () => {
   const [selectedTile, setSelectedTile] = useState(null);
   const [tileInfo, setTileInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [viewOffset, setViewOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -36,24 +40,34 @@ const WorldMap = () => {
   // Charger les données initiales
   const loadWorldData = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    clearError();
 
-    try {
-      const [world, userCities, slots, limitData] = await Promise.all([
-        getVisibleWorld(),
-        getUserCities(),
-        getAvailableCitySlots(),
-        getMaxCitiesLimit(),
-      ]);
+    const result = await catchError(
+      async () => {
+        const [world, userCities, slots, limitData] = await Promise.all([
+          getVisibleWorld(),
+          getUserCities(),
+          getAvailableCitySlots(),
+          getMaxCitiesLimit(),
+        ]);
+        return { world, userCities, slots, limitData };
+      },
+      { 
+        toast: true, 
+        logError: true,
+        fallbackMessage: 'Impossible de charger la carte du monde.'
+      }
+    );
 
-      setWorldData(world);
-      setCities(userCities);
-      setAvailableSlots(slots);
-      setMaxCities(limitData.maxCities);
+    if (result) {
+      setWorldData(result.world);
+      setCities(result.userCities);
+      setAvailableSlots(result.slots);
+      setMaxCities(result.limitData.maxCities);
 
       // Centrer la vue sur la capitale (première ville)
-      if (userCities.length > 0) {
-        const capital = userCities[0];
+      if (result.userCities.length > 0) {
+        const capital = result.userCities[0];
         if (capital.coords) {
           setViewOffset({
             x: -(capital.coords.x * CELL_SIZE) + window.innerWidth / 2,
@@ -61,13 +75,10 @@ const WorldMap = () => {
           });
         }
       }
-    } catch (err) {
-      console.error('Error loading world data:', err);
-      setError(getApiErrorMessage(err, 'Impossible de charger la carte du monde.'));
-    } finally {
-      setLoading(false);
     }
-  }, []);
+
+    setLoading(false);
+  }, [catchError, clearError]);
 
   useEffect(() => {
     loadWorldData();
@@ -185,13 +196,12 @@ const WorldMap = () => {
     if (tile) {
       setSelectedTile({ x: tileX, y: tileY });
 
-      try {
-        const info = await getTileInfo(tileX, tileY);
-        setTileInfo(info);
-      } catch (err) {
-        console.error('Error getting tile info:', err);
-        setTileInfo(null);
-      }
+      const info = await catchError(
+        () => getTileInfo(tileX, tileY),
+        { toast: false, logError: true }
+      );
+      
+      setTileInfo(info || null);
     }
   };
 
@@ -259,8 +269,10 @@ const WorldMap = () => {
     return (
       <div className="worldmap-container">
         <Menu />
-        <ResourcesWidget />
-        <Loader center label="Chargement de la carte du monde" size="lg" />
+        <div className="worldmap-content" id="main-content">
+          <ResourcesWidget />
+          <Loader center label="Chargement de la carte du monde" size="lg" />
+        </div>
       </div>
     );
   }
@@ -268,8 +280,8 @@ const WorldMap = () => {
   return (
     <div className="worldmap-container">
       <Menu />
-      <ResourcesWidget />
       <div className="worldmap-content" id="main-content">
+        <ResourcesWidget />
         <div className="worldmap-header">
           <h1>Carte du Monde</h1>
           <div className="worldmap-stats">

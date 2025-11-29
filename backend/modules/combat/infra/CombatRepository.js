@@ -1,4 +1,5 @@
 const { runWithContext } = require('../../../utils/logger');
+const { Op } = require('sequelize');
 
 /**
  * CombatRepository - Gestion des données combat (attaques, espionnage, rapports)
@@ -76,7 +77,7 @@ class CombatRepository {
         where.defender_user_id = userId;
       } else {
         // Par défaut, récupérer toutes les attaques liées au joueur
-        where[this.Attack.sequelize.Op.or] = [
+        where[Op.or] = [
           { attacker_user_id: userId },
           { defender_user_id: userId }
         ];
@@ -108,7 +109,8 @@ class CombatRepository {
     return runWithContext(async () => {
       return this.Attack.findAll({
         where: {
-          status: 'arrived'
+          status: 'traveling',
+          arrival_time: { [Op.lte]: new Date() }
         },
         include: [
           { model: this.City, as: 'attackerCity' },
@@ -245,7 +247,7 @@ class CombatRepository {
       return this.SpyMission.findAll({
         where: {
           status: 'traveling',
-          arrival_time: { [this.SpyMission.sequelize.Op.lte]: new Date() }
+          arrival_time: { [Op.lte]: new Date() }
         },
         include: [
           { model: this.City, as: 'spyCity' },

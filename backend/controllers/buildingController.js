@@ -13,6 +13,28 @@ const createBuildingController = ({ buildingService }) => {
     }
   };
 
+  /**
+   * @openapi
+   * /api/v1/buildings/{id}/upgrade:
+   *   post:
+   *     summary: Démarrer l'amélioration d'un bâtiment
+   *     tags: [Buildings]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Amélioration démarrée avec succès
+   *       400:
+   *         description: Conditions non remplies (ressources, niveau max, etc.)
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   const startUpgrade = async (req, res) => {
     try {
       const result = await buildingService.startUpgrade(req.user.id, req.params.id);
@@ -33,6 +55,36 @@ const createBuildingController = ({ buildingService }) => {
     }
   };
 
+  /**
+   * @openapi
+   * /api/v1/buildings/queue:
+   *   get:
+   *     summary: Lister la file d'attente de construction
+   *     tags: [Buildings]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: File d'attente de construction
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   id:
+   *                     type: integer
+   *                   buildingId:
+   *                     type: integer
+   *                   status:
+   *                     type: string
+   *                   completionTime:
+   *                     type: string
+   *                     format: date-time
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   const listConstructionQueue = async (req, res) => {
     try {
       const queue = await buildingService.listConstructionQueue(req.user.id);

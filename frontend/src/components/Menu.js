@@ -7,8 +7,11 @@ import ScienceIcon from '@mui/icons-material/Science';
 import BuildIcon from '@mui/icons-material/Build';
 import SecurityIcon from '@mui/icons-material/Security';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import GroupIcon from '@mui/icons-material/Group';
 import PublicIcon from '@mui/icons-material/Public';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
 
@@ -148,10 +151,34 @@ const Menu = () => {
             </Link>
           </li>
           <li>
+            <Link to="/trade" onClick={closeMenuOnNavigation}>
+              <LocalShippingIcon className="menu-icon" />
+              <div>
+                Commerce
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/market" onClick={closeMenuOnNavigation}>
+              <ShoppingCartIcon className="menu-icon" />
+              <div>
+                Marché
+              </div>
+            </Link>
+          </li>
+          <li>
             <Link to="/world" onClick={closeMenuOnNavigation}>
               <PublicIcon className="menu-icon" />
               <div>
                 Carte du Monde
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/cities" onClick={closeMenuOnNavigation}>
+              <LocationCityIcon className="menu-icon" />
+              <div>
+                Spécialisation
               </div>
             </Link>
           </li>

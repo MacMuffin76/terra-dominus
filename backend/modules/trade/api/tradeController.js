@@ -5,8 +5,44 @@ const { logger } = require('../../../utils/logger');
  */
 const tradeController = ({ tradeService }) => {
   /**
-   * POST /api/v1/trade/routes
-   * Établir une nouvelle route commerciale
+   * @openapi
+   * /api/v1/trade/routes:
+   *   post:
+   *     summary: Établir une nouvelle route commerciale
+   *     tags: [Trade]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - fromCityId
+   *               - toCityId
+   *               - resourceType
+   *               - quantity
+   *             properties:
+   *               fromCityId:
+   *                 type: integer
+   *               toCityId:
+   *                 type: integer
+   *               resourceType:
+   *                 type: string
+   *                 enum: [wood, stone, iron, food]
+   *               quantity:
+   *                 type: integer
+   *               routeType:
+   *                 type: string
+   *                 enum: [regular, express]
+   *     responses:
+   *       201:
+   *         description: Route commerciale établie
+   *       400:
+   *         description: Paramètres invalides
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const establishRoute = async (req, res) => {
     try {
@@ -22,8 +58,29 @@ const tradeController = ({ tradeService }) => {
   };
 
   /**
-   * GET /api/v1/trade/routes
-   * Récupérer les routes d'un utilisateur
+   * @openapi
+   * /api/v1/trade/routes:
+   *   get:
+   *     summary: Récupérer les routes commerciales de l'utilisateur
+   *     tags: [Trade]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [active, inactive, completed]
+   *       - in: query
+   *         name: routeType
+   *         schema:
+   *           type: string
+   *           enum: [regular, express]
+   *     responses:
+   *       200:
+   *         description: Liste des routes commerciales
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const getUserRoutes = async (req, res) => {
     try {
@@ -39,8 +96,38 @@ const tradeController = ({ tradeService }) => {
   };
 
   /**
-   * PUT /api/v1/trade/routes/:id
-   * Mettre à jour une route
+   * @openapi
+   * /api/v1/trade/routes/{id}:
+   *   put:
+   *     summary: Mettre à jour une route commerciale
+   *     tags: [Trade]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               quantity:
+   *                 type: integer
+   *               status:
+   *                 type: string
+   *                 enum: [active, inactive]
+   *     responses:
+   *       200:
+   *         description: Route mise à jour
+   *       400:
+   *         description: Paramètres invalides
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const updateRoute = async (req, res) => {
     try {
@@ -56,8 +143,26 @@ const tradeController = ({ tradeService }) => {
   };
 
   /**
-   * DELETE /api/v1/trade/routes/:id
-   * Supprimer une route
+   * @openapi
+   * /api/v1/trade/routes/{id}:
+   *   delete:
+   *     summary: Supprimer une route commerciale
+   *     tags: [Trade]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Route supprimée avec succès
+   *       400:
+   *         description: Route introuvable ou non autorisée
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
    */
   const deleteRoute = async (req, res) => {
     try {

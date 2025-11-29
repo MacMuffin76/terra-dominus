@@ -18,10 +18,14 @@ const Training = React.lazy(() => import('./components/Training'));
 const Defense = React.lazy(() => import('./components/Defense'));
 const Fleet = React.lazy(() => import('./components/Fleet'));
 const Alliance = React.lazy(() => import('./components/Alliance'));
+const TradePanel = React.lazy(() => import('./components/TradePanel'));
+const Market = React.lazy(() => import('./components/Market'));
+const CitySpecialization = React.lazy(() => import('./components/CitySpecialization'));
 const WorldMap = React.lazy(() => import('./components/WorldMap'));
 const Login = React.lazy(() => import('./components/Login'));
 const Register = React.lazy(() => import('./components/Register'));
 const Home = React.lazy(() => import('./pages/Home'));
+const DesignSystemTest = React.lazy(() => import('./pages/DesignSystemTest'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -45,6 +49,7 @@ function App() {
         <div className="App">
           <Suspense fallback={<Loader label="Chargement de la page..." center size="lg" />}>
             <Routes>
+              <Route path="/design-system-test" element={<DesignSystemTest />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
@@ -104,10 +109,34 @@ function App() {
                 )}
               />
               <Route
+                path="/trade"
+                element={(
+                  <PrivateRoute>
+                    <TradePanel />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
                 path="/alliance"
                 element={(
                   <PrivateRoute>
                     <Alliance />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/market"
+                element={(
+                  <PrivateRoute>
+                    <Market />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/cities"
+                element={(
+                  <PrivateRoute>
+                    <CitySpecialization />
                   </PrivateRoute>
                 )}
               />

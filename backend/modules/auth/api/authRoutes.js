@@ -28,5 +28,9 @@ module.exports = (container) => {
   // POST /api/v1/auth/refresh
   router.post('/refresh', validate(refreshSchema), controller.refreshSession);
 
+  // POST /api/v1/auth/logout - Révocation de token
+  const { protect } = require('../../../middleware/authMiddleware');
+  router.post('/logout', protect, controller.logout);
+
   return router;
 };

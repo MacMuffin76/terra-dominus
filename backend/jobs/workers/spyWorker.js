@@ -52,7 +52,7 @@ async function processSpyMission(missionId, combatService, job) {
     logger.info(`[SpyWorker] Mission ${missionId} résolue`, { success: result.success });
     return result;
   } catch (error) {
-    logger.error(`[SpyWorker] Erreur traitement mission ${missionId}`, { error: error.message });
+    logger.error({ err: error }, `[SpyWorker] Erreur traitement mission ${missionId}`);
     throw error;
   }
 }
@@ -77,7 +77,7 @@ async function scanArrivedSpyMissions(combatRepository, job) {
     job.updateProgress(100);
     return { processed: arrivedMissions.length };
   } catch (error) {
-    logger.error('[SpyWorker] Erreur scan missions espionnage', { error: error.message });
+    logger.error({ err: error }, '[SpyWorker] Erreur scan missions espionnage');
     throw error;
   }
 }

@@ -3,48 +3,46 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './Fleet.css';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader, Skeleton } from './ui';
+import FleetCard from './fleet/FleetCard';
+import { Alert, Loader } from './ui';
 
 const Fleet = () => {
+  const { error, catchError } = useAsyncError('Fleet');
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const fetchUnits = useCallback(async () => {
+  const fetchUnits = async () => {
     setLoading(true);
-    setError(null);
     try {
       const { data } = await axiosInstance.get('/api/units');
       setUnits(data);
-    } catch (err) {
-      console.error('Error fetching units:', err);
-      setUnits([]);
-      setError('Impossible de charger la flotte.');
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchUnits();
-  }, [fetchUnits]);
-
-  const formatFileName = (name) =>
-    name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/['’]/g, '')
-      .replace(/\s+/g, '_');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="fleet-container">
       <Menu />
-      <ResourcesWidget />
       <div className="fleet-content" id="main-content">
-        <h1>Flotte</h1>
+        <ResourcesWidget />
+        <div className="fleet-header">
+          <h1 className="fleet-title">Flotte</h1>
+        </div>
         {loading && <Loader label="Chargement de la flotte" />}
         {error && (
           <Alert
@@ -54,21 +52,13 @@ const Fleet = () => {
             onAction={fetchUnits}
           />
         )}
-        <div className="fleet-list">
+        <div className="fleet-grid">
           {(loading ? Array.from({ length: 4 }) : units).map((u, idx) => (
-            <div key={u?.id || `unit-skeleton-${idx}`} className="unit-card">
-              {loading ? (
-                <Skeleton width="100%" height="160px" />
-              ) : (
-                <img
-                  src={`/images/training/${formatFileName(u.name)}.png`}
-                  alt={u.name}
-                  className="unit-image"
-                />
-              )}
-              <h3>{loading ? <Skeleton width="60%" /> : u.name}</h3>
-              <p>{loading ? <Skeleton width="40%" /> : `Quantité : ${u.quantity}`}</p>
-            </div>
+            <FleetCard
+              key={u?.id || `unit-skeleton-${idx}`}
+              unit={u}
+              loading={loading}
+            />
           ))}
         </div>
       </div>

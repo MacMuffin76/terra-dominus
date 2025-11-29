@@ -1,3 +1,6 @@
+import { getLogger } from './logger';
+
+const logger = getLogger('SafeStorage');
 const memoryStore = new Map();
 
 const isStorageAccessible = () => {
@@ -8,7 +11,7 @@ const isStorageAccessible = () => {
     window.localStorage.removeItem(testKey);
     return true;
   } catch (err) {
-    console.warn('localStorage is not accessible; falling back to in-memory store.', err);
+    logger.warn('localStorage is not accessible; falling back to in-memory store.', err);
     return false;
   }
 };
@@ -24,7 +27,7 @@ export const safeStorage = {
       try {
         return store.getItem(key);
       } catch (err) {
-        console.warn('Unable to read from localStorage; using fallback store.', err);
+        logger.warn('Unable to read from localStorage; using fallback store.', { key, error: err.message });
       }
     }
     return memoryStore.get(key) ?? null;
@@ -36,7 +39,7 @@ export const safeStorage = {
         store.setItem(key, value);
         return;
       } catch (err) {
-        console.warn('Unable to write to localStorage; using fallback store.', err);
+        logger.warn('Unable to write to localStorage; using fallback store.', { key, error: err.message });
       }
     }
     memoryStore.set(key, value);
@@ -47,7 +50,7 @@ export const safeStorage = {
       try {
         store.removeItem(key);
       } catch (err) {
-        console.warn('Unable to remove from localStorage; updating fallback store.', err);
+        logger.warn('Unable to remove from localStorage; updating fallback store.', { key, error: err.message });
       }
     }
     memoryStore.delete(key);

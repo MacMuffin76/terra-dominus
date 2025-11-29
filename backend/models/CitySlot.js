@@ -74,4 +74,21 @@ const CitySlot = sequelize.define(
   }
 );
 
+/**
+ * Associations
+ */
+CitySlot.associate = function(models) {
+  // CitySlot appartient à WorldGrid
+  CitySlot.belongsTo(models.WorldGrid, {
+    foreignKey: 'grid_id',
+    as: 'grid'
+  });
+
+  // CitySlot peut avoir une City
+  CitySlot.belongsTo(models.City, {
+    foreignKey: 'city_id',
+    as: 'city'
+  });
+};
+
 module.exports = CitySlot;

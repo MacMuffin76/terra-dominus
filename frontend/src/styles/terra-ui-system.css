@@ -1,0 +1,933 @@
+/**
+ * TERRA DOMINUS - UI SYSTEM
+ * Design: Futuriste Minimaliste Stratégique
+ * Style: Cybernetic Command Interface
+ */
+
+/* ==================== */
+/* 1. DESIGN TOKENS     */
+/* ==================== */
+
+:root {
+  /* === PALETTE COULEURS === */
+  /* Backgrounds - Deep Space */
+  --bg-void: #0a0e1a;
+  --bg-panel: #12172b;
+  --bg-card: #1a2138;
+  --bg-hover: #222d47;
+  --bg-overlay: rgba(10, 14, 26, 0.95);
+  
+  /* Accents néon */
+  --neon-primary: #00d9ff;
+  --neon-secondary: #00ffaa;
+  --neon-danger: #ff006e;
+  --neon-warning: #ffaa00;
+  --neon-info: #7c3aed;
+  
+  /* Données ressources */
+  --data-metal: #8b9dc3;
+  --data-energy: #ffd700;
+  --data-crystal: #da70d6;
+  --data-food: #90ee90;
+  
+  /* Textes */
+  --text-primary: #e8f0ff;
+  --text-secondary: #8b9dc3;
+  --text-muted: #4a5a7a;
+  --text-glow: #00d9ff;
+  
+  /* Bordures */
+  --border-subtle: rgba(0, 217, 255, 0.1);
+  --border-base: rgba(0, 217, 255, 0.2);
+  --border-active: rgba(0, 217, 255, 0.5);
+  --border-glow: rgba(0, 217, 255, 0.8);
+  
+  /* Ombres et glows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --glow-cyan: 0 0 20px rgba(0, 217, 255, 0.5);
+  --glow-strong: 0 0 40px rgba(0, 217, 255, 0.8);
+  
+  /* === TYPOGRAPHIE === */
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+  --font-mono: 'Courier New', monospace;
+  
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 3rem;
+  
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  --weight-light: 300;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+  
+  /* === ESPACEMENTS === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  
+  /* === BORDURES === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== */
+/* 2. ANIMATIONS        */
+/* ==================== */
+
+@keyframes neon-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px var(--neon-primary),
+                0 0 10px var(--neon-primary),
+                0 0 20px rgba(0, 217, 255, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 10px var(--neon-primary),
+                0 0 20px var(--neon-primary),
+                0 0 40px rgba(0, 217, 255, 0.8);
+  }
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+@keyframes data-stream {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ==================== */
+/* 3. BOUTONS           */
+/* ==================== */
+
+.terra-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  overflow: hidden;
+}
+
+.terra-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.terra-btn:hover::before {
+  left: 100%;
+}
+
+.terra-btn:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.terra-btn:active {
+  transform: translateY(0);
+}
+
+/* Variantes */
+.terra-btn-primary {
+  background: linear-gradient(135deg, var(--neon-primary), #0099cc);
+  border-color: var(--neon-primary);
+  color: var(--bg-void);
+  font-weight: var(--weight-bold);
+}
+
+.terra-btn-primary:hover {
+  box-shadow: var(--glow-strong);
+  animation: neon-pulse 2s infinite;
+}
+
+.terra-btn-danger {
+  background: linear-gradient(135deg, var(--neon-danger), #cc0055);
+  border-color: var(--neon-danger);
+  color: var(--text-primary);
+}
+
+.terra-btn-ghost {
+  background: transparent;
+  border-color: var(--border-active);
+}
+
+.terra-btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.terra-btn-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-lg);
+}
+
+.terra-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== */
+/* 4. CARTES            */
+/* ==================== */
+
+.terra-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  overflow: hidden;
+}
+
+.terra-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-primary), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.terra-card:hover::before {
+  opacity: 1;
+}
+
+.terra-card:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-lg), var(--glow-cyan);
+  transform: translateY(-4px);
+}
+
+/* Effet scanlines */
+.terra-card-scanlines {
+  position: relative;
+}
+
+.terra-card-scanlines::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 217, 255, 0.02) 0px,
+    rgba(0, 217, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  animation: scanlines 8s linear infinite;
+}
+
+/* Variantes */
+.terra-card-interactive {
+  cursor: pointer;
+}
+
+.terra-card-glow {
+  border-color: var(--border-active);
+  box-shadow: var(--glow-cyan);
+}
+
+.terra-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.terra-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-glow);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.terra-card-body {
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+/* ==================== */
+/* 5. TABLEAUX DE DONNÉES */
+/* ==================== */
+
+.terra-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.terra-table thead {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+}
+
+.terra-table th {
+  padding: var(--space-4) var(--space-6);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-glow);
+  border-bottom: 2px solid var(--border-active);
+}
+
+.terra-table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.terra-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.terra-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.terra-table td {
+  padding: var(--space-4) var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.terra-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Cellules de données numériques */
+.terra-table-numeric {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: var(--weight-semibold);
+  color: var(--neon-primary);
+}
+
+/* ==================== */
+/* 6. BADGES & LABELS   */
+/* ==================== */
+
+.terra-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+}
+
+.terra-badge-primary {
+  background: rgba(0, 217, 255, 0.1);
+  border-color: var(--neon-primary);
+  color: var(--neon-primary);
+}
+
+.terra-badge-success {
+  background: rgba(0, 255, 170, 0.1);
+  border-color: var(--neon-secondary);
+  color: var(--neon-secondary);
+}
+
+.terra-badge-danger {
+  background: rgba(255, 0, 110, 0.1);
+  border-color: var(--neon-danger);
+  color: var(--neon-danger);
+}
+
+.terra-badge-warning {
+  background: rgba(255, 170, 0, 0.1);
+  border-color: var(--neon-warning);
+  color: var(--neon-warning);
+}
+
+.terra-badge-glow {
+  animation: neon-pulse 2s infinite;
+}
+
+/* ==================== */
+/* 7. BARRE DE PROGRESSION */
+/* ==================== */
+
+.terra-progress {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.terra-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-primary), var(--neon-secondary));
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+}
+
+.terra-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: data-stream 2s infinite;
+}
+
+.terra-progress-lg {
+  height: 16px;
+}
+
+.terra-progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ==================== */
+/* 8. MODALES           */
+/* ==================== */
+
+.terra-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  z-index: 1000;
+  animation: fade-in var(--transition-base);
+}
+
+.terra-modal {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  background: var(--bg-panel);
+  border: 2px solid var(--border-active);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl), var(--glow-strong);
+  overflow: hidden;
+  animation: scale-in var(--transition-slow);
+}
+
+.terra-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6);
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+  border-bottom: 1px solid var(--border-active);
+}
+
+.terra-modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-glow);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.terra-modal-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.terra-modal-close:hover {
+  border-color: var(--neon-danger);
+  color: var(--neon-danger);
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+}
+
+.terra-modal-body {
+  padding: var(--space-6);
+  max-height: calc(90vh - 180px);
+  overflow-y: auto;
+}
+
+.terra-modal-footer {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: flex-end;
+  padding: var(--space-6);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ==================== */
+/* 9. INPUTS & FORMS    */
+/* ==================== */
+
+.terra-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.terra-input:focus {
+  outline: none;
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.2);
+}
+
+.terra-input::placeholder {
+  color: var(--text-muted);
+}
+
+.terra-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.terra-input-label {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-glow);
+}
+
+.terra-input-error {
+  border-color: var(--neon-danger);
+  box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.2);
+}
+
+.terra-input-helper {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.terra-input-helper-error {
+  color: var(--neon-danger);
+}
+
+/* ==================== */
+/* 10. WIDGETS DE RESSOURCES */
+/* ==================== */
+
+.terra-resource-widget {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.terra-resource-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.terra-resource-item:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--glow-cyan);
+}
+
+.terra-resource-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+}
+
+.terra-resource-info {
+  flex: 1;
+}
+
+.terra-resource-label {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.terra-resource-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-glow);
+}
+
+/* ==================== */
+/* 11. ONGLETS          */
+/* ==================== */
+
+.terra-tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+}
+
+.terra-tab {
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.terra-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.terra-tab-active {
+  background: var(--bg-card);
+  color: var(--text-glow);
+  border-color: var(--border-active);
+  box-shadow: var(--glow-cyan);
+}
+
+/* ==================== */
+/* 12. MENU LATÉRAL     */
+/* ==================== */
+
+.terra-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--bg-panel);
+  border-right: 2px solid var(--border-active);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-6);
+  overflow-y: auto;
+  z-index: 900;
+}
+
+.terra-sidebar-header {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-base);
+}
+
+.terra-sidebar-logo {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-black);
+  color: var(--text-glow);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(0, 217, 255, 0.8);
+}
+
+.terra-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.terra-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.terra-sidebar-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-base);
+  transform: translateX(4px);
+}
+
+.terra-sidebar-link-active {
+  color: var(--text-glow);
+  background: var(--bg-card);
+  border-color: var(--border-active);
+  box-shadow: var(--glow-cyan);
+}
+
+.terra-sidebar-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-primary);
+}
+
+/* ==================== */
+/* 13. HEADER           */
+/* ==================== */
+
+.terra-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-overlay);
+  border-bottom: 2px solid var(--border-active);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  z-index: 800;
+}
+
+.terra-header-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-glow);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.terra-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ==================== */
+/* 14. UTILS            */
+/* ==================== */
+
+.terra-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-active), transparent);
+  margin: var(--space-6) 0;
+}
+
+.terra-text-glow {
+  color: var(--text-glow);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+}
+
+.terra-skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.terra-loader {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border-base);
+  border-top-color: var(--neon-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.terra-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+.terra-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+.terra-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+
+.terra-flex { display: flex; }
+.terra-flex-col { flex-direction: column; }
+.terra-items-center { align-items: center; }
+.terra-justify-between { justify-content: space-between; }
+.terra-gap-2 { gap: var(--space-2); }
+.terra-gap-4 { gap: var(--space-4); }
+.terra-gap-6 { gap: var(--space-6); }
+
+/* ==================== */
+/* 15. RESPONSIVE       */
+/* ==================== */
+
+@media (max-width: 768px) {
+  :root {
+    --text-3xl: 2rem;
+    --text-2xl: 1.5rem;
+    --text-xl: 1.25rem;
+  }
+  
+  .terra-sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+  
+  .terra-sidebar.is-open {
+    transform: translateX(0);
+  }
+  
+  .terra-grid-2,
+  .terra-grid-3,
+  .terra-grid-4 {
+    grid-template-columns: 1fr;
+  }
+  
+  .terra-modal {
+    max-width: 100%;
+    border-radius: 0;
+  }
+}

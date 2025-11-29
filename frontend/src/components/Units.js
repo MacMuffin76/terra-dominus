@@ -3,27 +3,31 @@
 import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
 import './Units.css';
 import ResourcesWidget from './ResourcesWidget';
 import UnitDetail from './UnitDetail';
 
 const Units = () => {
+  const { catchError } = useAsyncError('Units');
   const [units, setUnits] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     const fetchUnits = async () => {
-      try {
-        const { data } = await axiosInstance.get('/api/units');
-        setUnits(data);
-      } catch (err) {
-        console.error('Error fetching units:', err);
-        setUnits([]);
-      }
+      const data = await catchError(
+        async () => {
+          const response = await axiosInstance.get('/api/units');
+          return response.data;
+        },
+        { toast: true, logError: true, fallbackMessage: 'Erreur lors du chargement des unités' }
+      );
+
+      setUnits(data || []);
     };
 
     fetchUnits();
-  }, []);
+  }, [catchError]);
 
   const formatFileName = (name) =>
     name
@@ -36,9 +40,9 @@ const Units = () => {
   return (
     <div className="units-container">
       <Menu />
-      <ResourcesWidget />
 
       <div className="units-content" id="main-content">
+        <ResourcesWidget />
         <h1>Unités</h1>
 
         <div className="units-list">

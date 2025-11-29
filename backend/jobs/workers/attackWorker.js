@@ -52,7 +52,7 @@ async function processAttack(attackId, combatService, job) {
     logger.info(`[AttackWorker] Attaque ${attackId} résolue`, { outcome: result.outcome });
     return result;
   } catch (error) {
-    logger.error(`[AttackWorker] Erreur traitement attaque ${attackId}`, { error: error.message });
+    logger.error({ err: error }, `[AttackWorker] Erreur traitement attaque ${attackId}`);
     throw error;
   }
 }
@@ -81,7 +81,7 @@ async function scanArrivedAttacks(combatRepository, job) {
     job.updateProgress(100);
     return { processed: arrivedAttacks.length };
   } catch (error) {
-    logger.error('[AttackWorker] Erreur scan attaques', { error: error.message });
+    logger.error({ err: error }, '[AttackWorker] Erreur scan attaques');
     throw error;
   }
 }

@@ -1,0 +1,135 @@
+/* src/components/dashboard/StatCard.css */
+
+.terra-stat-card {
+  position: relative;
+  padding: var(--spacing-lg);
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.terra-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--neon-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.terra-stat-card:hover {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+  transform: translateY(-4px);
+}
+
+.terra-stat-card:hover::before {
+  opacity: 1;
+}
+
+.terra-stat-card-primary::before {
+  background: var(--neon-primary);
+}
+
+.terra-stat-card-success::before {
+  background: var(--neon-success);
+}
+
+.terra-stat-card-warning::before {
+  background: var(--neon-warning);
+}
+
+.terra-stat-card-danger::before {
+  background: var(--neon-danger);
+}
+
+.terra-stat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.terra-stat-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.terra-stat-label {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.terra-stat-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: var(--text-glow);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.2;
+}
+
+.terra-stat-sublabel {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.terra-stat-glow {
+  position: absolute;
+  bottom: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.terra-stat-card:hover .terra-stat-glow {
+  opacity: 1;
+}
+
+.terra-stat-skeleton {
+  width: 80px;
+  height: 32px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .terra-stat-card {
+    padding: var(--spacing-md);
+  }
+
+  .terra-stat-value {
+    font-size: 1.5rem;
+  }
+}

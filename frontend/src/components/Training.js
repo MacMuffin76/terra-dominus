@@ -3,39 +3,42 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './Training.css';
 import ResourcesWidget from './ResourcesWidget';
 import TrainingDetail from './TrainingDetail';
-import { Alert, Loader, Skeleton } from './ui';
+import TrainingCard from './training/TrainingCard';
+import { Alert, Loader } from './ui';
 
 const Training = () => {
+  const { error, catchError } = useAsyncError('Training');
   const [trainings, setTrainings] = useState([]);
   const [selectedTraining, setSelectedTraining] = useState(null);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Chargement des centres d’entraînement du joueur
-  const fetchTrainings = useCallback(async () => {
+  // Chargement des centres d'entraînement du joueur
+  const fetchTrainings = async () => {
     setLoading(true);
-    setError(null);
     try {
       const { data } = await axiosInstance.get(
         '/training/training-centers'
       );
       setTrainings(data);
-    } catch (err) {
-      console.error('Error fetching training centers:', err);
-      setError(
-        "Erreur lors du chargement des centres d'entraînement"
-      );
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchTrainings();
-  }, [fetchTrainings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sélection / désélection d’un centre d’entraînement
   const handleTrainingClick = (training) => {
@@ -69,25 +72,19 @@ const Training = () => {
   };
 
   // Génère le nom de fichier image à partir du nom
-  const formatFileName = (name) =>
-    (name || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // supprime les accents
-      .replace(/['’]/g, '') // supprime les apostrophes
-      .replace(/\s+/g, '_'); // espaces → underscore
-
   return (
     <div className="training-container">
       <Menu />
-      <ResourcesWidget />
       <div
         className={`training-content ${
           selectedTraining ? 'with-details' : ''
         }`}
         id="main-content"
       >
-        <h1>Centres d&apos;entraînement</h1>
+        <ResourcesWidget />
+        <div className="training-header">
+          <h1 className="training-title">Centres d&apos;entraînement</h1>
+        </div>
 
         {loading && <Loader label="Chargement des centres" />}
         {error && (
@@ -106,29 +103,15 @@ const Training = () => {
           />
         )}
 
-        <div className="training-list">
+        <div className="training-grid">
           {(loading ? Array.from({ length: 4 }) : trainings).map((training, idx) => (
-            <button
-              type="button"
+            <TrainingCard
               key={training?.id || `training-skeleton-${idx}`}
-              className={`training-card ${selectedTraining?.id === training?.id ? 'selected' : ''}`}
+              training={training}
+              isSelected={selectedTraining?.id === training?.id}
               onClick={() => training && handleTrainingClick(training)}
-              aria-pressed={selectedTraining?.id === training?.id}
-              aria-label={training ? `${training.name}, niveau ${training.level ?? 0}` : 'Chargement des centres'}
-              disabled={!training}
-            >
-              {loading ? (
-                <Skeleton width="100%" height="180px" />
-              ) : (
-                <img
-                  src={`/images/training/${formatFileName(training.name)}.png`}
-                  alt={training.name}
-                  className="training-image"
-                />
-              )}
-              <h3>{loading ? <Skeleton width="65%" /> : training.name}</h3>
-              <p>{loading ? <Skeleton width="45%" /> : `Niveau : ${training.level ?? 0}`}</p>
-            </button>
+              loading={loading}
+            />
           ))}
         </div>
       </div>

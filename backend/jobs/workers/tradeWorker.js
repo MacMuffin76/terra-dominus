@@ -65,7 +65,7 @@ async function finalizeConvoy(convoyId, tradeService, job) {
     logger.info(`[TradeWorker] Convoi ${convoyId} finalisé`);
     return result;
   } catch (error) {
-    logger.error(`[TradeWorker] Erreur finalisation convoi ${convoyId}`, { error: error.message });
+    logger.error({ err: error }, `[TradeWorker] Erreur finalisation convoi ${convoyId}`);
     throw error;
   }
 }
@@ -90,7 +90,7 @@ async function scanArrivedConvoys(tradeRepository, job) {
     job.updateProgress(100);
     return { processed: arrivedConvoys.length };
   } catch (error) {
-    logger.error('[TradeWorker] Erreur scan convois', { error: error.message });
+    logger.error({ err: error }, '[TradeWorker] Erreur scan convois');
     throw error;
   }
 }
@@ -108,7 +108,7 @@ async function processAutoTransfers(tradeService, job) {
     job.updateProgress(100);
     return results;
   } catch (error) {
-    logger.error('[TradeWorker] Erreur transferts auto', { error: error.message });
+    logger.error({ err: error }, '[TradeWorker] Erreur transferts auto');
     throw error;
   }
 }

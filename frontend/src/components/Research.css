@@ -1,175 +1,98 @@
-/* Reset CSS */
-* {
-  margin: 0;
-  padding: 0;
+/* Research - Terra UI */
+
+.research-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-void);
+  min-height: 100vh;
+}
+
+.research-content {
+  width: calc(100% - 280px);
+  max-width: 1600px;
+  margin-left: 280px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background: none;
-}
-
-/* Container principal : Menu à gauche, contenu à droite */
-.research-container {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
- 
-}
-
-/* Contenu à droite (après le Menu) */
-.research-content {
-  width: calc(100% - 250px);
-  max-width: 1200px;
-  position: relative;
-  margin-left: 250px; /* largeur du Menu */
-  padding: 20px;
-}
-
-.research-content h1 {
-  margin-bottom: 100px;
+.research-header {
+  width: 100%;
   text-align: center;
+  padding: 0;
+  margin-bottom: var(--spacing-xl);
 }
 
-/* Grille 5 colonnes, 2 lignes */
-.research-list {
+.research-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--neon-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: var(--text-glow);
+  margin: 0;
+  animation: neon-pulse 3s ease-in-out infinite;
+}
+
+.research-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
-  margin: 40px auto 40px;
-}
-
-/* Déplacement vers le bas quand on affiche le détail */
-.research-content.with-details .research-list {
-  transform: translateY(300px);
-  transition: transform 0.3s ease;
-}
-
-/* Carte de recherche */
-.research-card {
+  gap: var(--spacing-lg);
   width: 100%;
-  max-width: 220px;
-  margin: 0 auto;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(140deg, var(--color-surface), var(--color-surface-raised));
-  border: 1px solid var(--color-border);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
-  min-height: 280px;
-  font: inherit;
-  color: var(--color-text);
+  margin-bottom: var(--spacing-xl);
 }
 
-.research-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
-  border-color: var(--color-primary);
+/* Animations */
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px var(--neon-primary),
+      0 0 20px var(--neon-primary),
+      0 0 30px var(--neon-primary);
+  }
+  50% {
+    text-shadow: 
+      0 0 20px var(--neon-primary),
+      0 0 30px var(--neon-primary),
+      0 0 40px var(--neon-primary),
+      0 0 50px var(--neon-primary);
+  }
 }
 
-.research-card:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 4px;
-  transform: translateY(-6px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+/* Responsive */
+@media (max-width: 1400px) {
+  .research-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
-.research-card.selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 12px 24px rgba(92, 225, 230, 0.25);
+@media (max-width: 1200px) {
+  .research-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.research-card:disabled {
-  cursor: progress;
-  opacity: 0.85;
-}
-
-/* Image en haut de la carte */
-.research-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-bottom: 2px solid #444;
-}
-
-/* Titre */
-.research-card h3 {
-  margin: 10px 0 5px;
-  font-size: 1em;
-  color: var(--color-text);
-}
-
-/* Niveau */
-.research-card p {
-  margin: 0 0 12px;
-  color: var(--color-muted-text);
-  font-size: 0.9em;
-}
-
-/* Détail de la recherche (popup) */
-.research-detail {
-  position: absolute;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1000px;
-  padding: 20px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background-color: #070707;
-  color: #fff;
-  z-index: 10;
-}
-
-.research-detail h2 {
-  margin-top: 0;
-  color: #fff;
-}
-
-.research-detail p {
-  margin: 5px 0;
-}
-
-.research-detail button {
-  margin: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  background-color: #555;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-.research-detail button:hover {
-  background-color: #777;
+@media (max-width: 900px) {
+  .research-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 767px) {
   .research-content {
     width: 100%;
     margin-left: 0;
-    padding: 20px 16px;
+    padding: var(--spacing-lg) var(--spacing-md);
   }
 
-  .research-list {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
+  .research-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
   }
 
-  .research-card {
-    width: 100%;
-    max-width: 360px;
-  }
-
-  .research-detail {
-    position: static;
-    transform: none;
+  .research-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
   }
 }

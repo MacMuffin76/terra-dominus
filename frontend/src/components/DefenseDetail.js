@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { logger } from '../utils/logger';
 import './DefenseDetail.css';
 
 const DefenseDetail = ({ defense, onDefenseUpdated }) => {
+  const { error, catchError } = useAsyncError('DefenseDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,43 +24,38 @@ const DefenseDetail = ({ defense, onDefenseUpdated }) => {
         onDefenseUpdated(data);
       }
     } catch (err) {
-      console.error('Erreur lors du chargement de la défense :', err);
-      alert(
-        err.response?.data?.message ||
-          "Erreur lors du chargement des détails de la défense"
-      );
+      await catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
     }
   };
 
   useEffect(() => {
     refreshDefense();
-    // pas de commentaire eslint ici pour éviter l’erreur sur react-hooks/exhaustive-deps
-    // on veut juste recharger quand l’ID change
-  }, [defense?.id]); // OK même si defense est undefined au début
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defense?.id]);
 
-  const handleBuildOne = async () => {
-    if (!defense?.id) return;
+  const handleBuildOne = catchError(
+    async () => {
+      if (!defense?.id) return;
 
-    setLoading(true);
-    try {
-      const { data } = await axiosInstance.post(
-        `/defense/defense-buildings/${defense.id}/upgrade`
-      );
+      setLoading(true);
+      try {
+        const { data } = await axiosInstance.post(
+          `/defense/defense-buildings/${defense.id}/upgrade`
+        );
 
-      setDetail(data);
-      if (onDefenseUpdated) {
-        onDefenseUpdated(data);
+        setDetail(data);
+        if (onDefenseUpdated) {
+          onDefenseUpdated(data);
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Erreur lors de la construction de défense :', err);
-      alert(
-        err.response?.data?.message ||
-          'Erreur lors de la construction de la défense'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    { toast: true, logError: true }
+  );
 
   if (!detail) {
     return <p className="defense-detail-loading">Chargement…</p>;

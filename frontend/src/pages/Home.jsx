@@ -2,122 +2,94 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
 
-const benefits = [
-  {
-    title: 'Pilotez vos ressources en un coup d’œil',
-    description:
-      'Surveillez énergie, métal et cristal depuis un seul tableau de bord, avec des indicateurs clairs pour agir vite.',
-    icon: '🛰️',
-  },
-  {
-    title: 'Ordonnez, priorisez, optimisez',
-    description:
-      'Gérez vos files de construction et de recherche sans friction pour réduire les temps morts entre deux campagnes.',
-    icon: '🏗️',
-  },
-  {
-    title: 'Restez prêt au combat',
-    description:
-      'Gardez vos flottes et vos défenses sous contrôle grâce à une vue condensée des alertes critiques.',
-    icon: '🛡️',
-  },
-];
-
-const productHighlights = [
-  {
-    title: 'Un poste de commandement clair',
-    description:
-      'Composez votre écran d’accueil avec des cartes modulaires : ressources, files, recherches et actions rapides.',
-    icon: '📡',
-  },
-  {
-    title: 'Modules par domaine',
-    description:
-      'Ressources, bâtiments, combat, flottes, alliance : chaque module a sa place, sans saturer votre écran.',
-    icon: '🔬',
-  },
-  {
-    title: 'Pensé pour les campagnes longues',
-    description:
-      'Terra Dominus accompagne la montée en puissance de votre empire, sans complexifier votre interface.',
-    icon: '🚀',
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "On voit tout de suite ce qui bloque : ressources, files, alertes… On passe moins de temps à chercher l’info et plus à jouer.",
-    author: 'Amiral Liora, flotte Sigma',
-  },
-];
-
-const metrics = [
-  { label: 'Temps de réaction', value: '-28%', detail: 'sur les alertes critiques' },
-  { label: 'Construction', value: '2.3x', detail: 'plus rapide grâce aux files' },
-  { label: 'Coordination', value: '+17%', detail: "d'opérations d’alliance réussies" },
-];
-
 const Home = () => {
   return (
-    <main className="home-page" id="main-content" role="main" aria-labelledby="home-title">
-      {/* HERO SIMPLIFIÉ */}
-      <section className="hero hero-simple">
-        <div className="hero-content">
-          <span className="pill">Stratégie temps réel</span>
-          <h1 id="home-title">Dominez votre univers avec une vue claire</h1>
-          <p className="hero-lead">
-            Terra Dominus regroupe vos ressources, vos constructions et vos flottes dans une interface
-            épurée, pensée pour les commandants qui veulent aller à l&apos;essentiel.
+    <main className="terra-home" id="main-content" role="main">
+      {/* HERO */}
+      <section className="terra-hero">
+        <div className="hero-bg-grid" aria-hidden="true" />
+        <div className="hero-container">
+          <div className="hero-badge">⚡ STRATÉGIE TEMPS RÉEL</div>
+          <h1 className="hero-title">
+            <span className="title-line">TERRA</span>
+            <span className="title-line glow">DOMINUS</span>
+          </h1>
+          <p className="hero-subtitle">Interface de Commandement Cybernétique</p>
+          <p className="hero-description">
+            Gérez votre empire galactique avec une interface nouvelle génération. 
+            Ressources, constructions et flottes sous contrôle absolu.
           </p>
           <div className="hero-actions">
-            <Link to="/register" className="btn btn-primary">
-              Commencer gratuitement
+            <Link to="/register" className="terra-btn terra-btn-primary">
+              <span className="btn-icon">⚡</span>
+              Commencer Gratuitement
             </Link>
-            <Link to="/login" className="btn btn-ghost">
-              Se connecter
+            <Link to="/login" className="terra-btn terra-btn-secondary">
+              Se Connecter
             </Link>
           </div>
-          <div className="hero-meta-row">
-            <div className="meta-pill">Multi-plateforme</div>
-            <div className="meta-pill">Mode alliance</div>
-            <div className="meta-pill">Suivi en temps réel</div>
+          <div className="hero-features">
+            <div className="hero-feature">
+              <span className="feature-icon">🌐</span>
+              Multi-plateforme
+            </div>
+            <div className="hero-feature">
+              <span className="feature-icon">⚔️</span>
+              Mode Alliance
+            </div>
+            <div className="hero-feature">
+              <span className="feature-icon">📡</span>
+              Temps Réel
+            </div>
           </div>
         </div>
 
-        <div className="hero-preview" aria-hidden="true">
-          <div className="preview-card">
-            <div className="preview-header">
-              <span className="preview-dot" />
-              <span className="preview-dot" />
-              <span className="preview-dot" />
+        {/* PREVIEW DASHBOARD */}
+        <div className="dashboard-preview">
+          <div className="preview-window">
+            <div className="window-header">
+              <div className="window-dots">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+              <div className="window-title">COMMANDEMENT CENTRAL</div>
             </div>
-            <div className="preview-body">
-              <div className="preview-column">
-                <div className="preview-label">Ressources</div>
-                <div className="preview-stat-row">
-                  <span>Métal</span>
-                  <span className="preview-value">+12.4k</span>
+            <div className="window-content">
+              <div className="preview-section">
+                <div className="preview-label">RESSOURCES</div>
+                <div className="resource-row">
+                  <span className="resource-name">Métal</span>
+                  <span className="resource-value positive">+12.4k</span>
                 </div>
-                <div className="preview-stat-row">
-                  <span>Énergie</span>
-                  <span className="preview-value">Stable</span>
+                <div className="resource-row">
+                  <span className="resource-name">Énergie</span>
+                  <span className="resource-value stable">Stable</span>
                 </div>
-                <div className="preview-stat-row">
-                  <span>Cristal</span>
-                  <span className="preview-value">+3.1k</span>
+                <div className="resource-row">
+                  <span className="resource-name">Cristal</span>
+                  <span className="resource-value positive">+3.1k</span>
                 </div>
               </div>
-              <div className="preview-column">
-                <div className="preview-label">Files</div>
-                <div className="preview-pill-row">
-                  <span className="preview-pill">Usine niveau 7</span>
-                  <span className="preview-pill muted">Recherche boucliers</span>
-                  <span className="preview-pill">Hangar flotte</span>
+              <div className="preview-section">
+                <div className="preview-label">FILES ACTIVES</div>
+                <div className="queue-item">
+                  <span className="queue-dot active" />
+                  Usine niveau 7
                 </div>
-                <div className="preview-label mt16">Alertes</div>
-                <div className="preview-alert">
-                  <span className="preview-alert-dot" />
+                <div className="queue-item">
+                  <span className="queue-dot" />
+                  Recherche boucliers
+                </div>
+                <div className="queue-item">
+                  <span className="queue-dot" />
+                  Hangar flotte
+                </div>
+              </div>
+              <div className="preview-section alert-section">
+                <div className="preview-label">ALERTES</div>
+                <div className="alert-item">
+                  <span className="alert-pulse" />
                   Activité suspecte secteur Gamma
                 </div>
               </div>
@@ -126,99 +98,101 @@ const Home = () => {
         </div>
       </section>
 
-      {/* SECTION BENEFICES */}
-      <section className="section">
-        <div className="section-header">
-          <span className="pill">Pourquoi Terra Dominus</span>
-          <h2>Un poste de commandement sans surcharge visuelle</h2>
-          <p className="section-subtitle">
-            L’écran d’accueil met en avant uniquement ce dont vous avez besoin pour prendre une décision :
-            ressources, files prioritaires et alertes importantes.
-          </p>
-        </div>
-        <div className="card-grid">
-          {benefits.map((benefit) => (
-            <article className="info-card" key={benefit.title}>
-              <div className="icon-badge" aria-hidden="true">
-                {benefit.icon}
-              </div>
-              <h3>{benefit.title}</h3>
-              <p>{benefit.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION APERÇU PRODUIT */}
-      <section className="section">
-        <div className="section-header">
-          <span className="pill">Aperçu produit</span>
-          <h2>Vos modules, organisés en cartes claires</h2>
-          <p className="section-subtitle">
-            Composez une vue d’ensemble avec quelques blocs clés : état des ressources, listes de tâches,
-            recherche en cours et statut de vos flottes.
-          </p>
-        </div>
-        <div className="card-grid">
-          {productHighlights.map((highlight) => (
-            <article className="info-card info-card-soft" key={highlight.title}>
-              <div className="icon-badge" aria-hidden="true">
-                {highlight.icon}
-              </div>
-              <h3>{highlight.title}</h3>
-              <p>{highlight.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION TEMOIGNAGE + METRICS COMPACTE */}
-      <section className="section">
-        <div className="section-header">
-          <span className="pill">Ils témoignent</span>
-          <h2>Des commandants qui gagnent du temps</h2>
-          <p className="section-subtitle">
-            Terra Dominus est pensé pour réduire l&apos;esprit de surcharge et mettre en avant les décisions
-            importantes pendant vos sessions.
-          </p>
-        </div>
-        <div className="testimonials">
-          <div className="quote-card">
-            {testimonials.map((item) => (
-              <div key={item.author}>
-                <p>“{item.quote}”</p>
-                <div className="quote-author">{item.author}</div>
-              </div>
-            ))}
+      {/* BENEFITS */}
+      <section className="terra-section">
+        <div className="section-badge">💎 AVANTAGES</div>
+        <h2 className="section-title">Commandement de Nouvelle Génération</h2>
+        <div className="benefits-grid">
+          <div className="benefit-card">
+            <div className="benefit-icon">⚡</div>
+            <h3>Commandement Unifié</h3>
+            <p>Ressources, constructions et flottes dans une interface cybernétique épurée.</p>
           </div>
-          <div className="metrics">
-            {metrics.map((metric) => (
-              <div className="metric-card" key={metric.label}>
-                <strong>{metric.value}</strong>
-                <div>{metric.label}</div>
-                <div className="metric-detail">{metric.detail}</div>
-              </div>
-            ))}
+          <div className="benefit-card">
+            <div className="benefit-icon">🎯</div>
+            <h3>Temps Réel</h3>
+            <p>Système de synchronisation instantanée pour des décisions tactiques précises.</p>
+          </div>
+          <div className="benefit-card">
+            <div className="benefit-icon">⚔️</div>
+            <h3>Combat Stratégique</h3>
+            <p>Coordonnez vos forces avec une vue condensée des alertes et menaces actives.</p>
           </div>
         </div>
       </section>
 
-      {/* CTA FINALE */}
-      <section className="final-cta">
-        <div>
-          <h3>Prêt à lancer votre prochaine campagne ?</h3>
-          <p className="section-subtitle">
-            Créez un compte en quelques secondes et testez une interface plus légère pour suivre vos ressources,
-            vos plans de construction et vos flottes.
-          </p>
+      {/* FEATURES */}
+      <section className="terra-section dark">
+        <div className="section-badge">🔮 FONCTIONNALITÉS</div>
+        <h2 className="section-title">Technologie de Pointe</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">💠</div>
+            <h3>Interface Cybernétique</h3>
+            <p>Design futuriste avec effets néon et animations fluides pour une immersion totale.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🔷</div>
+            <h3>Architecture Modulaire</h3>
+            <p>Chaque système (ressources, combat, recherche) est isolé pour une navigation optimale.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🌐</div>
+            <h3>Évolution Continue</h3>
+            <p>Interface qui s'adapte à votre progression, du débutant au commandant vétéran.</p>
+          </div>
         </div>
-        <div className="hero-actions">
-          <Link to="/register" className="btn btn-primary">
-            Créer un compte
-          </Link>
-          <Link to="/login" className="btn">
-            Reprendre une session
-          </Link>
+      </section>
+
+      {/* STATS */}
+      <section className="terra-section">
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon">🔒</div>
+            <div className="stat-value">99.9%</div>
+            <div className="stat-label">Disponibilité</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">⚡</div>
+            <div className="stat-value">&lt;50ms</div>
+            <div className="stat-label">Latence</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🛡️</div>
+            <div className="stat-value">24/7</div>
+            <div className="stat-label">Support</div>
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
+      <section className="terra-section dark">
+        <div className="testimonial-card">
+          <div className="testimonial-quote">
+            "L'interface la plus claire et la plus réactive que j'ai utilisée. 
+            Terra Dominus transforme la gestion d'empire en expérience fluide."
+          </div>
+          <div className="testimonial-author">
+            <strong>Commandant Liora</strong>
+            <span>Flotte Sigma</span>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="terra-cta">
+        <div className="cta-content">
+          <h2 className="cta-title">Prenez le Commandement</h2>
+          <p className="cta-subtitle">Rejoignez les commandants qui dominent la galaxie</p>
+          <div className="cta-actions">
+            <Link to="/register" className="terra-btn terra-btn-primary terra-btn-large">
+              <span className="btn-icon">⚡</span>
+              Commencer Maintenant
+            </Link>
+            <Link to="/login" className="terra-btn terra-btn-secondary terra-btn-large">
+              Se Connecter
+            </Link>
+          </div>
         </div>
       </section>
     </main>

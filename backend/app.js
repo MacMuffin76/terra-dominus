@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./docs/swagger');
 const errorHandler = require('./middleware/errorHandler');
 const validate = require('./middleware/validate');
 const correlationMiddleware = require('./middleware/correlationMiddleware');
@@ -25,6 +27,12 @@ const createApp = (container) => {
 
   app.get('/metrics', metricsHandler);
   app.use(createHealthRouter());
+  
+  // Swagger UI - Documentation API interactive
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Terra Dominus API Documentation'
+  }));
 
   const apiLimiter = rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),

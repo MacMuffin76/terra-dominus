@@ -1,0 +1,144 @@
+/* src/components/dashboard/NotificationPanel.css */
+
+.terra-notification-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.terra-notification-success {
+  border-left: 4px solid var(--neon-success);
+}
+
+.terra-notification-warning {
+  border-left: 4px solid var(--neon-warning);
+}
+
+.terra-notification-danger {
+  border-left: 4px solid var(--neon-danger);
+}
+
+.terra-notification-default {
+  border-left: 4px solid var(--neon-primary);
+}
+
+.terra-notification-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+  border-radius: var(--radius-full);
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.terra-notification-success .terra-notification-icon {
+  color: var(--neon-success);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.terra-notification-warning .terra-notification-icon {
+  color: var(--neon-warning);
+  box-shadow: 0 0 15px rgba(255, 187, 0, 0.4);
+}
+
+.terra-notification-danger .terra-notification-icon {
+  color: var(--neon-danger);
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+}
+
+.terra-notification-default .terra-notification-icon {
+  color: var(--neon-primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+}
+
+.terra-notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.terra-notification-label {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.terra-notification-message {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terra-notification-action {
+  flex-shrink: 0;
+}
+
+.terra-notification-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  opacity: 0;
+  animation: notification-pulse 2s ease-in-out infinite;
+}
+
+.terra-notification-success .terra-notification-pulse {
+  background: var(--neon-success);
+}
+
+.terra-notification-warning .terra-notification-pulse {
+  background: var(--neon-warning);
+}
+
+.terra-notification-danger .terra-notification-pulse {
+  background: var(--neon-danger);
+}
+
+.terra-notification-default .terra-notification-pulse {
+  background: var(--neon-primary);
+}
+
+@keyframes notification-pulse {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .terra-notification-panel {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .terra-notification-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .terra-notification-action {
+    display: none;
+  }
+}

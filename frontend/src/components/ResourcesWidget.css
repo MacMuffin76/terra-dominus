@@ -1,29 +1,60 @@
 /* frontend/src/components/ResourcesWidget.css */
 .resources-widget {
-  position: absolute;
-  top: 80px;
-  left: calc(50% + 125px);
-  transform: translateX(-50%);
-  background-color: rgba(28, 28, 28, 0.8); /* Couleur de fond avec opacité */
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto var(--spacing-lg) auto;
+  background: linear-gradient(135deg, rgba(0, 150, 136, 0.15), rgba(0, 188, 212, 0.15));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
   display: flex;
-  align-items: center; /* Centre les items verticalement */
-  gap: 15px; /* Espace entre les items */
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: resourcesWidgetSlideIn 0.3s ease-out;
+}
+
+@keyframes resourcesWidgetSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .resource-item {
   display: flex;
-  align-items: center; /* Centre l'icône et le texte verticalement */
-  color: #fff;
-  font-size: 16px; /* Taille de police plus grande */
-  font-weight: 500; /* Légèrement en gras */
+  align-items: center;
+  color: rgba(0, 255, 255, 0.95);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.resource-item:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .resource-item img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px; /* Espace entre l'icône et le texte */
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.3));
 }

@@ -1,0 +1,178 @@
+/* src/components/fleet/FleetCard.css */
+
+.terra-fleet-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.terra-fleet-card:hover {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+  transform: translateY(-8px);
+}
+
+.terra-fleet-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: var(--bg-void);
+}
+
+.terra-fleet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.terra-fleet-card:hover .terra-fleet-image {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+.terra-fleet-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  display: flex;
+  align-items: flex-end;
+  padding: var(--spacing-md);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.terra-fleet-card:hover .terra-fleet-overlay {
+  opacity: 1;
+}
+
+.terra-fleet-quantity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--neon-primary);
+  color: var(--bg-void);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.terra-fleet-info {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  background: var(--bg-panel);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.terra-fleet-name {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.terra-fleet-description {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.terra-fleet-scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 217, 255, 0.03) 2px,
+    rgba(0, 217, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.terra-fleet-card:hover .terra-fleet-scanlines {
+  opacity: 1;
+}
+
+.terra-fleet-glow {
+  position: absolute;
+  bottom: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.terra-fleet-card:hover .terra-fleet-glow {
+  opacity: 1;
+}
+
+/* Loading State */
+.terra-fleet-skeleton {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .terra-fleet-image-wrapper {
+    height: 180px;
+  }
+
+  .terra-fleet-info {
+    padding: var(--spacing-md);
+  }
+
+  .terra-fleet-name {
+    font-size: 1rem;
+  }
+}
