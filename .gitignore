@@ -1,13 +1,51 @@
+# Logs
 *.log
 *.tmp
+logs/
+log/
+
+# Dependencies
 node_modules/
 frontend/node_modules/
 backend/node_modules/
-logs/
-log/
+
+# Build
 bin/
 obj/
 build/
 dist/
+frontend/build/
+
+# Testing
 coverage/
+.nyc_output/
+test-results/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Archives personnelles
+archive_docs/
+
+# Fichiers temporaires
+*.docx
+*.tmp
+*.bak
