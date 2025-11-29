@@ -9,6 +9,10 @@ const createDefenseRouter = require('../modules/combat/api/defenseRoutes');
 const createUnitRouter = require('../modules/units/api/unitRoutes');
 const createDashboardRouter = require('../modules/dashboard/api/dashboardRoutes');
 const createBlueprintAdminRouter = require('../modules/admin/api/blueprintRoutes');
+const createWorldRouter = require('../modules/world/api/worldRoutes');
+const createColonizationRouter = require('../modules/colonization/api/colonizationRoutes');
+const createCombatRouter = require('../modules/combat/api/combatRoutes');
+const createTradeRouter = require('../modules/trade/api/tradeRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
@@ -20,6 +24,11 @@ const createApiRouter = (container) => {
   router.use('/research', createResearchRouter(container));
   router.use('/training', createTrainingRouter(container));
   router.use('/defense', createDefenseRouter(container));
+  router.use('/world', createWorldRouter(container));
+  router.use('/colonization', createColonizationRouter(container));
+  router.use('/combat', createCombatRouter(container));
+  router.use('/trade', createTradeRouter(container));
+  router.use('/cities', require('../modules/cities/api/citiesRoutes')());
   router.use('/', createDashboardRouter(container));
   router.use('/', createUnitRouter(container));
   router.use('/admin', createBlueprintAdminRouter(container));

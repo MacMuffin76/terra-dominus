@@ -18,6 +18,7 @@ const Training = React.lazy(() => import('./components/Training'));
 const Defense = React.lazy(() => import('./components/Defense'));
 const Fleet = React.lazy(() => import('./components/Fleet'));
 const Alliance = React.lazy(() => import('./components/Alliance'));
+const WorldMap = React.lazy(() => import('./components/WorldMap'));
 const Login = React.lazy(() => import('./components/Login'));
 const Register = React.lazy(() => import('./components/Register'));
 const Home = React.lazy(() => import('./pages/Home'));
@@ -107,6 +108,14 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <Alliance />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/world"
+                element={(
+                  <PrivateRoute>
+                    <WorldMap />
                   </PrivateRoute>
                 )}
               />

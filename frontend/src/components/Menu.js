@@ -8,6 +8,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import SecurityIcon from '@mui/icons-material/Security';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import GroupIcon from '@mui/icons-material/Group';
+import PublicIcon from '@mui/icons-material/Public';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
 
@@ -143,6 +144,14 @@ const Menu = () => {
               <DirectionsBoatIcon className="menu-icon" />
               <div>
                 Flotte
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/world" onClick={closeMenuOnNavigation}>
+              <PublicIcon className="menu-icon" />
+              <div>
+                Carte du Monde
               </div>
             </Link>
           </li>

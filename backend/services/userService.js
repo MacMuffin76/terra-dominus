@@ -88,11 +88,11 @@ async function initializeUserGameData(userId, transaction) {
 
   const buildingTypes = [
     "Mine d'or",
-    "Mine de métal",
+    "Mine de metal",
     'Extracteur',
-    'Centrale électrique',
+    'Centrale electrique',
     'Hangar',
-    'Réservoir',
+    'Reservoir',
   ];
 
   await Promise.all(
@@ -118,9 +118,8 @@ async function initializeUserGameData(userId, transaction) {
   );
 
   const facilityTypes = [
-    'Centre de Commandement',
-    'Laboratoire de Recherche',
-    "Terrain d'Entraînement",
+    'Centre de Recherche',
+    "Terrain d'Entrainement",
   ];
 
   await Promise.all(

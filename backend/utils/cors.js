@@ -25,7 +25,15 @@ const buildCorsOptions = () => {
   return {
     origin: (origin, callback) => {
       // En dev, certaines requêtes n'ont pas d'origin (Postman, curl…) → on autorise
-      if (allowAllOrigins || !origin || allowedOrigins.includes(origin)) {
+      if (allowAllOrigins || !origin) {
+        return callback(null, true);
+      }
+
+      // Normaliser l'origin en retirant le / final
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const normalizedAllowed = allowedOrigins.map(o => o.replace(/\/$/, ''));
+
+      if (normalizedAllowed.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 

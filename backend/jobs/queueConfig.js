@@ -7,6 +7,10 @@ const queueNames = {
   PRODUCTION: 'production',
   COMBAT: 'combat',
   RESOURCE_UPGRADE: 'resource-upgrade',
+  COLONIZATION: 'colonization',
+  ATTACK: 'attack',
+  SPY: 'spy',
+  TRADE: 'trade',
 };
 
 const connection = {

@@ -29,6 +29,16 @@ const City = sequelize.define('City', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  vision_range: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 5,
+  },
+  founded_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,

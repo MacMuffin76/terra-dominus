@@ -80,6 +80,108 @@ const createContainer = () => {
   container.register('unitController', () => require('./controllers/unitController'));
   container.register('dashboardController', () => require('./controllers/dashboardController'));
 
+  // World & Colonization modules
+  container.register('worldRepository', () => {
+    const WorldRepository = require('./modules/world/infra/WorldRepository');
+    return new WorldRepository();
+  });
+
+  container.register('worldService', (c) => {
+    const WorldService = require('./modules/world/application/WorldService');
+    return new WorldService({
+      worldRepository: c.resolve('worldRepository'),
+    });
+  });
+
+  container.register('worldController', (c) => {
+    const createWorldController = require('./modules/world/api/worldController');
+    return createWorldController({
+      worldService: c.resolve('worldService'),
+    });
+  });
+
+  container.register('colonizationRepository', () => {
+    const ColonizationRepository = require('./modules/colonization/infra/ColonizationRepository');
+    return new ColonizationRepository();
+  });
+
+  container.register('colonizationService', (c) => {
+    const ColonizationService = require('./modules/colonization/application/ColonizationService');
+    return new ColonizationService({
+      colonizationRepository: c.resolve('colonizationRepository'),
+      worldRepository: c.resolve('worldRepository'),
+    });
+  });
+
+  container.register('colonizationController', (c) => {
+    const createColonizationController = require('./modules/colonization/api/colonizationController');
+    return createColonizationController({
+      colonizationService: c.resolve('colonizationService'),
+    });
+  });
+
+  // Combat module (attaques territoriales + espionnage)
+  container.register('combatRepository', () => {
+    const CombatRepository = require('./modules/combat/infra/CombatRepository');
+    const { Attack, AttackWave, DefenseReport, SpyMission, City, User, Entity, Unit } = require('./models');
+    return new CombatRepository({ Attack, AttackWave, DefenseReport, SpyMission, City, User, Entity, Unit });
+  });
+
+  container.register('combatService', (c) => {
+    const CombatService = require('./modules/combat/application/CombatService');
+    const { City, Unit, Resource, Building, Research } = require('./models');
+    const sequelize = require('./db');
+    return new CombatService({
+      combatRepository: c.resolve('combatRepository'),
+      City,
+      Unit,
+      Resource,
+      Building,
+      Research,
+      sequelize
+    });
+  });
+
+  container.register('combatController', (c) => {
+    const createCombatController = require('./modules/combat/api/combatController');
+    return createCombatController({
+      combatService: c.resolve('combatService'),
+    });
+  });
+
+  // Trade module (commerce inter-villes)
+  container.register('tradeRepository', () => {
+    const TradeRepository = require('./modules/trade/infra/TradeRepository');
+    const { TradeRoute, TradeConvoy, City, User } = require('./models');
+    return new TradeRepository({ TradeRoute, TradeConvoy, City, User });
+  });
+
+  container.register('tradeService', (c) => {
+    const TradeService = require('./modules/trade/application/TradeService');
+    const { City, Resource } = require('./models');
+    const sequelize = require('./db');
+    return new TradeService({
+      tradeRepository: c.resolve('tradeRepository'),
+      City,
+      Resource,
+      sequelize
+    });
+  });
+
+  container.register('tradeController', (c) => {
+    const createTradeController = require('./modules/trade/api/tradeController');
+    return createTradeController({
+      tradeService: c.resolve('tradeService'),
+    });
+  });
+
+  // Queues for workers
+  const { getQueue, queueNames } = require('./jobs/queueConfig');
+  container.register('colonizationQueue', () => getQueue(queueNames.COLONIZATION));
+  container.register('attackQueue', () => getQueue(queueNames.ATTACK));
+  container.register('spyQueue', () => getQueue(queueNames.SPY));
+  container.register('tradeQueue', () => getQueue(queueNames.TRADE));
+
   return container;
 };
 
