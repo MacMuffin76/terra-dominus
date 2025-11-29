@@ -14,7 +14,8 @@ const buildService = (overrides = {}) => new BuildingService({
   resourceCostRepository: overrides.resourceCostRepository,
   constructionOrderRepository: overrides.constructionOrderRepository,
   entityRepository: overrides.entityRepository,
-  queueEventPublisher: overrides.queueEventPublisher || { emit: jest.fn() },
+  // Production `queueEventPublisher.emit` returns a Promise — tests must mock that
+  queueEventPublisher: overrides.queueEventPublisher || { emit: jest.fn().mockResolvedValue() },
   cityRepository: overrides.cityRepository,
   transactionProvider,
 });
