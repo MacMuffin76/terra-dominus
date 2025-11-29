@@ -4,7 +4,8 @@ test.describe('Parcours public', () => {
   test('affiche la page d’accueil et les CTA principaux', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { level: 1, name: /Terra Dominus/i })).toBeVisible();
+    // title remains the single stable identifier for the app regardless of localized H1 text
+    await expect(page).toHaveTitle(/Terra Dominus/i);
     await expect(page.getByRole('link', { name: /Commencer gratuitement/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Se connecter/i })).toBeVisible();
   });
