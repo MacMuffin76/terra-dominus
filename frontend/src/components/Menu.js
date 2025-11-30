@@ -95,7 +95,7 @@ const Menu = () => {
         </div>
         <ul className="menu-list">
           <li>
-            <Link to="/dashboard" onClick={closeMenuOnNavigation}>
+            <Link to="/dashboard" onClick={closeMenuOnNavigation} id="menu-dashboard">
               <DashboardIcon className="menu-icon" />
               <div>
                 Tableau de bord
@@ -103,7 +103,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/resources" onClick={closeMenuOnNavigation}>
+            <Link to="/resources" onClick={closeMenuOnNavigation} id="menu-resources">
               <CategoryIcon className="menu-icon" />
               <div>
                 Ressource
@@ -111,7 +111,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/facilities" onClick={closeMenuOnNavigation}>
+            <Link to="/facilities" onClick={closeMenuOnNavigation} id="menu-facilities">
               <BusinessIcon className="menu-icon" />
               <div>
                 Installation
@@ -119,7 +119,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/research" onClick={closeMenuOnNavigation}>
+            <Link to="/research" onClick={closeMenuOnNavigation} id="menu-research">
               <ScienceIcon className="menu-icon" />
               <div>
                 Recherche
@@ -127,7 +127,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/training" onClick={closeMenuOnNavigation}>
+            <Link to="/training" onClick={closeMenuOnNavigation} id="menu-training">
               <BuildIcon className="menu-icon" />
               <div>
                 Centre d'entrainement
@@ -167,7 +167,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/world" onClick={closeMenuOnNavigation}>
+            <Link to="/world" onClick={closeMenuOnNavigation} id="menu-world">
               <PublicIcon className="menu-icon" />
               <div>
                 Carte du Monde

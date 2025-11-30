@@ -138,6 +138,27 @@ exports.upgradeResearch = async (req, res) => {
     research.nextlevelcost = sumCost(nextCost);
     await research.save();
     (req.logger || logger).audit({ userId: req.user.id, researchId: research.id }, 'Research upgraded');
+    
+    // Mettre à jour les leaderboards
+    const leaderboardIntegration = require('../utils/leaderboardIntegration');
+    leaderboardIntegration.updateResearchScore(req.user.id).catch(err => {
+      logger.error('Error updating research leaderboard:', err);
+    });
+    leaderboardIntegration.updateTotalPower(req.user.id).catch(err => {
+      logger.error('Error updating total power leaderboard:', err);
+    });
+    
+    // Grant Battle Pass XP
+    const battlePassService = require('../modules/battlepass/application/BattlePassService');
+    battlePassService.addXP(req.user.id, 50).catch(err => {
+      logger.error('Failed to grant Battle Pass XP for research upgrade:', err);
+    });
+    
+    // Check for achievement unlocks
+    const achievementChecker = require('../utils/achievementChecker');
+    achievementChecker.checkResearchAchievements(req.user.id)
+      .catch(err => logger.error('Failed to check research achievements:', err));
+    
     res.json({
       ...research.toJSON(),
       nextLevelCost: research.nextlevelcost,

@@ -13,6 +13,7 @@
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "init-world": "node initializeWorld.js",
+    "init-leaderboards": "node scripts/initLeaderboards.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build": "tsc",

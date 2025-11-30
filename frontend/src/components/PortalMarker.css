@@ -1,0 +1,48 @@
+.portal-marker {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portal-marker:hover {
+  transform: scale(1.2);
+  z-index: 101 !important;
+}
+
+.portal-marker.selected {
+  transform: scale(1.3);
+  z-index: 102 !important;
+}
+
+@keyframes portal-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.portal-tier-grey {
+  filter: brightness(1);
+}
+
+.portal-tier-green {
+  filter: brightness(1.1);
+}
+
+.portal-tier-blue {
+  filter: brightness(1.2);
+}
+
+.portal-tier-purple {
+  filter: brightness(1.3);
+}
+
+.portal-tier-red {
+  filter: brightness(1.4);
+}
+
+.portal-tier-gold {
+  filter: brightness(1.5);
+}

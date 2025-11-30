@@ -45,6 +45,41 @@ const Alliance = sequelize.define('Alliance', {
     type: DataTypes.BIGINT,
     defaultValue: 0,
     field: 'total_power'
+  },
+  treasuryGold: {
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+    field: 'treasury_gold'
+  },
+  treasuryMetal: {
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+    field: 'treasury_metal'
+  },
+  treasuryFuel: {
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+    field: 'treasury_fuel'
+  },
+  treasuryEnergy: {
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+    field: 'treasury_energy'
+  },
+  warsWon: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'wars_won'
+  },
+  warsLost: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'wars_lost'
+  },
+  territoriesControlled: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'territories_controlled'
   }
 }, {
   tableName: 'alliances',
@@ -58,6 +93,10 @@ Alliance.associate = (models) => {
   Alliance.hasMany(models.AllianceMember, { foreignKey: 'allianceId', as: 'members' });
   Alliance.hasMany(models.AllianceInvitation, { foreignKey: 'allianceId', as: 'invitations' });
   Alliance.hasMany(models.AllianceJoinRequest, { foreignKey: 'allianceId', as: 'joinRequests' });
+  Alliance.hasMany(models.AllianceTreasuryLog, { foreignKey: 'allianceId', as: 'treasuryLogs' });
+  Alliance.hasMany(models.AllianceTerritory, { foreignKey: 'allianceId', as: 'territories' });
+  Alliance.hasMany(models.AllianceWar, { foreignKey: 'attackerAllianceId', as: 'warsAsAttacker' });
+  Alliance.hasMany(models.AllianceWar, { foreignKey: 'defenderAllianceId', as: 'warsAsDefender' });
 };
 
 module.exports = Alliance;

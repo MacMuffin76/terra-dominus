@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Alert } from './components/ui';
 import { ResourcesProvider } from './context/ResourcesContext';
+import { TutorialProvider } from './context/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 import useDashboardData from './hooks/useDashboardData';
@@ -44,11 +45,12 @@ function App() {
   };
 
   return (
-    <ResourcesProvider>
-      <Router>
-        <div className="App">
-          <Suspense fallback={<Loader label="Chargement de la page..." center size="lg" />}>
-            <Routes>
+    <TutorialProvider>
+      <ResourcesProvider>
+        <Router>
+          <div className="App">
+            <Suspense fallback={<Loader label="Chargement de la page..." center size="lg" />}>
+              <Routes>
               <Route path="/design-system-test" element={<DesignSystemTest />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -166,6 +168,7 @@ function App() {
         </div>
       </Router>
     </ResourcesProvider>
+    </TutorialProvider>
   );
 }
 

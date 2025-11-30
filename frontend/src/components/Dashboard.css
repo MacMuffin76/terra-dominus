@@ -66,6 +66,110 @@
   width: 100%;
 }
 
+/* Quest & Achievement Section */
+.dashboard-quest-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: var(--spacing-lg) 0;
+  flex-wrap: wrap;
+}
+
+.quest-toggle-button,
+.achievement-toggle-button,
+.battlepass-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quest-toggle-button {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(156, 39, 176, 0.2));
+}
+
+.quest-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(156, 39, 176, 0.3));
+}
+
+.achievement-toggle-button {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 152, 0, 0.2));
+}
+
+.achievement-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+  border-color: rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 152, 0, 0.3));
+}
+
+.battlepass-toggle-button {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2));
+}
+
+.battlepass-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(138, 43, 226, 0.4);
+  border-color: rgba(138, 43, 226, 0.5);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.3), rgba(75, 0, 130, 0.3));
+}
+
+.leaderboard-toggle-button {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 152, 0, 0.2));
+}
+
+.leaderboard-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+  border-color: rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 152, 0, 0.3));
+}
+
+.quest-toggle-button:active,
+.achievement-toggle-button:active,
+.battlepass-toggle-button:active,
+.leaderboard-toggle-button:active {
+  transform: translateY(0);
+}
+
+.toggle-icon {
+  font-size: 24px;
+}
+
+.toggle-text {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-quest-section {
+  width: 100%;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Animations */
 @keyframes neon-pulse {
   0%, 100% {

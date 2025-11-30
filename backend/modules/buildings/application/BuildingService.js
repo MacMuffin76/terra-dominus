@@ -184,6 +184,26 @@ class BuildingService {
 
       transaction.afterCommit(() => {
         this.queueEventPublisher.emit(city.id, userId).catch(() => {});
+        
+        // Mettre à jour les leaderboards
+        const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
+        leaderboardIntegration.updateBuildingsScore(userId).catch(err => {
+          console.error('Error updating buildings leaderboard:', err);
+        });
+        leaderboardIntegration.updateTotalPower(userId).catch(err => {
+          console.error('Error updating total power leaderboard:', err);
+        });
+        
+        // Grant Battle Pass XP
+        const battlePassService = require('../../battlepass/application/BattlePassService');
+        battlePassService.addXP(userId, 25).catch(err => {
+          console.error('Failed to grant Battle Pass XP for building upgrade:', err);
+        });
+        
+        // Check for achievement unlocks
+        const achievementChecker = require('../../../utils/achievementChecker');
+        achievementChecker.checkBuildingAchievements(userId, { level: upgraded.level })
+          .catch(err => console.error('Failed to check building achievements:', err));
       });
 
       return new Building({ ...upgraded });

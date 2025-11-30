@@ -49,6 +49,38 @@ const AllianceDiplomacy = require('./AllianceDiplomacy');
 const MarketOrder = require('./MarketOrder');
 const MarketTransaction = require('./MarketTransaction');
 
+// Import des modèles portails
+const Portal = require('./Portal');
+const PortalExpedition = require('./PortalExpedition');
+
+// Import des modèles quêtes
+const Quest = require('./Quest');
+const UserQuest = require('./UserQuest');
+
+// Import des modèles achievements
+const Achievement = require('./Achievement');
+const UserAchievement = require('./UserAchievement');
+
+// Import des modèles battle pass
+const BattlePassSeason = require('./BattlePassSeason')(sequelize);
+const BattlePassReward = require('./BattlePassReward')(sequelize);
+const UserBattlePass = require('./UserBattlePass')(sequelize);
+const UserBattlePassReward = require('./UserBattlePassReward')(sequelize);
+
+// Import des modèles leaderboards
+const LeaderboardEntry = require('./LeaderboardEntry')(sequelize);
+const LeaderboardReward = require('./LeaderboardReward')(sequelize);
+const UserLeaderboardReward = require('./UserLeaderboardReward')(sequelize);
+
+// Import du modèle chat
+const ChatMessage = require('./ChatMessage')(sequelize);
+
+// Import des nouveaux modèles alliance (treasury, territories, wars)
+const AllianceTreasuryLog = require('./AllianceTreasuryLog')(sequelize);
+const AllianceTerritory = require('./AllianceTerritory')(sequelize);
+const AllianceWar = require('./AllianceWar')(sequelize);
+const AllianceWarBattle = require('./AllianceWarBattle')(sequelize);
+
 // Initialiser les nouveaux modèles (classes)
 Attack.init(sequelize);
 AttackWave.init(sequelize);
@@ -56,6 +88,20 @@ DefenseReport.init(sequelize);
 SpyMission.init(sequelize);
 TradeRoute.init(sequelize);
 TradeConvoy.init(sequelize);
+Portal.init(sequelize);
+PortalExpedition.init(sequelize);
+
+// Définir les associations pour les quêtes
+Quest.hasMany(UserQuest, { foreignKey: 'quest_id', as: 'userQuests' });
+UserQuest.belongsTo(Quest, { foreignKey: 'quest_id', as: 'quest' });
+User.hasMany(UserQuest, { foreignKey: 'user_id', as: 'userQuests' });
+UserQuest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// Définir les associations pour les achievements
+Achievement.hasMany(UserAchievement, { foreignKey: 'achievement_id', as: 'userAchievements' });
+UserAchievement.belongsTo(Achievement, { foreignKey: 'achievement_id', as: 'achievement' });
+User.hasMany(UserAchievement, { foreignKey: 'user_id', as: 'userAchievements' });
+UserAchievement.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Définir les associations (si les modèles ont une méthode associate)
 const models = {
@@ -92,7 +138,25 @@ const models = {
   AllianceJoinRequest,
   AllianceDiplomacy,
   MarketOrder,
-  MarketTransaction
+  MarketTransaction,
+  Portal,
+  PortalExpedition,
+  Quest,
+  UserQuest,
+  Achievement,
+  UserAchievement,
+  BattlePassSeason,
+  BattlePassReward,
+  UserBattlePass,
+  UserBattlePassReward,
+  LeaderboardEntry,
+  LeaderboardReward,
+  UserLeaderboardReward,
+  ChatMessage,
+  AllianceTreasuryLog,
+  AllianceTerritory,
+  AllianceWar,
+  AllianceWarBattle
 };
 
 // Ajouter sequelize et Sequelize pour les associations

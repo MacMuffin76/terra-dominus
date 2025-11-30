@@ -44,6 +44,9 @@
 
 **Verdict : Le moteur tourne, mais il n'y a pas de voiture.**
 
+**📄 Documents complémentaires :**
+- 🌀 [Design Système Portails PvE](docs/PVE_PORTALS_DESIGN.md) — Système inspiré Solo Leveling
+
 ---
 
 ## 🔍 ANALYSE DÉTAILLÉE PAR PILIER
@@ -73,13 +76,15 @@ Répéter indéfiniment (ennui à J+3)
     ↓
 [Spécialisation] Ville Minière (débloquer raffinerie T3) → produire Alliages Rares
     ↓
+[PvE Portails] Portail Bleu apparaît (1h restante) → envoyer 50 tanks → loot titanium
+    ↓
 [Économie] Vendre sur marché 10 alliages = 5000 or (ou garder pour Super Tank)
     ↓
-[Combat/Défense] Protéger route commerciale avec escorte OU rejoindre siège de Boss
+[Combat/Défense] Protéger route commerciale avec escorte OU attaquer joueur rival
     ↓
-[Progression] XP Boss → débloquer tech "Boucliers Énergétiques" (avantage compétitif)
+[Progression] XP Portails + Quêtes → débloquer tech "Boucliers Énergétiques"
     ↓
-[Social] Partager butin avec alliance → points influence → élection Dirigeant
+[Social] Portail Rouge spawn → alliance coordonne raid massif → loot légendaire
     ↓
 RÉPÉTER avec complexité croissante
 ```
@@ -307,32 +312,27 @@ const CONTROL_ZONES = {
 - Objectifs collectifs (capturer territoires)
 - Meta-jeu à long terme (domination de faction)
 
-##### C) Système de Siège & Boss de Monde PvE (Semaine 11-12)
+##### C) Système de Portails PvE (Semaine 11-12)
 
 ```javascript
-// PNJ Boss avec HP partagé
-const WORLD_BOSSES = {
-  TITAN_ALPHA: {
-    location: { x: 200, y: 200 },
-    hp: 10000000, // 10M HP (nécessite 100+ joueurs)
-    phases: [
-      { hp_threshold: 75, unlocks: 'weak_points', damage_multiplier: 1.5 },
-      { hp_threshold: 50, spawns: 'reinforcements', adds: [{ type: 'Elite_Guard', qty: 50 }] },
-      { hp_threshold: 25, mode: 'berserk', boss_damage: 2.0 }
-    ],
-    loot_table: {
-      guaranteed: { blueprint_legendary: 'Titan_Chassis', premium_currency: 100 },
-      top_10_damage: { unique_title: 'Titan Slayer', cosmetic: 'titan_armor_skin' }
-    },
-    respawn: 604800 // 7 jours
-  }
+// Portails colorés aléatoires (style Solo Leveling)
+const PORTAL_TIERS = {
+  GREY: { rarity: 0.50, power_range: [500, 2000], duration: 14400 }, // 4h, commun
+  GREEN: { rarity: 0.30, power_range: [2000, 8000], duration: 10800 }, // 3h
+  BLUE: { rarity: 0.12, power_range: [8000, 20000], duration: 7200 }, // 2h
+  PURPLE: { rarity: 0.06, power_range: [20000, 50000], duration: 5400 }, // 1h30
+  RED: { rarity: 0.015, power_range: [50000, 150000], duration: 3600, boss: true }, // 1h, boss
+  GOLD: { rarity: 0.005, power_range: [100000, 300000], duration: 1800, legendary: true } // 30min !
 };
+
+// Joueur envoie unités → combat → loot si victoire
+// Réutilise système combat existant (pas de nouveau moteur)
 ```
 
 **ROI :**
-- **Coût dev :** 160h (2 devs × 4 semaines)
-- **Engagement communautaire :** Events hebdomadaires = pics de connexion prévisibles
-- **Rétention :** +50% J30 (objectifs long-terme collectifs)
+- **Coût dev :** 180h total (MVP 80h + Avancé 40h + Quêtes 60h) = 3 semaines
+- **Engagement :** Events visuels (Portail Doré spawn = rush communautaire)
+- **Rétention :** +40% J7 (contenu PvE solo), +60% J30 (campagne portails)
 
 ---
 
@@ -913,42 +913,51 @@ const MOD_MANIFEST = {
 
 ---
 
-### 🚀 PHASE 2 : SOCIAL & ÉCONOMIE (Semaines 5-8)
+### 🚀 PHASE 2 : SOCIAL & ÉCONOMIE (Semaines 5-8) — **EN COURS** ⏳
 
 **Objectif :** Créer interactions joueurs + meta-économie.
 
-| Semaine | Tâche | Dev Hours | Priority | Impact |
-|---------|-------|-----------|----------|--------|
-| 5 | Chat global + alliance | 40h | P0 | Social foundation |
-| 6 | Alliances complètes (roles, guerres) | 80h | P0 | +30% rétention |
-| 6 | Ressources rares T2 (3 types) | 40h | P1 | Progression depth |
-| 7 | Crafting/Blueprints (10 recipes) | 60h | P1 | Engagement loop |
-| 8 | Factions & bonus territoriaux | 80h | P1 | Meta-jeu |
+| Semaine | Tâche | Dev Hours | Status | Impact |
+|---------|-------|-----------|--------|--------|
+| 5 | ✅ Chat global + alliance | 40h | **COMPLETE** | Social foundation |
+| 6 | ✅ Alliance Treasury System | 25h | **COMPLETE** | Resource pooling |
+| 6 | ✅ Alliance Territory System | 13h | **COMPLETE** | Spatial control |
+| 6 | ⏳ Alliance War System | 30h | **IN PROGRESS** | PvP coordination |
+| 6 | ❌ Ressources rares T2 (3 types) | 40h | TODO | Progression depth |
+| 7 | ❌ Crafting/Blueprints (10 recipes) | 60h | TODO | Engagement loop |
+| 8 | ❌ Factions & bonus territoriaux | 80h | TODO | Meta-jeu |
 
-**Total :** 300h | **Budget :** 16k€
+**Progress:** **78h / 288h (27%)** | **Budget utilisé:** 4.3k€ / 16k€
 
-**KPIs cibles :**
-- Rétention J30 : 10% → 35%
-- Social interactions : 0 → 5 messages/jour/joueur
-- % joueurs en alliance : 0% → 60%
+**Systèmes complétés :**
+- ✅ **Chat System**: Messages globaux + alliance, persistance, temps réel (10 fichiers, 13/13 tests)
+- ✅ **Treasury System**: Dépôt/retrait, logs, contributions (75% MVP, API fonctionnelle)
+- ✅ **Territory System**: 4 types, défense upgradable, garrison, bonuses (90% MVP, 11/11 tests)
+
+**KPIs actuels :**
+- Rétention J30 : 10% (baseline)
+- Social interactions : Chat fonctionnel, alliance features actives
+- % joueurs en alliance : Systèmes prêts pour adoption
 
 ---
 
 ### ⚔️ PHASE 3 : CONTENU PvE & ÉQUILIBRAGE (Semaines 9-12)
 
-**Objectif :** PvP équilibré + contenu PvE engageant.
+**Objectif :** PvP équilibré + contenu PvE engageant via Portails.
 
 | Semaine | Tâche | Dev Hours | Priority | Impact |
 |---------|-------|-----------|----------|--------|
 | 9 | Tests E2E Playwright (10 scénarios) | 40h | P1 | Qualité |
-| 10 | PNJ Boss de Monde (3 boss) | 80h | P0 | Events communautaires |
-| 11 | IA Factions dynamiques (2 factions) | 60h | P1 | PvE richesse |
+| 10 | Système Portails MVP (Gris, Vert, Bleu) | 80h | P0 | PvE immédiat |
+| 11 | Portails Avancés (Violet, Rouge, Doré) | 40h | P0 | Events rares |
+| 11-12 | Quêtes & Campagne Portails | 60h | P0 | Progression narrative |
 | 12 | Équilibrage PvP (cooldowns, matchmaking) | 40h | P0 | Fairness |
 
-**Total :** 220h | **Budget :** 12k€
+**Total :** 260h | **Budget :** 14k€
 
 **KPIs cibles :**
-- % joueurs participent events : 0% → 40%
+- % joueurs font portails : 0% → 70% (PvE accessible)
+- Portails complétés/jour : 0 → 500+
 - Satisfaction PvP (sondage) : 3/10 → 7/10
 
 ---
@@ -1015,6 +1024,8 @@ const MOD_MANIFEST = {
 | **Marketing** (ads, influenceurs) | 5,000€ |
 | **Legal** (CGU, RGPD, entité) | 2,000€ |
 | **TOTAL** | **95,800€** |
+
+**Note :** Système Portails = +40h Phase 3 mais -40h complexité (pas de factions IA). Budget inchangé.
 
 ### Revenus projetés (conservateurs)
 
@@ -1131,7 +1142,7 @@ const MOD_MANIFEST = {
 4. **Alliances fonctionnelles**
 
 ### 🟢 MOYEN TERME (Mois 3-4)
-1. **PNJ Boss & PvE**
+1. **Système Portails PvE complet** (6 tiers + quêtes)
 2. **UI Redesign (MUI 5)**
 3. **Monétisation éthique**
 4. **Tests E2E coverage 80%**

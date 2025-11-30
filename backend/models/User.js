@@ -54,6 +54,15 @@ const User = sequelize.define('User', {
       len: [1, 50]
     }
   },
+  protection_shield_until: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  attacks_sent_count: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
   tableName: 'users',
   timestamps: false,

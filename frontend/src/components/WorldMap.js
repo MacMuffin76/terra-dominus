@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
+import PortalMarker from './PortalMarker';
+import PortalModal from './PortalModal';
 import { getVisibleWorld, getAvailableCitySlots, getTileInfo, startColonization } from '../api/world';
 import { getUserCities, getMaxCitiesLimit } from '../api/world';
+import { getActivePortals } from '../api/portals';
 import { Alert, Loader } from './ui';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { useAsyncError } from '../hooks/useAsyncError';
+import { usePortalEvents } from '../hooks/usePortalEvents';
 import { getLogger } from '../utils/logger';
 import './WorldMap.css';
 
@@ -27,6 +31,9 @@ const WorldMap = () => {
   const [cities, setCities] = useState([]);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [maxCities, setMaxCities] = useState(1);
+  const [portals, setPortals] = useState([]);
+  const [selectedPortal, setSelectedPortal] = useState(null);
+  const [showPortalModal, setShowPortalModal] = useState(false);
   const [selectedTile, setSelectedTile] = useState(null);
   const [tileInfo, setTileInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,13 +51,14 @@ const WorldMap = () => {
 
     const result = await catchError(
       async () => {
-        const [world, userCities, slots, limitData] = await Promise.all([
+        const [world, userCities, slots, limitData, portalsData] = await Promise.all([
           getVisibleWorld(),
           getUserCities(),
           getAvailableCitySlots(),
           getMaxCitiesLimit(),
+          getActivePortals().catch(() => ({ data: [] })), // Portals optional
         ]);
-        return { world, userCities, slots, limitData };
+        return { world, userCities, slots, limitData, portalsData };
       },
       { 
         toast: true, 
@@ -64,6 +72,7 @@ const WorldMap = () => {
       setCities(result.userCities);
       setAvailableSlots(result.slots);
       setMaxCities(result.limitData.maxCities);
+      setPortals(result.portalsData?.data || []);
 
       // Centrer la vue sur la capitale (première ville)
       if (result.userCities.length > 0) {
@@ -83,6 +92,41 @@ const WorldMap = () => {
   useEffect(() => {
     loadWorldData();
   }, [loadWorldData]);
+
+  // Socket.IO events for portals
+  usePortalEvents({
+    onPortalSpawned: (data) => {
+      logger.info('New portal spawned!', data);
+      // Reload portals
+      getActivePortals()
+        .then(result => setPortals(result.data || []))
+        .catch(err => logger.error('Failed to reload portals', err));
+      
+      // Show notification
+      if (window.Notification && Notification.permission === 'granted') {
+        new Notification('Nouveau Portail!', {
+          body: `Un portail ${data.tier} est apparu sur la carte!`,
+          icon: '/favicon.ico'
+        });
+      }
+    },
+    onPortalExpired: (data) => {
+      logger.info('Portal expired', data);
+      // Remove expired portal from state
+      setPortals(prev => prev.filter(p => p.id !== data.portalId));
+    },
+    onExpeditionResolved: (data) => {
+      logger.info('Expedition resolved!', data);
+      const message = data.victory 
+        ? `✅ Victoire! Vous avez vaincu le portail ${data.portal.tier}!`
+        : `❌ Défaite... Vos unités ont été repoussées.`;
+      
+      alert(message);
+      
+      // Reload data
+      loadWorldData();
+    }
+  });
 
   // Dessiner la carte sur le canvas
   useEffect(() => {
@@ -177,6 +221,8 @@ const WorldMap = () => {
       ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, 6, 0, 2 * Math.PI);
       ctx.fill();
     });
+
+    // Note: Portals are rendered as React components, not on canvas
   }, [worldData, cities, availableSlots, viewOffset, selectedTile]);
 
   // Gestion du clic sur une case
@@ -265,6 +311,21 @@ const WorldMap = () => {
     }
   };
 
+  const handlePortalClick = (portal) => {
+    setSelectedPortal(portal);
+    setShowPortalModal(true);
+  };
+
+  const handlePortalModalClose = () => {
+    setShowPortalModal(false);
+    setSelectedPortal(null);
+  };
+
+  const handleExpeditionLaunched = () => {
+    // Reload world data to update portals
+    loadWorldData();
+  };
+
   if (loading) {
     return (
       <div className="worldmap-container">
@@ -322,6 +383,31 @@ const WorldMap = () => {
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
           />
 
+          {/* Render portals as React components on top of canvas */}
+          {portals.map((portal) => {
+            const x = portal.coord_x * CELL_SIZE + viewOffset.x;
+            const y = portal.coord_y * CELL_SIZE + viewOffset.y;
+            
+            // Only render if on screen
+            if (x + CELL_SIZE < 0 || y + CELL_SIZE < 0 || 
+                x > (containerRef.current?.clientWidth || 0) || 
+                y > (containerRef.current?.clientHeight || 0)) {
+              return null;
+            }
+
+            return (
+              <PortalMarker
+                key={portal.id}
+                portal={portal}
+                x={x}
+                y={y}
+                cellSize={CELL_SIZE}
+                isSelected={selectedPortal?.id === portal.id}
+                onClick={handlePortalClick}
+              />
+            );
+          })}
+
           {tileInfo && (
             <div className="worldmap-tile-info">
               <h3>Case ({tileInfo.x}, {tileInfo.y})</h3>
@@ -367,7 +453,18 @@ const WorldMap = () => {
           <div className="legend-item">
             <div className="legend-icon" style={{ background: '#FFD700', borderRadius: '50%', width: 12, height: 12 }}></div> Emplacement libre
           </div>
+          <div className="legend-item">
+            <div className="legend-icon portal-legend-icon"></div> Portails PvE
+          </div>
         </div>
+
+        {showPortalModal && selectedPortal && (
+          <PortalModal
+            portal={selectedPortal}
+            onClose={handlePortalModalClose}
+            onExpeditionLaunched={handleExpeditionLaunched}
+          />
+        )}
       </div>
     </div>
   );

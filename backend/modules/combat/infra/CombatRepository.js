@@ -281,6 +281,39 @@ class CombatRepository {
       });
     });
   }
+
+  /**
+   * Count user's attacks today (for daily limit check)
+   */
+  async countUserAttacksToday(userId) {
+    return runWithContext(async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      return this.Attack.count({
+        where: {
+          attacker_user_id: userId,
+          departure_time: { [Op.gte]: todayStart }
+        }
+      });
+    });
+  }
+
+  /**
+   * Get last attack from attacker to defender (for raid cooldown check)
+   */
+  async getLastAttackOnTarget(attackerUserId, defenderUserId) {
+    return runWithContext(async () => {
+      return this.Attack.findOne({
+        where: {
+          attacker_user_id: attackerUserId,
+          defender_user_id: defenderUserId
+        },
+        order: [['arrival_time', 'DESC']],
+        attributes: ['id', 'arrival_time']
+      });
+    });
+  }
 }
 
 module.exports = CombatRepository;

@@ -221,12 +221,126 @@ const createContainer = () => {
     });
   });
 
+  // Portal Service
+  container.register('portalRepository', () => {
+    const PortalRepository = require('./modules/portals/infra/PortalRepository');
+    return new PortalRepository();
+  });
+
+  container.register('portalService', (c) => {
+    const PortalService = require('./modules/portals/application/PortalService');
+    const { CityRepository } = require('./modules/buildings/infra/SequelizeRepositories');
+    return new PortalService({
+      portalRepository: c.resolve('portalRepository'),
+      cityRepository: new CityRepository()
+    });
+  });
+
+  // Tutorial Service
+  container.register('tutorialService', () => {
+    const TutorialService = require('./modules/tutorial/application/TutorialService');
+    const sequelize = require('./db');
+    return new TutorialService({ sequelize });
+  });
+
+  container.register('tutorialController', (c) => {
+    const createTutorialController = require('./controllers/tutorialController');
+    return createTutorialController({
+      tutorialService: c.resolve('tutorialService'),
+    });
+  });
+
+  // Quest Service
+  container.register('questRepository', () => {
+    const SequelizeQuestRepository = require('./modules/quest/infra/SequelizeQuestRepository');
+    const { Quest, UserQuest, User } = require('./models');
+    const sequelize = require('./db');
+    return new SequelizeQuestRepository({ Quest, UserQuest, User, sequelize });
+  });
+
+  container.register('questService', (c) => {
+    const QuestService = require('./modules/quest/application/QuestService');
+    return new QuestService({
+      questRepository: c.resolve('questRepository')
+    });
+  });
+
+  container.register('questController', (c) => {
+    const createQuestController = require('./controllers/questController');
+    return createQuestController({
+      questService: c.resolve('questService'),
+    });
+  });
+
+  // Achievement Service
+  container.register('achievementRepository', () => {
+    const SequelizeAchievementRepository = require('./modules/achievement/infra/SequelizeAchievementRepository');
+    const { Achievement, UserAchievement, User } = require('./models');
+    const sequelize = require('./db');
+    return new SequelizeAchievementRepository({ Achievement, UserAchievement, User, sequelize });
+  });
+
+  container.register('achievementService', (c) => {
+    const AchievementService = require('./modules/achievement/application/AchievementService');
+    return new AchievementService({
+      achievementRepository: c.resolve('achievementRepository')
+    });
+  });
+
+  container.register('achievementController', (c) => {
+    const createAchievementController = require('./controllers/achievementController');
+    return createAchievementController({
+      achievementService: c.resolve('achievementService'),
+    });
+  });
+
+  // Battle Pass
+  container.register('battlePassService', () => {
+    const BattlePassService = require('./modules/battlepass/application/BattlePassService');
+    return new BattlePassService();
+  });
+
+  container.register('battlePassController', (c) => {
+    const createBattlePassController = require('./controllers/battlePassController');
+    return createBattlePassController({
+      battlePassService: c.resolve('battlePassService'),
+    });
+  });
+
+  // Leaderboard Service et Controller
+  container.register('leaderboardService', () => {
+    return require('./modules/leaderboard/application/LeaderboardService');
+  });
+
+  container.register('leaderboardController', (c) => {
+    return require('./controllers/leaderboardController');
+  });
+
+  // Chat Service et Controller
+  container.register('chatRepository', () => {
+    const ChatRepository = require('./modules/chat/infra/ChatRepository');
+    return new ChatRepository();
+  });
+
+  container.register('chatService', (c) => {
+    const ChatService = require('./modules/chat/application/ChatService');
+    return new ChatService(c.resolve('chatRepository'));
+  });
+
+  container.register('chatController', (c) => {
+    const createChatController = require('./controllers/chatController');
+    return createChatController({
+      chatService: c.resolve('chatService'),
+    });
+  });
+
   // Queues for workers
   const { getQueue, queueNames } = require('./jobs/queueConfig');
   container.register('colonizationQueue', () => getQueue(queueNames.COLONIZATION));
   container.register('attackQueue', () => getQueue(queueNames.ATTACK));
   container.register('spyQueue', () => getQueue(queueNames.SPY));
   container.register('tradeQueue', () => getQueue(queueNames.TRADE));
+  container.register('portalQueue', () => getQueue(queueNames.PORTAL));
 
   return container;
 };

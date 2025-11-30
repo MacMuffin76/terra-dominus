@@ -40,5 +40,23 @@ module.exports = ({ allianceController, authMiddleware }) => {
   router.post('/:id/diplomacy/ally', allianceController.proposeAlliance);
   router.delete('/:id/diplomacy/:targetAllianceId', allianceController.breakRelation);
 
+  // Treasury (requires treasury controller)
+  const treasuryController = require('../../../controllers/allianceTreasuryController');
+  router.get('/:allianceId/treasury', treasuryController.getTreasuryBalances);
+  router.post('/:allianceId/treasury/deposit', treasuryController.depositResources);
+  router.post('/:allianceId/treasury/withdraw', treasuryController.withdrawResources);
+  router.get('/:allianceId/treasury/history', treasuryController.getTransactionHistory);
+  router.get('/:allianceId/treasury/contributions', treasuryController.getMemberContributions);
+
+  // Territory (requires territory controller)
+  const territoryController = require('../../../controllers/allianceTerritoryController');
+  router.get('/:allianceId/territories', territoryController.getAllianceTerritories);
+  router.post('/:allianceId/territories/claim', territoryController.claimTerritory);
+  router.post('/:allianceId/territories/:territoryId/upgrade', territoryController.upgradeDefense);
+  router.post('/:allianceId/territories/:territoryId/reinforce', territoryController.reinforceGarrison);
+  router.post('/:allianceId/territories/:territoryId/withdraw', territoryController.withdrawGarrison);
+  router.delete('/:allianceId/territories/:territoryId', territoryController.abandonTerritory);
+  router.get('/:allianceId/territories/bonuses', territoryController.getTerritoryBonuses);
+
   return router;
 };

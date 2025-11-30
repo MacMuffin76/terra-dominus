@@ -2,6 +2,8 @@ const { runWithContext } = require('../../../utils/logger');
 const combatRules = require('../domain/combatRules');
 const worldRules = require('../../world/domain/worldRules');
 const NotificationService = require('../../../services/NotificationService');
+const protectionRules = require('../../protection/domain/protectionRules');
+const User = require('../../../models/User');
 
 /**
  * CombatService - Gestion des combats territoriaux et espionnage
@@ -41,6 +43,37 @@ class CombatService {
 
         if (defenderCity.user_id === userId) {
           throw new Error('Impossible d\'attaquer sa propre ville');
+        }
+
+        // 1.5 Protection Shield Checks
+        const attacker = await User.findByPk(userId, { transaction });
+        const defender = await User.findByPk(defenderCity.user_id, { transaction });
+
+        if (!attacker || !defender) {
+          throw new Error('Utilisateur introuvable');
+        }
+
+        // Check if defender has active shield
+        const attackCheck = protectionRules.canAttack(attacker, defender);
+        if (!attackCheck.canAttack) {
+          throw new Error(attackCheck.reason);
+        }
+
+        // Check daily attack limit
+        const attacksToday = await this.combatRepository.countUserAttacksToday(userId);
+        const dailyLimit = protectionRules.checkDailyAttackLimit(attacksToday);
+        if (!dailyLimit.canAttack) {
+          throw new Error(dailyLimit.reason);
+        }
+
+        // Check raid cooldown on this specific target
+        const lastAttackOnTarget = await this.combatRepository.getLastAttackOnTarget(
+          userId,
+          defenderCity.user_id
+        );
+        const raidCheck = protectionRules.canRaidTarget(lastAttackOnTarget?.arrival_time);
+        if (!raidCheck.canAttack) {
+          throw new Error(raidCheck.reason);
         }
 
         // 2. Calculer la distance
@@ -97,6 +130,27 @@ class CombatService {
           waves,
           transaction
         );
+
+        // 6. Remove attacker's shield if active (aggressive behavior)
+        if (protectionRules.hasActiveShield(attacker)) {
+          attacker.protection_shield_until = null;
+          await attacker.save({ transaction });
+        }
+
+        // 7. Increment attacks sent count
+        attacker.attacks_sent_count += 1;
+        await attacker.save({ transaction });
+
+        // 8. Check if defender should lose shield (city count check)
+        const defenderCityCount = await this.City.count({
+          where: { user_id: defender.id },
+          transaction
+        });
+        const shieldCheck = protectionRules.shouldLoseShield(defender, defenderCityCount);
+        if (shieldCheck.shouldLoseShield && defender.protection_shield_until) {
+          defender.protection_shield_until = null;
+          await defender.save({ transaction });
+        }
 
         await transaction.commit();
 
@@ -267,6 +321,35 @@ class CombatService {
         );
 
         await transaction.commit();
+
+        // Mettre à jour les leaderboards
+        const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
+        
+        // Si victoire de l'attaquant, incrémenter son score de victoires
+        if (combatResult.outcome === 'attacker_victory') {
+          leaderboardIntegration.incrementCombatVictories(attack.attacker_user_id, 1).catch(err => {
+            this.logger.error('Error updating combat victories leaderboard:', err);
+          });
+          
+          // Grant Battle Pass XP for victory
+          const battlePassService = require('../../battlepass/application/BattlePassService');
+          battlePassService.addXP(attack.attacker_user_id, 100).catch(err => {
+            this.logger.error('Failed to grant Battle Pass XP for combat victory:', err);
+          });
+        }
+        
+        // Check for achievement unlocks
+        const achievementChecker = require('../../../utils/achievementChecker');
+        achievementChecker.checkCombatAchievements(attack.attacker_user_id, combatResult)
+          .catch(err => this.logger.error('Failed to check combat achievements:', err));
+        
+        // Mettre à jour la puissance totale des deux joueurs (unités perdues)
+        leaderboardIntegration.updateTotalPower(attack.attacker_user_id).catch(err => {
+          this.logger.error('Error updating attacker total power:', err);
+        });
+        leaderboardIntegration.updateTotalPower(attack.defender_user_id).catch(err => {
+          this.logger.error('Error updating defender total power:', err);
+        });
 
         // Notification temps réel du résultat
         NotificationService.notifyAttackArrived(

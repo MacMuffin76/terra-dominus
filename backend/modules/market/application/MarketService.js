@@ -297,6 +297,27 @@ class MarketService {
       await transaction.commit();
       logger.info({ buyerId, orderId, quantity }, 'Transaction de marché exécutée');
 
+      // Mettre à jour le leaderboard économie pour les deux parties
+      const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
+      
+      if (order.orderType === 'sell') {
+        // Transaction: buyerId achète, order.userId vend
+        leaderboardIntegration.updateEconomyScore(buyerId).catch(err => {
+          logger.error('Error updating economy leaderboard for buyer:', err);
+        });
+        leaderboardIntegration.updateEconomyScore(order.userId).catch(err => {
+          logger.error('Error updating economy leaderboard for seller:', err);
+        });
+      } else {
+        // Transaction: buyerId vend, order.userId achète
+        leaderboardIntegration.updateEconomyScore(buyerId).catch(err => {
+          logger.error('Error updating economy leaderboard for seller:', err);
+        });
+        leaderboardIntegration.updateEconomyScore(order.userId).catch(err => {
+          logger.error('Error updating economy leaderboard for buyer:', err);
+        });
+      }
+
       return transactionRecord;
     } catch (error) {
       await transaction.rollback();

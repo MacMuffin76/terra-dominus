@@ -16,6 +16,15 @@ const createTradeRouter = require('../modules/trade/api/tradeRoutes');
 const createAllianceRouter = require('../modules/alliances/api/allianceRoutes');
 const createCityRouter = require('../modules/cities/api/cityRoutes');
 const createMarketRouter = require('../modules/market/api/marketRoutes');
+const createPortalRouter = require('../routes/portalRoutes');
+const protectionRoutes = require('../routes/protectionRoutes');
+const createTutorialRouter = require('../routes/tutorialRoutes');
+const createQuestRouter = require('../routes/questRoutes');
+const createAchievementRouter = require('../routes/achievementRoutes');
+const createBattlePassRouter = require('../routes/battlePassRoutes');
+const createLeaderboardRouter = require('../routes/leaderboardRoutes');
+const createChatRouter = require('../routes/chatRoutes');
+const territoryRoutes = require('../routes/territoryRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
@@ -40,6 +49,17 @@ const createApiRouter = (container) => {
     marketController: container.resolve('marketController'),
     authMiddleware: require('../middleware/authMiddleware')
   }));
+  router.use('/portals', createPortalRouter(container));
+  router.use('/protection', protectionRoutes);
+  router.use('/tutorial', createTutorialRouter(container));
+  router.use('/quests', createQuestRouter(container.resolve('questController')));
+  router.use('/achievements', createAchievementRouter(container.resolve('achievementController')));
+  router.use('/battlepass', createBattlePassRouter(container.resolve('battlePassController')));
+  router.use('/leaderboards', createLeaderboardRouter());
+  router.use('/chat', createChatRouter({
+    chatController: container.resolve('chatController')
+  }));
+  router.use('/territories', territoryRoutes);
   router.use('/', createDashboardRouter(container));
   router.use('/', createUnitRouter(container));
   router.use('/admin', createBlueprintAdminRouter(container));

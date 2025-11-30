@@ -1,0 +1,14 @@
+Agis comme un game designer + architecte logiciel senior.  
+Voici un projet de jeu de stratégie MMO web (RTS) nommé Terra Dominus, en version bêta, sans joueur actif.
+
+Stack : Node.js (Express, Sequelize), React + Redux, PostgreSQL, Redis, Socket.IO, BullMQ  
+Style : jeu à la OGame terrestre avec combats, ressources, colonisation
+
+Voici les objectifs :
+1. Analyser en profondeur les faiblesses de gameplay, technique, UX, et infrastructure.
+2. Identifier les features manquantes bloquant l’émergence d’un public (fidélisation, immersion, progression).
+3. Proposer un plan de développement pour tendre vers un jeu “AAA navigateur”.
+4. Suggérer des modules à ajouter (factions, météo, IA, diplomatie, etc.)
+5. Prioriser les tâches selon ROI + charge estimée
+
+Sois structuré, visionnaire et directif, comme si tu préparais une roadmap pour investisseurs ou une levée de fonds.

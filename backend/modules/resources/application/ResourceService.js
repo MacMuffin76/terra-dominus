@@ -661,6 +661,182 @@ class ResourceService {
   getAllowedResourceBuildingNames() {
     return [...RESOURCE_BUILDINGS];
   }
+
+  /**
+   * Add resources to user's main city
+   * @param {number} userId 
+   * @param {Object} resources - { gold: 1000, metal: 500, fuel: 200, energy: 100 }
+   * @param {Object} transaction - Sequelize transaction (optional)
+   * @returns {Promise<Object>} - Updated resources
+   */
+  async addResourcesToUser(userId, resources, transaction = null) {
+    const executeInTransaction = async (t) => {
+      const city = await this.withCity(userId, { transaction: t, lock: t.LOCK.UPDATE });
+
+      const resourceTypes = ['gold', 'metal', 'fuel', 'energy'];
+      const updates = [];
+
+      for (const type of resourceTypes) {
+        const amount = resources[type];
+        if (!amount || amount <= 0) continue;
+
+        // Map frontend type to database type
+        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'essence' : 'energie';
+
+        let resource = await Resource.findOne({
+          where: { city_id: city.id, type: dbType },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+
+        if (!resource) {
+          // Create resource if it doesn't exist
+          resource = await Resource.create({
+            city_id: city.id,
+            type: dbType,
+            amount: Math.floor(amount),
+            last_update: new Date(),
+          }, { transaction: t });
+        } else {
+          const currentAmount = Number(resource.amount) || 0;
+          const newAmount = currentAmount + Math.floor(amount);
+          const currentVersion = Number(resource.version) || 0;
+
+          const [affected] = await Resource.update(
+            {
+              amount: newAmount,
+              last_update: new Date(),
+              version: currentVersion + 1,
+            },
+            {
+              where: { id: resource.id, version: currentVersion },
+              transaction: t,
+            }
+          );
+
+          this.assertOptimisticUpdate(affected);
+          resource.amount = newAmount;
+          resource.version = currentVersion + 1;
+        }
+
+        updates.push({ type, amount: Math.floor(amount), newTotal: resource.amount });
+      }
+
+      return { success: true, updates };
+    };
+
+    if (transaction) {
+      return executeInTransaction(transaction);
+    } else {
+      return this.transactionProvider(executeInTransaction);
+    }
+  }
+
+  /**
+   * Deduct resources from user's main city
+   * @param {number} userId 
+   * @param {Object} resources - { gold: 1000, metal: 500, fuel: 200, energy: 100 }
+   * @param {Object} transaction - Sequelize transaction (optional)
+   * @returns {Promise<Object>} - Updated resources
+   */
+  async deductResourcesFromUser(userId, resources, transaction = null) {
+    const executeInTransaction = async (t) => {
+      const city = await this.withCity(userId, { transaction: t, lock: t.LOCK.UPDATE });
+
+      const resourceTypes = ['gold', 'metal', 'fuel', 'energy'];
+      const resourcesToDeduct = [];
+
+      // First pass: validate all resources are sufficient
+      for (const type of resourceTypes) {
+        const amount = resources[type];
+        if (!amount || amount <= 0) continue;
+
+        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'essence' : 'energie';
+
+        const resource = await Resource.findOne({
+          where: { city_id: city.id, type: dbType },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+
+        if (!resource) {
+          const error = new Error(`Ressource ${type} introuvable pour cet utilisateur.`);
+          error.status = 404;
+          throw error;
+        }
+
+        const currentAmount = Number(resource.amount) || 0;
+        if (currentAmount < amount) {
+          const error = new Error(`Ressources insuffisantes : ${type}. Requis: ${amount}, Disponible: ${currentAmount}`);
+          error.status = 400;
+          throw error;
+        }
+
+        resourcesToDeduct.push({ resource, type, amount: Math.floor(amount), dbType });
+      }
+
+      // Second pass: deduct resources
+      const updates = [];
+      for (const { resource, type, amount } of resourcesToDeduct) {
+        const currentAmount = Number(resource.amount);
+        const newAmount = currentAmount - amount;
+        const currentVersion = Number(resource.version) || 0;
+
+        const [affected] = await Resource.update(
+          {
+            amount: newAmount,
+            last_update: new Date(),
+            version: currentVersion + 1,
+          },
+          {
+            where: { id: resource.id, version: currentVersion },
+            transaction: t,
+          }
+        );
+
+        this.assertOptimisticUpdate(affected);
+        resource.amount = newAmount;
+        resource.version = currentVersion + 1;
+
+        updates.push({ type, amount, newTotal: newAmount });
+      }
+
+      return { success: true, updates };
+    };
+
+    if (transaction) {
+      return executeInTransaction(transaction);
+    } else {
+      return this.transactionProvider(executeInTransaction);
+    }
+  }
+
+  /**
+   * Get user's current resource amounts (simplified)
+   * @param {number} userId 
+   * @returns {Promise<Object>} - { gold: 1000, metal: 500, fuel: 200, energy: 100 }
+   */
+  async getUserResourceAmounts(userId) {
+    const city = await this.withCity(userId);
+
+    const resources = await Resource.findAll({
+      where: { city_id: city.id },
+    });
+
+    const amounts = { gold: 0, metal: 0, fuel: 0, energy: 0 };
+
+    for (const resource of resources) {
+      const type = resource.type;
+      const amount = Number(resource.amount) || 0;
+
+      if (type === 'or') amounts.gold = amount;
+      else if (type === 'metal') amounts.metal = amount;
+      else if (type === 'essence') amounts.fuel = amount;
+      else if (type === 'energie') amounts.energy = amount;
+    }
+
+    return amounts;
+  }
 }
 
 module.exports = ResourceService;

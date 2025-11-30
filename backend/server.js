@@ -16,12 +16,16 @@ const io = initIO(server);
 startJobs(container);
 
 const resourceService = container.resolve('resourceService');
+const chatService = container.resolve('chatService');
 const logger = getLogger({ module: 'server' });
 
 const emitUserResources = async (socket, userId) => {
   const resources = await resourceService.getUserResources(userId);
   socket.emit('resources', resources);
 };
+
+// Chat socket handlers
+const registerChatHandlers = require('./modules/chat/socket/chatSocketHandlers');
 
 io.on('connection', (socket) => {
   const userId = socket.user?.id;
@@ -56,6 +60,9 @@ io.on('connection', (socket) => {
   });
 
   sendResources();
+
+  // Register chat socket handlers
+  registerChatHandlers(io, socket, { chatService });
 
   socket.on('user_connected', async (payload = {}) => {
     runWithContext(context, async () => {

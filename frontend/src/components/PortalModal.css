@@ -1,0 +1,374 @@
+.portal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.portal-modal {
+  background: #1a1a2e;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.portal-modal-header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f0f1e;
+}
+
+.portal-modal-header h2 {
+  margin: 0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portal-tier-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #000;
+  text-transform: uppercase;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.portal-modal-content {
+  padding: 20px;
+}
+
+.portal-info-section {
+  margin-bottom: 30px;
+}
+
+.portal-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  background: #0f0f1e;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.info-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+.portal-description {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.portal-description p {
+  margin: 0;
+  color: #ccc;
+}
+
+.portal-enemies h4,
+.portal-loot h4 {
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.enemies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.enemy-item {
+  background: #0f0f1e;
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.enemy-name {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.enemy-count {
+  color: #ffd700;
+}
+
+.enemy-stats {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.portal-loot {
+  margin-top: 20px;
+}
+
+.loot-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.loot-guaranteed,
+.loot-random {
+  background: #0f0f1e;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.loot-guaranteed strong,
+.loot-random strong {
+  color: #4CAF50;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.loot-guaranteed ul,
+.loot-random ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #ccc;
+}
+
+.expedition-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.expedition-section h3 {
+  color: #fff;
+  margin-top: 0;
+}
+
+.city-select {
+  margin-bottom: 15px;
+}
+
+.city-select label {
+  display: block;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.city-select select {
+  width: 100%;
+  padding: 10px;
+  background: #0f0f1e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.travel-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-bottom: 15px;
+  color: #ccc;
+}
+
+.units-selection h4 {
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.units-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.unit-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.unit-input label {
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.unit-input input {
+  padding: 8px;
+  background: #0f0f1e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.power-comparison {
+  background: #0f0f1e;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.power-bar,
+.portal-power-bar {
+  margin-bottom: 15px;
+}
+
+.power-label {
+  color: #fff;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.power-progress {
+  background: rgba(255, 255, 255, 0.1);
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.power-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+.power-fill.strong {
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+}
+
+.power-fill.medium {
+  background: linear-gradient(90deg, #FF9800, #FFC107);
+}
+
+.power-fill.weak {
+  background: linear-gradient(90deg, #F44336, #E91E63);
+}
+
+.power-verdict {
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.verdict-strong {
+  color: #4CAF50;
+}
+
+.verdict-medium {
+  color: #FF9800;
+}
+
+.verdict-weak {
+  color: #F44336;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  background: #555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  background: #555;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: #666;
+}
+
+@media (max-width: 768px) {
+  .portal-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .loot-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .units-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

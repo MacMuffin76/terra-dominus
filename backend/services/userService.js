@@ -15,6 +15,8 @@ const Entity = require('../models/Entity');
 const sequelize = require('../db');
 const RefreshToken = require('../models/RefreshToken');
 const BlueprintRepository = require('../repositories/BlueprintRepository');
+const { calculateShieldExpiration } = require('../modules/protection/domain/protectionRules');
+const TutorialProgress = require('../models/TutorialProgress');
 
 const { getJwtSecret } = require('../config/jwtConfig');
 
@@ -250,11 +252,30 @@ async function registerUser({ username, email, password }) {
 
   const hashed = await bcrypt.hash(password, 10);
   return sequelize.transaction(async (transaction) => {
+    // Calculate protection shield expiration (72h from now)
+    const shieldExpiration = calculateShieldExpiration();
+    
     const newUser = await User.create(
-      { username, email, password: hashed },
+      { 
+        username, 
+        email, 
+        password: hashed,
+        protection_shield_until: shieldExpiration,
+        attacks_sent_count: 0
+      },
       { transaction }
     );
   await initializeUserGameData(newUser.id, transaction);
+
+    // Initialize tutorial progress
+    await TutorialProgress.create({
+      user_id: newUser.id,
+      current_step: 1,
+      completed: false,
+      skipped: false,
+      completed_steps: [],
+      started_at: new Date(),
+    }, { transaction });
 
     const accessToken = buildAccessToken(newUser.id);
     const refreshToken = await createRefreshTokenRecord(newUser.id, transaction);

@@ -11,6 +11,7 @@ const queueNames = {
   ATTACK: 'attack',
   SPY: 'spy',
   TRADE: 'trade',
+  PORTAL: 'portal',
 };
 
 const connection = {
