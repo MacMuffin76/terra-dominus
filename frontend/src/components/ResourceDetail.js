@@ -1,10 +1,9 @@
 // frontend/src/components/ResourceDetail.js
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './ResourceDetail.css';
 import { useResources } from '../context/ResourcesContext';
 import { getApiErrorMessage } from '../utils/apiErrorHandler';
 import { safeStorage } from '../utils/safeStorage';
-import { useAsyncError } from '../hooks/useAsyncError';
 import { logger } from '../utils/logger';
 import PropTypes from 'prop-types';
 import { Button, Loader } from './ui';
@@ -39,10 +38,10 @@ const ResourceDetail = ({
   onBuildingUpgraded,
   onBuildingDowngraded,
 }) => {
-  const { error, catchError, clearError } = useAsyncError('ResourceDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
+  const [error, setError] = useState(null);
   const { resources, setResources } = useResources(); // ✅ objet et plus tableau
 
   const isBuilding = useMemo(
@@ -60,13 +59,13 @@ const ResourceDetail = ({
     return `${hrs}:${mins}:${secs}`;
   };
 
-  const refreshBuilding = async (signal, { silent = false } = {}) => {
+  const refreshBuilding = useCallback(async (signal, { silent = false } = {}) => {
     if (!building || !building.id) return null;
 
     if (!silent) {
       setLoading(true);
     }
-    clearError();
+    setError(null);
 
     try {
       const data = await getResourceBuildingDetail(building.id, signal);
@@ -98,17 +97,13 @@ const ResourceDetail = ({
       if (err.name === 'CanceledError') return null;
 
       logger.error('ResourceDetail', 'Error refreshing building', { buildingId: building?.id, error: err });
-      
-      await catchError(async () => { throw err; }, { 
-        toast: true, 
-        logError: true 
-      }).catch(() => {});
+      setError(getApiErrorMessage(err, 'Erreur lors du chargement'));
       
       return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [building, setResources]);
 
   useEffect(() => {
     const controller = new AbortController();

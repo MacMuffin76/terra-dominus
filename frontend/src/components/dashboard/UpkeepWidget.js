@@ -68,14 +68,14 @@ const UpkeepWidget = () => {
     );
   }
 
-  const { upkeep, income, net, warnings } = upkeepData;
+  const { upkeep = {}, income = {}, net = {}, warnings = [] } = upkeepData;
   const hasWarnings = warnings && warnings.length > 0;
-  const isDeficit = net.gold < 0 || net.metal < 0 || net.fuel < 0;
+  const isDeficit = (net.gold || 0) < 0 || (net.metal || 0) < 0 || (net.fuel || 0) < 0;
 
   // Calculate percentage of income consumed by upkeep
-  const goldPercent = income.gold > 0 ? Math.round((upkeep.gold / income.gold) * 100) : 0;
-  const metalPercent = income.metal > 0 ? Math.round((upkeep.metal / income.metal) * 100) : 0;
-  const fuelPercent = income.fuel > 0 ? Math.round((upkeep.fuel / income.fuel) * 100) : 0;
+  const goldPercent = (income.gold || 0) > 0 ? Math.round(((upkeep.gold || 0) / income.gold) * 100) : 0;
+  const metalPercent = (income.metal || 0) > 0 ? Math.round(((upkeep.metal || 0) / income.metal) * 100) : 0;
+  const fuelPercent = (income.fuel || 0) > 0 ? Math.round(((upkeep.fuel || 0) / income.fuel) * 100) : 0;
 
   const getStatusColor = (percent) => {
     if (percent >= 80) return '#ff4444'; // Critical

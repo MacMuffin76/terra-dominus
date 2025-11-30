@@ -1,6 +1,6 @@
 // frontend/src/components/units/UnitTrainingPanel.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Users, Award, Lock } from 'lucide-react';
 import Menu from '../Menu';
 import ResourcesWidget from '../ResourcesWidget';
@@ -21,12 +21,7 @@ const UnitTrainingPanel = () => {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [filterTier, setFilterTier] = useState('all');
 
-  useEffect(() => {
-    loadUnits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadUnits = async () => {
+  const loadUnits = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getAvailableUnits();
@@ -39,16 +34,21 @@ const UnitTrainingPanel = () => {
         logError: true
       }).catch(() => {});
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleUnitSelect = (unit) => {
-    setSelectedUnit(selectedUnit?.id === unit.id ? null : unit);
-  };
+  useEffect(() => {
+    loadUnits();
+  }, [loadUnits]);
 
-  const handleTrainUnits = () => {
+  const handleUnitSelect = useCallback((unit) => {
+    setSelectedUnit(prev => prev?.id === unit.id ? null : unit);
+  }, []);
+
+  const handleTrainUnits = useCallback(() => {
     // TODO: Implement training logic
     console.log('Training units:', selectedUnit);
-  };
+  }, [selectedUnit]);
 
   if (loading) {
     return (
@@ -126,10 +126,10 @@ const UnitTrainingPanel = () => {
             <div className="banner-content">
               <h3>Prochaine Unité</h3>
               <p>
-                <strong>{nextUnlock.unitName}</strong> disponible au niveau {nextUnlock.requiredLevel}
+                <strong>{nextUnlock.name}</strong> disponible au niveau {Number(nextUnlock.requiredLevel)}
               </p>
               <span className="levels-remaining">
-                {nextUnlock.levelsRemaining} niveau{nextUnlock.levelsRemaining > 1 ? 'x' : ''} restant{nextUnlock.levelsRemaining > 1 ? 's' : ''}
+                {Number(nextUnlock.levelsRemaining)} niveau{nextUnlock.levelsRemaining > 1 ? 'x' : ''} restant{nextUnlock.levelsRemaining > 1 ? 's' : ''}
               </span>
             </div>
           </div>

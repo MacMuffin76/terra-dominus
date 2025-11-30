@@ -1,8 +1,7 @@
 // frontend/src/components/TrainingDetail.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
-import { useAsyncError } from '../hooks/useAsyncError';
 import { logger } from '../utils/logger';
 import './TrainingDetail.css';
 
@@ -10,11 +9,10 @@ const formatNumber = (value) =>
   new Intl.NumberFormat('fr-FR').format(Number(value || 0));
 
 const TrainingDetail = ({ training, onTrainingUpdated }) => {
-  const { error, catchError } = useAsyncError('TrainingDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const refreshTraining = async () => {
+  const refreshTraining = useCallback(async () => {
     if (!training?.id) return;
 
     try {
@@ -26,56 +24,50 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
         onTrainingUpdated(data);
       }
     } catch (err) {
-      await catchError(async () => { throw err; }, { 
-        toast: true, 
-        logError: true 
-      }).catch(() => {});
+      logger.error('Failed to refresh training', err);
     }
-  };
+  }, [training?.id, onTrainingUpdated]);
 
   useEffect(() => {
     refreshTraining();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [training?.id]);
+  }, [refreshTraining]);
 
-  const handleUpgrade = catchError(
-    async () => {
-      if (!detail) return;
-      setLoading(true);
-      try {
-        const { data } = await axiosInstance.post(
-          `/training/training-centers/${training.id}/upgrade`
-        );
-        setDetail(data);
-        if (onTrainingUpdated) {
-          onTrainingUpdated(data);
-        }
-      } finally {
-        setLoading(false);
+  const handleUpgrade = useCallback(async () => {
+    if (!detail) return;
+    setLoading(true);
+    try {
+      const { data } = await axiosInstance.post(
+        `/training/training-centers/${training.id}/upgrade`
+      );
+      setDetail(data);
+      if (onTrainingUpdated) {
+        onTrainingUpdated(data);
       }
-    },
-    { toast: true, logError: true }
-  );
+    } catch (err) {
+      logger.error('Failed to upgrade training', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [detail, training?.id, onTrainingUpdated]);
 
-  const handleDestroy = catchError(
-    async () => {
-      if (!window.confirm('Supprimer ce centre d\'entraînement ?')) return;
+  const handleDestroy = useCallback(async () => {
+    if (!window.confirm('Supprimer ce centre d\'entraînement ?')) return;
 
-      setLoading(true);
-      try {
-        await axiosInstance.post(
-          `/training/training-centers/${training.id}/destroy`
-        );
-        if (onTrainingUpdated) {
-          onTrainingUpdated(null); // le parent saura retirer la carte
-        }
-        setDetail(null);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    try {
+      await axiosInstance.post(
+        `/training/training-centers/${training.id}/destroy`
+      );
+      if (onTrainingUpdated) {
+        onTrainingUpdated(null); // le parent saura retirer la carte
       }
-    },
-    { toast: true, logError: true }
-  );
+      setDetail(null);
+    } catch (err) {
+      logger.error('Failed to destroy training', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [training?.id, onTrainingUpdated]);
 
   if (!detail) {
     return (

@@ -1,17 +1,15 @@
 // frontend/src/components/DefenseDetail.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
-import { useAsyncError } from '../hooks/useAsyncError';
 import { logger } from '../utils/logger';
 import './DefenseDetail.css';
 
 const DefenseDetail = ({ defense, onDefenseUpdated }) => {
-  const { error, catchError } = useAsyncError('DefenseDetail');
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const refreshDefense = async () => {
+  const refreshDefense = useCallback(async () => {
     if (!defense?.id) return;
 
     try {
@@ -24,38 +22,34 @@ const DefenseDetail = ({ defense, onDefenseUpdated }) => {
         onDefenseUpdated(data);
       }
     } catch (err) {
-      await catchError(async () => { throw err; }, { 
-        toast: true, 
-        logError: true 
-      }).catch(() => {});
+      logger.error('Failed to refresh defense', err);
+      // Don't re-throw to avoid infinite loop
     }
-  };
+  }, [defense?.id, onDefenseUpdated]);
 
   useEffect(() => {
     refreshDefense();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defense?.id]);
+  }, [refreshDefense]);
 
-  const handleBuildOne = catchError(
-    async () => {
-      if (!defense?.id) return;
+  const handleBuildOne = useCallback(async () => {
+    if (!defense?.id) return;
 
-      setLoading(true);
-      try {
-        const { data } = await axiosInstance.post(
-          `/defense/defense-buildings/${defense.id}/upgrade`
-        );
+    setLoading(true);
+    try {
+      const { data } = await axiosInstance.post(
+        `/defense/defense-buildings/${defense.id}/upgrade`
+      );
 
-        setDetail(data);
-        if (onDefenseUpdated) {
-          onDefenseUpdated(data);
-        }
-      } finally {
-        setLoading(false);
+      setDetail(data);
+      if (onDefenseUpdated) {
+        onDefenseUpdated(data);
       }
-    },
-    { toast: true, logError: true }
-  );
+    } catch (err) {
+      logger.error('Failed to upgrade defense', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [defense?.id, onDefenseUpdated]);
 
   if (!detail) {
     return <p className="defense-detail-loading">Chargement…</p>;

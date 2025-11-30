@@ -116,29 +116,29 @@ const UnitTrainingCard = ({
         <div className="cost-section">
           <span className="cost-label">Cost:</span>
           <div className="cost-values">
-            {unit.cost.gold > 0 && <span className="cost gold">{unit.cost.gold}g</span>}
-            {unit.cost.metal > 0 && <span className="cost metal">{unit.cost.metal}m</span>}
-            {unit.cost.fuel > 0 && <span className="cost fuel">{unit.cost.fuel}f</span>}
+            {unit.cost?.gold > 0 && <span className="cost gold">{Number(unit.cost.gold)}g</span>}
+            {unit.cost?.metal > 0 && <span className="cost metal">{Number(unit.cost.metal)}m</span>}
+            {unit.cost?.fuel > 0 && <span className="cost fuel">{Number(unit.cost.fuel)}f</span>}
           </div>
         </div>
         <div className="upkeep-section">
           <span className="upkeep-label">Upkeep/h:</span>
           <div className="upkeep-values">
-            {unit.upkeepPerHour.gold > 0 && <span className="upkeep gold">{unit.upkeepPerHour.gold}g</span>}
-            {unit.upkeepPerHour.metal > 0 && <span className="upkeep metal">{unit.upkeepPerHour.metal}m</span>}
-            {unit.upkeepPerHour.fuel > 0 && <span className="upkeep fuel">{unit.upkeepPerHour.fuel}f</span>}
+            {unit.upkeepPerHour?.gold > 0 && <span className="upkeep gold">{Number(unit.upkeepPerHour.gold)}g</span>}
+            {unit.upkeepPerHour?.metal > 0 && <span className="upkeep metal">{Number(unit.upkeepPerHour.metal)}m</span>}
+            {unit.upkeepPerHour?.fuel > 0 && <span className="upkeep fuel">{Number(unit.upkeepPerHour.fuel)}f</span>}
           </div>
         </div>
       </div>
 
-      {unit.counters && unit.counters.length > 0 && !isLocked && (
+      {unit.counters && Array.isArray(unit.counters) && unit.counters.length > 0 && !isLocked && (
         <div className="unit-counters">
           <span className="counters-label">✅ Strong vs:</span>
           <span className="counters-list">{unit.counters.join(', ')}</span>
         </div>
       )}
 
-      {unit.weakTo && unit.weakTo.length > 0 && !isLocked && (
+      {unit.weakTo && Array.isArray(unit.weakTo) && unit.weakTo.length > 0 && !isLocked && (
         <div className="unit-weaknesses">
           <span className="weak-label">⚠️ Weak to:</span>
           <span className="weak-list">{unit.weakTo.join(', ')}</span>

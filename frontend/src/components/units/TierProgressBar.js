@@ -35,16 +35,16 @@ const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
       <div className="progress-header">
         <div className="current-tier">
           <span className="tier-label" style={{ color: currentColor }}>
-            Tier {currentTier}: {currentTier === 1 ? 'Basic' : currentTier === 2 ? 'Advanced' : currentTier === 3 ? 'Elite' : 'Experimental'}
+            Tier {Number(currentTier)}: {currentTier === 1 ? 'Basic' : currentTier === 2 ? 'Advanced' : currentTier === 3 ? 'Elite' : 'Experimental'}
           </span>
         </div>
         <div className="progress-stats">
           <TrendingUp size={16} />
-          <span>Niveau {currentLevel}</span>
+          <span>Niveau {Number(currentLevel)}</span>
         </div>
         <div className="next-tier">
           <span className="tier-label" style={{ color: nextColor }}>
-            Tier {nextTier}: {nextTier === 2 ? 'Advanced' : nextTier === 3 ? 'Elite' : nextTier === 4 ? 'Experimental' : 'Max'}
+            Tier {Number(nextTier)}: {nextTier === 2 ? 'Advanced' : nextTier === 3 ? 'Elite' : nextTier === 4 ? 'Experimental' : 'Max'}
           </span>
         </div>
       </div>
@@ -54,7 +54,7 @@ const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
           <div
             className="progress-bar-fill"
             style={{
-              width: `${progress}%`,
+              width: `${Number(progress)}%`,
               background: `linear-gradient(90deg, ${currentColor} 0%, ${nextColor} 100%)`
             }}
           >
@@ -62,7 +62,7 @@ const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
           </div>
         </div>
         <div className="progress-label">
-          {progress}% - {levelsToNext} niveau{levelsToNext > 1 ? 'x' : ''} jusqu'au prochain tier
+          {Number(progress).toFixed(0)}% - {Number(levelsToNext)} niveau{levelsToNext > 1 ? 'x' : ''} jusqu'au prochain tier
         </div>
       </div>
     </div>
