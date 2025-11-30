@@ -16,6 +16,7 @@ const Resources = React.lazy(() => import('./components/Resources'));
 const Facilities = React.lazy(() => import('./components/Facilities'));
 const Research = React.lazy(() => import('./components/Research'));
 const Training = React.lazy(() => import('./components/Training'));
+const UnitTraining = React.lazy(() => import('./components/units/UnitTrainingPanel'));
 const Defense = React.lazy(() => import('./components/Defense'));
 const Fleet = React.lazy(() => import('./components/Fleet'));
 const Alliance = React.lazy(() => import('./components/Alliance'));
@@ -27,6 +28,7 @@ const Login = React.lazy(() => import('./components/Login'));
 const Register = React.lazy(() => import('./components/Register'));
 const Home = React.lazy(() => import('./pages/Home'));
 const DesignSystemTest = React.lazy(() => import('./pages/DesignSystemTest'));
+const Portals = React.lazy(() => import('./pages/Portals'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -95,6 +97,14 @@ function App() {
                 )}
               />
               <Route
+                path="/units"
+                element={(
+                  <PrivateRoute>
+                    <UnitTraining />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
                 path="/defense"
                 element={(
                   <PrivateRoute>
@@ -147,6 +157,14 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <WorldMap />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/portals"
+                element={(
+                  <PrivateRoute>
+                    <Portals />
                   </PrivateRoute>
                 )}
               />

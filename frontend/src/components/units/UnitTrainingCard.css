@@ -1,0 +1,266 @@
+/* frontend/src/components/units/UnitTrainingCard.css */
+
+.unit-training-card {
+  background: linear-gradient(135deg, #1a1f3a 0%, #0f1425 100%);
+  border: 2px solid #2a3f5f;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.unit-training-card:hover:not(.locked) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 217, 255, 0.3);
+  border-color: #00d9ff;
+}
+
+.unit-training-card.selected {
+  border-color: #00d9ff;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+  background: linear-gradient(135deg, #1e2847 0%, #121829 100%);
+}
+
+.unit-training-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+.unit-training-card.locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  color: #ff6b35;
+  font-weight: bold;
+}
+
+.lock-overlay svg {
+  color: #ff6b35;
+  filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.5));
+}
+
+.level-requirement {
+  background: rgba(255, 107, 53, 0.2);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  border: 1px solid #ff6b35;
+}
+
+.unit-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.unit-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 217, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.unit-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.unit-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.unit-tier {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.unit-description {
+  font-size: 13px;
+  color: #b0b8c8;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  min-height: 40px;
+}
+
+.unit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-icon {
+  margin-bottom: 4px;
+}
+
+.stat-icon.attack {
+  color: #ff6b35;
+}
+
+.stat-icon.defense {
+  color: #4CAF50;
+}
+
+.stat-icon.health {
+  color: #2196F3;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #8a94a8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.unit-costs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.cost-section,
+.upkeep-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cost-label,
+.upkeep-label {
+  font-size: 12px;
+  color: #8a94a8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cost-values,
+.upkeep-values {
+  display: flex;
+  gap: 8px;
+}
+
+.cost,
+.upkeep {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cost.gold,
+.upkeep.gold {
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.cost.metal,
+.upkeep.metal {
+  color: #C0C0C0;
+  border: 1px solid rgba(192, 192, 192, 0.3);
+}
+
+.cost.fuel,
+.upkeep.fuel {
+  color: #FF6B35;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.unit-counters,
+.unit-weaknesses {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.unit-counters {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.unit-weaknesses {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.counters-label,
+.weak-label {
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.counters-list,
+.weak-list {
+  color: #b0b8c8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .unit-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .unit-name {
+    font-size: 16px;
+  }
+
+  .unit-description {
+    font-size: 12px;
+    min-height: auto;
+  }
+}

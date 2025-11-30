@@ -6,8 +6,13 @@ const { createColonizationWorker } = require('./workers/colonizationWorker');
 const { createAttackWorker } = require('./workers/attackWorker');
 const { createSpyWorker } = require('./workers/spyWorker');
 const { createTradeWorker } = require('./workers/tradeWorker');
-const { createPortalSpawnWorker, createPortalResolutionWorker, schedulePortalSpawning } = require('./workers/portalWorker');
-const { getQueue, queueNames } = require('./queueConfig');
+const createPortalSpawningJob = require('./portalSpawningJob');
+const createQuestRotationJob = require('./questRotationJob');
+const { startUpkeepJob, stopUpkeepJob } = require('./upkeepJob');
+
+let portalJobs = null;
+let questJobs = null;
+let upkeepJobStarted = false;
 
 function startJobs(container) {
   createConstructionWorker(container);
@@ -19,13 +24,29 @@ function startJobs(container) {
   createSpyWorker(container);
   createTradeWorker(container);
   
-  // Portal workers
-  createPortalSpawnWorker(container);
-  createPortalResolutionWorker(container);
+  // Portal cron jobs (new system)
+  portalJobs = createPortalSpawningJob(container);
+  portalJobs.start();
   
-  // Schedule recurring portal spawning
-  const portalQueue = getQueue(queueNames.PORTAL);
-  schedulePortalSpawning(portalQueue);
+  // Quest rotation cron jobs
+  questJobs = createQuestRotationJob(container);
+  questJobs.start();
+  
+  // Upkeep job (hourly)
+  startUpkeepJob(container);
+  upkeepJobStarted = true;
 }
 
-module.exports = { startJobs };
+function stopJobs() {
+  if (portalJobs) {
+    portalJobs.stop();
+  }
+  if (questJobs) {
+    questJobs.stop();
+  }
+  if (upkeepJobStarted) {
+    stopUpkeepJob();
+  }
+}
+
+module.exports = { startJobs, stopJobs };

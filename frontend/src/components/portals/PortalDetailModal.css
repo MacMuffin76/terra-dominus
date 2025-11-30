@@ -1,0 +1,253 @@
+/* PortalDetailModal Styles */
+
+.portal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.portal-modal-content {
+  background: linear-gradient(135deg, #0A0E27 0%, #151B3B 100%);
+  border: 2px solid #00D9FF;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 40px rgba(0, 217, 255, 0.4);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: rgba(255, 0, 0, 1);
+  transform: scale(1.1);
+}
+
+.modal-header {
+  padding: 25px 30px;
+  border-radius: 14px 14px 0 0;
+}
+
+.modal-header h2 {
+  color: #000;
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.portal-rank-large {
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.modal-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.modal-section h3 {
+  color: #00D9FF;
+  margin: 0 0 15px 0;
+  font-size: 1.3rem;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-item .label {
+  color: #aaa;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.info-item .value {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-item .value.power {
+  color: #FF6B35;
+}
+
+.enemy-composition,
+.rewards {
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid #00D9FF;
+}
+
+.rewards {
+  border-left-color: #FFD700;
+}
+
+.modal-footer {
+  padding: 20px 30px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #555;
+  color: #fff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #666;
+  transform: scale(1.05);
+}
+
+.btn-primary {
+  color: #000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.alert {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.alert-error {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid #FF0000;
+  color: #FF6666;
+}
+
+.alert-success {
+  background: rgba(0, 255, 0, 0.2);
+  border: 1px solid #00FF00;
+  color: #66FF66;
+}
+
+/* Scrollbar */
+.portal-modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.portal-modal-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.portal-modal-content::-webkit-scrollbar-thumb {
+  background: #00D9FF;
+  border-radius: 5px;
+}
+
+.portal-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #00B8D4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .portal-modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .portal-rank-large {
+    font-size: 2rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

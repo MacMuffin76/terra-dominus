@@ -1,0 +1,225 @@
+/* PortalBattleEstimation Styles */
+
+.battle-estimation {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  padding: 20px;
+  border: 2px solid;
+}
+
+.battle-estimation.excellent {
+  border-color: #00FF00;
+  background: rgba(0, 255, 0, 0.05);
+}
+
+.battle-estimation.fair {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.battle-estimation.poor {
+  border-color: #FF0000;
+  background: rgba(255, 0, 0, 0.05);
+}
+
+/* Power Comparison */
+.power-comparison {
+  margin-bottom: 20px;
+}
+
+.power-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.player-label {
+  color: #00D9FF;
+  font-size: 1rem;
+}
+
+.vs {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.portal-label {
+  color: #FF6B35;
+  font-size: 1rem;
+}
+
+.power-bars {
+  display: flex;
+  gap: 10px;
+  height: 40px;
+  margin-bottom: 15px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.power-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.5s ease;
+  min-width: 60px;
+}
+
+.player-bar {
+  background: linear-gradient(135deg, #00D9FF 0%, #0099CC 100%);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+}
+
+.portal-bar {
+  background: linear-gradient(135deg, #FF6B35 0%, #CC4422 100%);
+  box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+}
+
+.power-value {
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.95rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.ratio-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.ratio-label {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+.ratio-value {
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.battle-estimation.excellent .ratio-value {
+  color: #00FF00;
+}
+
+.battle-estimation.fair .ratio-value {
+  color: #FFD700;
+}
+
+.battle-estimation.poor .ratio-value {
+  color: #FF0000;
+}
+
+/* Verdict Section */
+.verdict-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.verdict-icon {
+  font-size: 2.5rem;
+}
+
+.verdict-text {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* Losses Section */
+.losses-section {
+  margin-bottom: 20px;
+}
+
+.losses-section h4 {
+  color: #FF6B35;
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+}
+
+.losses-text {
+  color: #fff;
+  background: rgba(255, 107, 53, 0.1);
+  border-left: 4px solid #FF6B35;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Advice Section */
+.advice-section {
+  margin-top: 15px;
+}
+
+.advice {
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+  border-left: 4px solid;
+}
+
+.advice.excellent {
+  background: rgba(0, 255, 0, 0.1);
+  border-color: #00FF00;
+  color: #66FF66;
+}
+
+.advice.fair {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #FFD700;
+  color: #FFE066;
+}
+
+.advice.poor {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: #FF0000;
+  color: #FF6666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .power-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .power-bars {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .power-bar {
+    height: 35px;
+    width: 100% !important;
+  }
+
+  .verdict-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .verdict-icon {
+    font-size: 3rem;
+  }
+}

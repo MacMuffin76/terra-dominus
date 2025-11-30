@@ -1,77 +1,113 @@
-// quests.js - API client for quest system
+/**
+ * Quest API Client
+ * Frontend service for portal quest system API calls
+ */
+
 import axiosInstance from '../utils/axiosInstance';
 
-/**
- * Get user's quests
- * @param {Object} filters - Optional filters (type, status)
- * @returns {Promise} API response
- */
-export const getUserQuests = async (filters = {}) => {
-  const params = new URLSearchParams();
-  if (filters.type) params.append('type', filters.type);
-  if (filters.status) params.append('status', filters.status);
-  
-  const queryString = params.toString();
-  const url = queryString ? `/quests?${queryString}` : '/quests';
-  
-  const response = await axiosInstance.get(url);
-  return response.data;
+const BASE_URL = '/portal-quests';
+
+export const questAPI = {
+  // ============================================
+  // QUEST DISCOVERY
+  // ============================================
+
+  async getAvailableQuests() {
+    const response = await axiosInstance.get(`${BASE_URL}/available`);
+    return response.data;
+  },
+
+  async getDailyQuests() {
+    const response = await axiosInstance.get(`${BASE_URL}/daily`);
+    return response.data;
+  },
+
+  async getStoryProgress() {
+    const response = await axiosInstance.get(`${BASE_URL}/story`);
+    return response.data;
+  },
+
+  // ============================================
+  // QUEST LIFECYCLE
+  // ============================================
+
+  async acceptQuest(questId) {
+    const response = await axiosInstance.post(`${BASE_URL}/${questId}/accept`);
+    return response.data;
+  },
+
+  async abandonQuest(questId) {
+    const response = await axiosInstance.post(`${BASE_URL}/${questId}/abandon`);
+    return response.data;
+  },
+
+  async claimRewards(questId) {
+    const response = await axiosInstance.post(`${BASE_URL}/${questId}/claim`);
+    return response.data;
+  },
+
+  // ============================================
+  // USER QUEST STATUS
+  // ============================================
+
+  async getActiveQuests() {
+    const response = await axiosInstance.get(`${BASE_URL}/user/active`);
+    return response.data;
+  },
+
+  async getQuestStats() {
+    const response = await axiosInstance.get(`${BASE_URL}/user/stats`);
+    return response.data;
+  },
+
+  // ============================================
+  // UNLOCKS
+  // ============================================
+
+  async getUserUnlocks() {
+    const response = await axiosInstance.get(`${BASE_URL}/unlocks`);
+    return response.data;
+  },
+
+  async checkUnlock(unlockType, unlockKey) {
+    const response = await axiosInstance.get(`${BASE_URL}/unlocks/check`, {
+      params: { unlockType, unlockKey },
+    });
+    return response.data;
+  },
+
+  // ============================================
+  // STREAKS
+  // ============================================
+
+  async getStreak() {
+    const response = await axiosInstance.get(`${BASE_URL}/streak`);
+    return response.data;
+  },
+
+  // ============================================
+  // ADMIN
+  // ============================================
+
+  async rotateDailyQuests() {
+    const response = await axiosInstance.post(`${BASE_URL}/admin/rotate-daily`);
+    return response.data;
+  },
 };
 
-/**
- * Assign daily quests to user
- * @returns {Promise} API response
- */
-export const assignDailyQuests = async () => {
-  const response = await axiosInstance.post('/quests/daily/assign');
-  return response.data;
-};
+// Legacy exports for backward compatibility with QuestPanel.js
+export const getUserQuests = questAPI.getActiveQuests;
+export const getQuestStats = questAPI.getQuestStats;
+export const assignDailyQuests = questAPI.rotateDailyQuests;
+export const assignWeeklyQuests = questAPI.rotateDailyQuests; // Same as daily for now
+export const claimQuestRewards = questAPI.claimRewards;
+export const startQuest = questAPI.acceptQuest;
 
-/**
- * Assign weekly quests to user
- * @returns {Promise} API response
- */
-export const assignWeeklyQuests = async () => {
-  const response = await axiosInstance.post('/quests/weekly/assign');
-  return response.data;
-};
+// Additional named exports for PortalQuestPanel compatibility
+export const getAvailableQuests = questAPI.getAvailableQuests;
+export const getDailyQuests = questAPI.getDailyQuests;
+export const getStoryProgress = questAPI.getStoryProgress;
+export const getActiveQuests = questAPI.getActiveQuests;
+export const acceptQuest = questAPI.acceptQuest;
 
-/**
- * Start a quest
- * @param {number} questId - Quest ID
- * @returns {Promise} API response
- */
-export const startQuest = async (questId) => {
-  const response = await axiosInstance.post(`/quests/${questId}/start`);
-  return response.data;
-};
-
-/**
- * Claim quest rewards
- * @param {number} questId - Quest ID
- * @returns {Promise} API response
- */
-export const claimQuestRewards = async (questId) => {
-  const response = await axiosInstance.post(`/quests/${questId}/claim`);
-  return response.data;
-};
-
-/**
- * Get quest statistics
- * @returns {Promise} API response
- */
-export const getQuestStats = async () => {
-  const response = await axiosInstance.get('/quests/stats');
-  return response.data;
-};
-
-/**
- * Update quest progress (testing/admin)
- * @param {number} questId - Quest ID
- * @param {number} increment - Progress increment
- * @returns {Promise} API response
- */
-export const updateQuestProgress = async (questId, increment) => {
-  const response = await axiosInstance.post(`/quests/${questId}/progress`, { increment });
-  return response.data;
-};
+export default questAPI;

@@ -1,0 +1,72 @@
+// frontend/src/components/units/TierProgressBar.js
+
+import React from 'react';
+import { TrendingUp } from 'lucide-react';
+import './TierProgressBar.css';
+
+/**
+ * Progress bar showing advancement toward next tier
+ */
+const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
+  if (!tierProgress) return null;
+
+  const { currentTier, nextTier, progress, levelsToNext } = tierProgress;
+
+  const getTierColor = (tierNum) => {
+    switch (tierNum) {
+      case 1:
+        return '#9E9E9E';
+      case 2:
+        return '#4CAF50';
+      case 3:
+        return '#2196F3';
+      case 4:
+        return '#9C27B0';
+      default:
+        return '#757575';
+    }
+  };
+
+  const currentColor = getTierColor(currentTier);
+  const nextColor = getTierColor(nextTier);
+
+  return (
+    <div className="tier-progress-container">
+      <div className="progress-header">
+        <div className="current-tier">
+          <span className="tier-label" style={{ color: currentColor }}>
+            Tier {currentTier}: {currentTier === 1 ? 'Basic' : currentTier === 2 ? 'Advanced' : currentTier === 3 ? 'Elite' : 'Experimental'}
+          </span>
+        </div>
+        <div className="progress-stats">
+          <TrendingUp size={16} />
+          <span>Niveau {currentLevel}</span>
+        </div>
+        <div className="next-tier">
+          <span className="tier-label" style={{ color: nextColor }}>
+            Tier {nextTier}: {nextTier === 2 ? 'Advanced' : nextTier === 3 ? 'Elite' : nextTier === 4 ? 'Experimental' : 'Max'}
+          </span>
+        </div>
+      </div>
+
+      <div className="progress-bar-wrapper">
+        <div className="progress-bar-bg">
+          <div
+            className="progress-bar-fill"
+            style={{
+              width: `${progress}%`,
+              background: `linear-gradient(90deg, ${currentColor} 0%, ${nextColor} 100%)`
+            }}
+          >
+            <div className="progress-shine"></div>
+          </div>
+        </div>
+        <div className="progress-label">
+          {progress}% - {levelsToNext} niveau{levelsToNext > 1 ? 'x' : ''} jusqu'au prochain tier
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TierProgressBar;

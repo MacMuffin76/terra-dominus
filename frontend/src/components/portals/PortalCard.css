@@ -1,0 +1,192 @@
+/* PortalCard Styles */
+
+.portal-card {
+  background: linear-gradient(135deg, #151B3B 0%, #1A2245 100%);
+  border: 2px solid;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.portal-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3) !important;
+}
+
+.portal-card-header {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.portal-rank {
+  font-size: 1.5rem;
+  color: #000;
+  font-weight: 900;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.portal-tier-name {
+  font-size: 1.2rem;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.portal-card-body {
+  padding: 20px;
+}
+
+.portal-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.portal-info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.difficulty-stars {
+  font-size: 0.8rem;
+  margin-right: 5px;
+}
+
+.difficulty-num {
+  color: #00D9FF;
+  font-weight: bold;
+}
+
+.power-value {
+  color: #FF6B35;
+  font-weight: bold;
+}
+
+.time-remaining {
+  color: #00FF00;
+}
+
+.time-remaining.urgent {
+  color: #FF0000;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.5; }
+}
+
+.global-event-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #000;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-top: 15px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.portal-card-footer {
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.btn-attack {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: bold;
+  font-size: 1rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-attack:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
+/* Golden Portal Animation */
+.portal-card.portal-tier-golden {
+  animation: golden-pulse 2s ease-in-out infinite;
+}
+
+@keyframes golden-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+  }
+}
+
+.golden-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.1) 50%, transparent 70%);
+  background-size: 200% 200%;
+  animation: shine 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Expiring Soon */
+.portal-card.expiring-soon {
+  border-color: #FF0000 !important;
+  animation: urgent-pulse 1s ease-in-out infinite;
+}
+
+@keyframes urgent-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .portal-card-body {
+    padding: 15px;
+  }
+
+  .portal-info-row {
+    font-size: 0.9rem;
+  }
+
+  .difficulty-stars {
+    display: none;
+  }
+}

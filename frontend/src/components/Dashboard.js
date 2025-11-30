@@ -8,6 +8,7 @@ import useDashboardData from '../hooks/useDashboardData';
 import { useTutorialContext } from '../context/TutorialContext';
 import { Alert, Loader, Skeleton } from './ui';
 import ResourcesWidget from './dashboard/ResourcesWidget';
+import UpkeepWidget from './dashboard/UpkeepWidget';
 import StatCard from './dashboard/StatCard';
 import ProgressCard from './dashboard/ProgressCard';
 import NotificationPanel from './dashboard/NotificationPanel';
@@ -17,11 +18,21 @@ import QuestPanel from './QuestPanel';
 import AchievementPanel from './AchievementPanel';
 import BattlePassPanel from './BattlePassPanel';
 import LeaderboardPanel from './LeaderboardPanel';
+import { QuestLogModal, QuestTracker, QuestNotification } from './Quests';
+import PowerDisplay from './PowerDisplay';
+import useQuests from '../hooks/useQuests';
 
 const Dashboard = () => {
   const { dashboard, resources, loading, connectionStatus, error, refresh } = useDashboardData();
   const { user, buildings, units } = dashboard;
   const location = useLocation();
+  
+  // Portal Quest System
+  const {
+    activeQuests: portalQuests,
+    notification: questNotification,
+    clearNotification,
+  } = useQuests();
   
   // Tutorial context
   const {
@@ -40,6 +51,9 @@ const Dashboard = () => {
 
   // Quest panel visibility
   const [showQuests, setShowQuests] = useState(false);
+  
+  // Portal Quest Log visibility
+  const [showPortalQuestLog, setShowPortalQuestLog] = useState(false);
 
   // Achievement panel visibility
   const [showAchievements, setShowAchievements] = useState(false);
@@ -167,6 +181,8 @@ const Dashboard = () => {
 
         <ResourcesWidget resources={resources} id="resources-widget" />
 
+        <UpkeepWidget />
+
         <div className="dashboard-stats-grid">
           <StatCard
             icon="👤"
@@ -197,6 +213,11 @@ const Dashboard = () => {
             sublabel="Structures actives"
             variant="default"
           />
+        </div>
+
+        {/* PvP Power Display */}
+        <div className="dashboard-power-section">
+          <PowerDisplay />
         </div>
 
         <div className="dashboard-progress-grid">
@@ -297,6 +318,19 @@ const Dashboard = () => {
           onClose={() => setShowLeaderboard(false)}
         />
       )}
+
+      {/* Portal Quest System */}
+      <QuestTracker onOpenQuestLog={() => setShowPortalQuestLog(true)} />
+      
+      <QuestLogModal
+        open={showPortalQuestLog}
+        onClose={() => setShowPortalQuestLog(false)}
+      />
+      
+      <QuestNotification
+        notification={questNotification}
+        onClose={clearNotification}
+      />
     </div>
   );
 };

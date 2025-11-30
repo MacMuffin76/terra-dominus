@@ -20,4 +20,17 @@ const Entity = sequelize.define('Entity', {
   timestamps: false,
 });
 
+// Associations
+Entity.associate = (models) => {
+  // Unit system associations
+  Entity.hasOne(models.UnitStats, {
+    foreignKey: 'unit_id',
+    as: 'unitStats'
+  });
+  Entity.hasOne(models.UnitUpkeep, {
+    foreignKey: 'unit_id',
+    as: 'unitUpkeep'
+  });
+};
+
 module.exports = Entity;

@@ -1,97 +1,88 @@
-const { DataTypes, Model } = require('sequelize');
-
-/**
- * Portal - Portails PvE style Solo Leveling
- * 
- * Portails apparaissent aléatoirement sur la carte avec différents tiers de difficulté.
- * Joueurs envoient des unités pour combattre les ennemis et obtenir du loot.
- */
-class Portal extends Model {
-  static init(sequelize) {
-    super.init({
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      tier: {
-        type: DataTypes.ENUM('GREY', 'GREEN', 'BLUE', 'PURPLE', 'RED', 'GOLD'),
-        allowNull: false,
-      },
-      coord_x: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      coord_y: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      power: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      enemies: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        get() {
-          const rawValue = this.getDataValue('enemies');
-          return rawValue ? JSON.parse(rawValue) : [];
+const { DataTypes } = require("sequelize");
+/** * Portal - PvE Portals System *  * Portals spawn randomly on the world map with different difficulty tiers. * Players send units to battle enemies and earn rewards. */ module.exports =
+  (sequelize) => {
+    const Portal = sequelize.define(
+      "Portal",
+      {
+        id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+        tier: {
+          type: DataTypes.ENUM(
+            "grey",
+            "green",
+            "blue",
+            "purple",
+            "red",
+            "golden",
+          ),
+          allowNull: false,
         },
-        set(value) {
-          this.setDataValue('enemies', JSON.stringify(value));
-        }
-      },
-      loot_table: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        get() {
-          const rawValue = this.getDataValue('loot_table');
-          return rawValue ? JSON.parse(rawValue) : { guaranteed: {}, random: [] };
+        x_coordinate: { type: DataTypes.INTEGER, allowNull: false },
+        y_coordinate: { type: DataTypes.INTEGER, allowNull: false },
+        spawn_time: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
         },
-        set(value) {
-          this.setDataValue('loot_table', JSON.stringify(value));
-        }
+        expiry_time: { type: DataTypes.DATE, allowNull: false },
+        status: {
+          type: DataTypes.ENUM("active", "expired", "completed"),
+          defaultValue: "active",
+        },
+        difficulty: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          validate: { min: 1, max: 10 },
+        },
+        recommended_power: { type: DataTypes.INTEGER, allowNull: false },
+        global_event: { type: DataTypes.BOOLEAN, defaultValue: false },
+        enemy_composition: {
+          type: DataTypes.JSONB,
+          defaultValue: {},
+          get() {
+            const rawValue = this.getDataValue("enemy_composition");
+            return rawValue || {};
+          },
+        },
+        created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+        updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
       },
-      status: {
-        type: DataTypes.ENUM('active', 'expired', 'cleared'),
-        allowNull: false,
-        defaultValue: 'active',
+      {
+        tableName: "portals",
+        timestamps: false,
+        indexes: [
+          { fields: ["status"] },
+          { fields: ["tier"] },
+          { fields: ["x_coordinate", "y_coordinate"] },
+          { fields: ["expiry_time"] },
+        ],
       },
-      spawned_at: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      expires_at: {
-        type: DataTypes.DATE,
-        allowNull: false,
-      },
-      times_challenged: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      times_cleared: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      }
-    }, {
-      sequelize,
-      modelName: 'Portal',
-      tableName: 'portals',
-      timestamps: true,
-      underscored: true
-    });
-  }
+    );
+    Portal.associate = (models) => {
+      Portal.hasMany(models.PortalAttempt, {
+        foreignKey: "portal_id",
+        as: "attempts",
+      });
 
-  static associate(models) {
-    Portal.hasMany(models.PortalExpedition, {
-      foreignKey: 'portal_id',
-      as: 'expeditions'
-    });
-  }
-}
-
-module.exports = Portal;
+      Portal.hasOne(models.PortalBoss, {
+        foreignKey: "portal_id",
+        as: "boss",
+      });
+    };
+    /**   * Check if portal is still active   */ Portal.prototype.isActive =
+      function () {
+        return (
+          this.status === "active" && new Date() < new Date(this.expiry_time)
+        );
+      };
+    /**   * Check if portal has expired   */ Portal.prototype.hasExpired =
+      function () {
+        return new Date() >= new Date(this.expiry_time);
+      };
+    /**   * Get distance from coordinates   */ Portal.prototype.getDistanceFrom =
+      function (x, y) {
+        const dx = this.x_coordinate - x;
+        const dy = this.y_coordinate - y;
+        return Math.sqrt(dx * dx + dy * dy);
+      };
+    return Portal;
+  };

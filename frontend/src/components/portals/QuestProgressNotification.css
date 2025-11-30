@@ -1,0 +1,129 @@
+/**
+ * Quest Progress Notification Styles
+ */
+
+.quest-notification-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.quest-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 400px;
+  padding: 16px;
+  background: linear-gradient(135deg, #1f2640 0%, #151b3b 100%);
+  border: 2px solid #FFD700;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.4);
+  animation: slideIn 0.3s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.quest-notification-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1f36;
+}
+
+.quest-notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.quest-notification-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFD700;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quest-notification-message {
+  font-size: 13px;
+  color: #CCC;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.quest-notification-progress {
+  font-size: 12px;
+  color: #00D9FF;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.quest-notification-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.quest-notification-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+}
+
+/* Fade out animation when removing */
+.quest-notification.removing {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .quest-notification-container {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .quest-notification {
+    min-width: 0;
+    max-width: 100%;
+  }
+}

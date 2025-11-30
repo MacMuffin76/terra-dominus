@@ -41,4 +41,20 @@ const Unit = sequelize.define('Unit', {
   timestamps: false,
 });
 
+// Define associations
+Unit.associate = function(models) {
+  // Unit belongs to City
+  Unit.belongsTo(models.City, {
+    foreignKey: 'city_id',
+    as: 'city',
+  });
+
+  // Unit belongs to Entity (for extended stats)
+  Unit.belongsTo(models.Entity, {
+    foreignKey: 'name',
+    targetKey: 'entity_name',
+    as: 'entity',
+  });
+};
+
 module.exports = Unit;

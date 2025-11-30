@@ -3,13 +3,14 @@ const combatRules = require('../domain/combatRules');
 const worldRules = require('../../world/domain/worldRules');
 const NotificationService = require('../../../services/NotificationService');
 const protectionRules = require('../../protection/domain/protectionRules');
+const pvpBalancingRules = require('../domain/pvpBalancingRules');
 const User = require('../../../models/User');
 
 /**
  * CombatService - Gestion des combats territoriaux et espionnage
  */
 class CombatService {
-  constructor({ combatRepository, City, Unit, Resource, Building, Research, sequelize }) {
+  constructor({ combatRepository, City, Unit, Resource, Building, Research, sequelize, playerPowerService }) {
     this.combatRepository = combatRepository;
     this.City = City;
     this.Unit = Unit;
@@ -17,6 +18,7 @@ class CombatService {
     this.Building = Building;
     this.Research = Research;
     this.sequelize = sequelize;
+    this.playerPowerService = playerPowerService;
   }
 
   /**
@@ -76,6 +78,57 @@ class CombatService {
           throw new Error(raidCheck.reason);
         }
 
+        // 1.6 PvP Balancing - Calculate power and check for weak target penalty
+        let attackerPower = 0;
+        let defenderPower = 0;
+        let costModifier = null;
+        let rewardModifier = null;
+        
+        if (this.playerPowerService) {
+          try {
+            attackerPower = await this.playerPowerService.getPlayerPower(userId);
+            defenderPower = await this.playerPowerService.getPlayerPower(defenderCity.user_id);
+            
+            // Calculate cost modifier (penalty for attacking weak targets)
+            costModifier = pvpBalancingRules.calculateAttackCostModifier(attackerPower, defenderPower);
+            
+            // Calculate reward modifier (for later use in resolveCombat)
+            rewardModifier = pvpBalancingRules.calculateRewardModifier(attackerPower, defenderPower);
+            
+            // Apply gold penalty if attacking weak target
+            if (costModifier.isWeakTarget && costModifier.goldPenalty > 0) {
+              const attackerResources = await this.Resource.findOne({
+                where: { city_id: attackerCityId },
+                transaction
+              });
+              
+              if (!attackerResources || attackerResources.gold < costModifier.goldPenalty) {
+                throw new Error(
+                  `Attaquer un joueur plus faible nécessite ${costModifier.goldPenalty} gold. ` +
+                  `${costModifier.message}`
+                );
+              }
+              
+              // Deduct gold penalty
+              attackerResources.gold -= costModifier.goldPenalty;
+              await attackerResources.save({ transaction });
+              
+              console.log(`⚖️ PvP Balancing: Gold penalty applied (${costModifier.goldPenalty} gold) for weak target attack`);
+            }
+            
+            console.log('⚖️ PvP Balancing:', {
+              attackerPower,
+              defenderPower,
+              powerRatio: (defenderPower / attackerPower).toFixed(2),
+              costMultiplier: costModifier.costMultiplier,
+              isWeakTarget: costModifier.isWeakTarget,
+              rewardMultiplier: rewardModifier.rewardMultiplier
+            });
+          } catch (error) {
+            console.error('⚠️ PvP Balancing calculation failed, proceeding without penalties:', error.message);
+          }
+        }
+
         // 2. Calculer la distance
         const distance = worldRules.calculateDistance(
           attackerCity.coord_x,
@@ -83,6 +136,57 @@ class CombatService {
           defenderCity.coord_x,
           defenderCity.coord_y
         );
+
+        // 2.5 Calculer les coûts d'attaque (fuel + food basés sur distance et nombre d'unités)
+        let totalUnitCount = 0;
+        units.forEach(u => totalUnitCount += u.quantity);
+        
+        // Coût de base: 1 fuel et 2 food par unité par tile de distance
+        const baseFuelCost = Math.ceil(totalUnitCount * distance * 1);
+        const baseFoodCost = Math.ceil(totalUnitCount * distance * 2);
+        
+        // Appliquer le multiplicateur PvP si cible faible
+        const finalFuelCost = costModifier?.isWeakTarget 
+          ? Math.ceil(baseFuelCost * costModifier.costMultiplier) 
+          : baseFuelCost;
+        const finalFoodCost = costModifier?.isWeakTarget 
+          ? Math.ceil(baseFoodCost * costModifier.costMultiplier) 
+          : baseFoodCost;
+
+        // Vérifier et déduire les ressources d'attaque
+        const attackerResources = await this.Resource.findOne({
+          where: { city_id: attackerCityId },
+          transaction
+        });
+
+        if (!attackerResources) {
+          throw new Error('Ressources de la ville introuvables');
+        }
+
+        // Note: "fuel" = "carburant", "food" pourrait être représenté par "metal" ou on l'ignore si pas dans le modèle
+        if (attackerResources.fuel < finalFuelCost) {
+          throw new Error(
+            `Carburant insuffisant pour cette attaque. ` +
+            `Requis: ${finalFuelCost}, Disponible: ${attackerResources.fuel}` +
+            (costModifier?.isWeakTarget ? ` (Pénalité x${costModifier.costMultiplier} pour attaque sur cible faible)` : '')
+          );
+        }
+
+        // Déduire le carburant (et possiblement metal comme "nourriture" si le modèle le supporte)
+        attackerResources.fuel -= finalFuelCost;
+        // Si votre modèle a un champ "food", déduisez-le ici. Sinon, utilisez metal comme proxy:
+        // attackerResources.metal -= finalFoodCost;
+        await attackerResources.save({ transaction });
+
+        if (costModifier?.isWeakTarget) {
+          console.log(`⚖️ PvP Balancing: Attack cost scaling applied`, {
+            baseFuelCost,
+            finalFuelCost,
+            costMultiplier: costModifier.costMultiplier,
+            goldPenalty: costModifier.goldPenalty,
+            totalPenalty: finalFuelCost - baseFuelCost + costModifier.goldPenalty
+          });
+        }
 
         // 3. Vérifier et déduire les unités
         const waves = [];
@@ -125,7 +229,15 @@ class CombatService {
             status: 'traveling',
             departure_time: departureTime,
             arrival_time: arrivalTime,
-            distance
+            distance,
+            // Store PvP balancing data for resolveCombat
+            metadata: costModifier && rewardModifier ? JSON.stringify({
+              attackerPower,
+              defenderPower,
+              costMultiplier: costModifier.costMultiplier,
+              rewardMultiplier: rewardModifier.rewardMultiplier,
+              isWeakTarget: costModifier.isWeakTarget
+            }) : null
           },
           waves,
           transaction
@@ -229,11 +341,23 @@ class CombatService {
 
         const wallsBonus = walls ? combatRules.calculateWallsBonus(walls.level) : 0;
 
-        // 5. Calculer les forces
-        const attackerStrength = combatRules.calculateArmyStrength(attack.waves) * (1 + attackerTechBonus);
-        const defenderStrength = defenderUnits.reduce((total, unit) => {
-          return total + (unit.entity.attack_power || 1) * unit.quantity;
-        }, 0) * (1 + defenderTechBonus);
+        // 5. Calculer les forces avec système de counters
+        const strengthCalc = combatRules.calculateArmyStrengthWithCounters(
+          attack.waves,
+          defenderUnits
+        );
+
+        // Apply tech bonuses
+        const attackerStrength = strengthCalc.attackerStrength * (1 + attackerTechBonus);
+        const defenderStrength = strengthCalc.defenderStrength * (1 + defenderTechBonus);
+
+        console.log('⚔️  Combat strength calculated:', {
+          attacker: attackerStrength,
+          defender: defenderStrength,
+          counterBonuses: strengthCalc.counterBonuses,
+          techBonuses: { attacker: attackerTechBonus, defender: defenderTechBonus },
+          wallsBonus
+        });
 
         // 6. Simuler le combat
         const combatResult = combatRules.simulateCombat(
@@ -277,6 +401,28 @@ class CombatService {
           });
 
           loot = combatRules.calculateLoot(defenderResources, attack.attack_type);
+          
+          // Apply PvP balancing reward scaling
+          let rewardMultiplier = 1.0;
+          try {
+            if (attack.metadata) {
+              const metadata = JSON.parse(attack.metadata);
+              rewardMultiplier = metadata.rewardMultiplier || 1.0;
+              
+              // Apply scaling to loot
+              const scaledLoot = pvpBalancingRules.applyRewardScaling(loot, { rewardMultiplier });
+              loot = scaledLoot.scaled;
+              
+              console.log('⚖️ PvP Balancing: Reward scaling applied', {
+                original: scaledLoot.original,
+                scaled: scaledLoot.scaled,
+                multiplier: rewardMultiplier,
+                isWeakTarget: metadata.isWeakTarget
+              });
+            }
+          } catch (error) {
+            console.error('⚠️ Failed to apply reward scaling:', error.message);
+          }
 
           // Déduire des ressources du défenseur
           defenderResources.gold = Math.max(0, defenderResources.gold - loot.gold);
@@ -322,6 +468,17 @@ class CombatService {
 
         await transaction.commit();
 
+        // Invalidate power cache for both players (units lost affect power)
+        if (this.playerPowerService) {
+          try {
+            await this.playerPowerService.invalidateCache(attack.attacker_user_id);
+            await this.playerPowerService.invalidateCache(attack.defender_user_id);
+            console.log('⚖️ PvP Balancing: Power cache invalidated for both players');
+          } catch (error) {
+            console.error('⚠️ Failed to invalidate power cache:', error.message);
+          }
+        }
+        
         // Mettre à jour les leaderboards
         const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
         

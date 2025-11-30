@@ -1,0 +1,329 @@
+/* PowerDisplay Component Styles */
+
+.power-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.power-display:hover:not(.loading):not(.error) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.power-display.inline {
+  padding: 8px 12px;
+  font-size: 0.9em;
+}
+
+.power-display.loading {
+  opacity: 0.6;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.power-display.error {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.power-icon {
+  font-size: 1.5em;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.power-value {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-family: 'Orbitron', monospace;
+}
+
+.power-label {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.power-expand-icon {
+  font-size: 0.8em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 4px;
+  transition: transform 0.3s ease;
+}
+
+.power-display:hover .power-expand-icon {
+  transform: translateY(2px);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+}
+
+/* Power Breakdown Modal */
+
+.power-breakdown-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+.power-breakdown-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.power-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+}
+
+.power-breakdown-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.5em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.power-breakdown-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 1.5em;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.power-breakdown-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.power-breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+  margin: 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.breakdown-label {
+  font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.breakdown-value {
+  font-size: 2em;
+  font-weight: bold;
+  color: #667eea;
+  font-family: 'Orbitron', monospace;
+  text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.power-breakdown-categories {
+  padding: 0 16px 16px;
+}
+
+.breakdown-category {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.breakdown-category:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+.category-header {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.category-icon {
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.category-name {
+  color: white;
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.category-value {
+  color: #667eea;
+  font-weight: bold;
+  font-family: 'Orbitron', monospace;
+}
+
+.category-percentage {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
+  min-width: 45px;
+  text-align: right;
+}
+
+.category-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 52px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
+}
+
+.detail-value {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+.unit-breakdown {
+  margin-top: 12px;
+  padding-left: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.unit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+.unit-name {
+  color: rgba(255, 255, 255, 0.8);
+  flex: 1;
+}
+
+.unit-quantity {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 12px;
+}
+
+.unit-power {
+  color: #667eea;
+  font-weight: bold;
+  font-family: 'Orbitron', monospace;
+}
+
+.power-breakdown-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.breakdown-info {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .power-breakdown-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .power-breakdown-header {
+    padding: 16px;
+  }
+
+  .power-breakdown-header h3 {
+    font-size: 1.2em;
+  }
+
+  .power-breakdown-total {
+    padding: 16px;
+    margin: 12px;
+  }
+
+  .breakdown-value {
+    font-size: 1.5em;
+  }
+
+  .category-header {
+    grid-template-columns: 32px 1fr auto;
+    gap: 8px;
+  }
+
+  .category-percentage {
+    grid-column: 2 / 4;
+    text-align: left;
+    padding-left: 40px;
+  }
+
+  .unit-breakdown {
+    padding-left: 40px;
+  }
+}

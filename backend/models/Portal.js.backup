@@ -1,0 +1,119 @@
+const { DataTypes, Model } = require('sequelize');
+
+/**
+ * Portal - PvE Portals System
+ * 
+ * Portals spawn randomly on the world map with different difficulty tiers.
+ * Players send units to battle enemies and earn rewards.
+ */
+class Portal extends Model {
+  static init(sequelize) {
+    super.init({
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      tier: {
+        type: DataTypes.ENUM('grey', 'green', 'blue', 'purple', 'red', 'golden'),
+        allowNull: false,
+      },
+      x_coordinate: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      y_coordinate: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      spawn_time: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      expiry_time: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      status: {
+        type: DataTypes.ENUM('active', 'expired', 'completed'),
+        defaultValue: 'active',
+      },
+      difficulty: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          min: 1,
+          max: 10,
+        },
+      },
+      recommended_power: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      global_event: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      enemy_composition: {
+        type: DataTypes.JSONB,
+        defaultValue: {},
+        get() {
+          const rawValue = this.getDataValue('enemy_composition');
+          return rawValue || {};
+        },
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+    }, {
+      sequelize,
+      modelName: 'Portal',
+      tableName: 'portals',
+      timestamps: false,
+      indexes: [
+        { fields: ['status'] },
+        { fields: ['tier'] },
+        { fields: ['x_coordinate', 'y_coordinate'] },
+        { fields: ['expiry_time'] },
+      ],
+    });
+  }
+
+  static associate(models) {
+    Portal.hasMany(models.PortalAttempt, {
+      foreignKey: 'portal_id',
+      as: 'attempts',
+    });
+  }
+
+  /**
+   * Check if portal is still active
+   */
+  isActive() {
+    return this.status === 'active' && new Date() < new Date(this.expiry_time);
+  }
+
+  /**
+   * Check if portal has expired
+   */
+  hasExpired() {
+    return new Date() >= new Date(this.expiry_time);
+  }
+
+  /**
+   * Get distance from coordinates
+   */
+  getDistanceFrom(x, y) {
+    const dx = this.x_coordinate - x;
+    const dy = this.y_coordinate - y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+}
+
+module.exports = Portal;

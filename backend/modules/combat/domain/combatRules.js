@@ -1,6 +1,8 @@
 /**
- * Règles de combat territorial
+ * Règles de combat territorial avec système de counters
  */
+
+const { getUnitById, calculateCounterMultiplier } = require('./unitDefinitions');
 
 // Types d'attaque
 const ATTACK_TYPES = {
@@ -32,10 +34,103 @@ function calculateArmyStrength(waves) {
   }, 0);
 }
 
-// Calcul du bonus défensif des murailles
+/**
+ * Calcul de la force d'une armée avec système de counters
+ * @param {Array} attackerWaves - Vagues de l'attaquant
+ * @param {Array} defenderUnits - Unités du défenseur
+ * @returns {{attackerStrength: number, defenderStrength: number, counterBonuses: Object}}
+ */
+function calculateArmyStrengthWithCounters(attackerWaves, defenderUnits) {
+  let attackerStrength = 0;
+  let defenderStrength = 0;
+  const counterBonuses = {
+    attacker: {},
+    defender: {}
+  };
+
+  // Calculer la composition de chaque armée
+  const attackerComposition = {};
+  const defenderComposition = {};
+
+  // Map attacker waves
+  attackerWaves.forEach(wave => {
+    const unitKey = wave.unitEntity?.unit_key || 'militia';
+    attackerComposition[unitKey] = (attackerComposition[unitKey] || 0) + wave.quantity;
+  });
+
+  // Map defender units
+  defenderUnits.forEach(unit => {
+    const unitKey = unit.entity?.unit_key || 'militia';
+    defenderComposition[unitKey] = (defenderComposition[unitKey] || 0) + unit.quantity;
+  });
+
+  // Calculate attacker strength with counter bonuses
+  Object.entries(attackerComposition).forEach(([unitKey, quantity]) => {
+    const unit = getUnitById(unitKey);
+    if (!unit) return;
+
+    let totalMultiplier = 1.0;
+    let counterCount = 0;
+
+    // Check against all defender units
+    Object.keys(defenderComposition).forEach(defenderUnitKey => {
+      const counterMult = calculateCounterMultiplier(unit, getUnitById(defenderUnitKey));
+      if (counterMult > 1.0) counterCount++;
+      totalMultiplier += (counterMult - 1.0) * 0.3; // Weighted average
+    });
+
+    const baseStrength = unit.attack * quantity;
+    const finalStrength = baseStrength * totalMultiplier;
+    attackerStrength += finalStrength;
+
+    counterBonuses.attacker[unitKey] = {
+      multiplier: totalMultiplier,
+      counterCount,
+      baseStrength,
+      finalStrength
+    };
+  });
+
+  // Calculate defender strength with counter bonuses
+  Object.entries(defenderComposition).forEach(([unitKey, quantity]) => {
+    const unit = getUnitById(unitKey);
+    if (!unit) return;
+
+    let totalMultiplier = 1.0;
+    let counterCount = 0;
+
+    // Check against all attacker units
+    Object.keys(attackerComposition).forEach(attackerUnitKey => {
+      const counterMult = calculateCounterMultiplier(unit, getUnitById(attackerUnitKey));
+      if (counterMult > 1.0) counterCount++;
+      totalMultiplier += (counterMult - 1.0) * 0.3; // Weighted average
+    });
+
+    const baseStrength = unit.defense * quantity;
+    const finalStrength = baseStrength * totalMultiplier;
+    defenderStrength += finalStrength;
+
+    counterBonuses.defender[unitKey] = {
+      multiplier: totalMultiplier,
+      counterCount,
+      baseStrength,
+      finalStrength
+    };
+  });
+
+  return {
+    attackerStrength,
+    defenderStrength,
+    counterBonuses
+  };
+}
+
+// Calcul du bonus défensif des murailles - REBALANCED
 function calculateWallsBonus(wallLevel) {
-  // +5% de défense par niveau de muraille
-  return wallLevel * 0.05;
+  // +8% de défense par niveau de muraille (augmenté de 5%)
+  // Maximum 200% bonus (level 25)
+  const bonus = wallLevel * 0.08;
+  return Math.min(bonus, 2.0);
 }
 
 // Calcul du bonus technologique
@@ -104,22 +199,22 @@ function calculateLosses(waves, strengthLost, totalStrength) {
   return losses;
 }
 
-// Calculer le butin pillé (pourcentage des ressources disponibles)
+// Calculer le butin pillé (pourcentage des ressources disponibles) - REBALANCED
 function calculateLoot(defenderResources, attackType) {
   let lootPercentage;
   
   switch (attackType) {
     case ATTACK_TYPES.RAID:
-      lootPercentage = 0.30; // 30% des ressources
+      lootPercentage = 0.20; // 20% des ressources (réduit de 30%)
       break;
     case ATTACK_TYPES.CONQUEST:
-      lootPercentage = 0.50; // 50% des ressources
+      lootPercentage = 0.40; // 40% des ressources (réduit de 50%)
       break;
     case ATTACK_TYPES.SIEGE:
-      lootPercentage = 0.20; // 20% (but affaiblir défenses)
+      lootPercentage = 0.10; // 10% (réduit de 20%)
       break;
     default:
-      lootPercentage = 0.20;
+      lootPercentage = 0.10;
   }
 
   return {
@@ -173,6 +268,7 @@ module.exports = {
   calculateTravelTime,
   calculateUnitStrength,
   calculateArmyStrength,
+  calculateArmyStrengthWithCounters,
   calculateWallsBonus,
   calculateTechBonus,
   simulateCombat,

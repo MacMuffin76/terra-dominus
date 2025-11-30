@@ -145,6 +145,30 @@ const createContainer = () => {
       Resource,
       Building,
       Research,
+      sequelize,
+      playerPowerService: c.resolve('playerPowerService')
+    });
+  });
+
+  container.register('upkeepService', () => {
+    const UpkeepService = require('./modules/combat/application/UpkeepService');
+    const { City, Unit, Resource } = require('./models');
+    const sequelize = require('./db');
+    return new UpkeepService({
+      City,
+      Unit,
+      Resource,
+      sequelize
+    });
+  });
+
+  container.register('unitUnlockService', () => {
+    const UnitUnlockService = require('./modules/combat/application/UnitUnlockService');
+    const { User, Research } = require('./models');
+    const sequelize = require('./db');
+    return new UnitUnlockService({
+      User,
+      Research,
       sequelize
     });
   });
@@ -153,6 +177,60 @@ const createContainer = () => {
     const createCombatController = require('./modules/combat/api/combatController');
     return createCombatController({
       combatService: c.resolve('combatService'),
+    });
+  });
+
+  // PvP Balancing repositories
+  container.register('cityRepository', () => {
+    const { CityRepository } = require('./modules/buildings/infra/SequelizeRepositories');
+    return new CityRepository();
+  });
+
+  container.register('userRepository', () => {
+    const { User } = require('./models');
+    return {
+      findById: async (userId) => await User.findByPk(userId),
+      findAll: async (options) => await User.findAll(options)
+    };
+  });
+
+  container.register('cityRepository', () => {
+    const { City } = require('./models');
+    return {
+      findByUserId: async (userId) => await City.findAll({ where: { userId } }),
+      countByUserId: async (userId) => await City.count({ where: { userId } })
+    };
+  });
+
+  // PvP Balancing (matchmaking, power calculation)
+  container.register('playerPowerService', (c) => {
+    const PlayerPowerService = require('./modules/combat/application/PlayerPowerService');
+    return new PlayerPowerService({
+      cityRepository: c.resolve('cityRepository'),
+      userRepository: c.resolve('userRepository'),
+    });
+  });
+
+  container.register('pvpBalancingController', (c) => {
+    const createPvpBalancingController = require('./controllers/pvpBalancingController');
+    const pvpBalancingRules = require('./modules/combat/domain/pvpBalancingRules');
+    return createPvpBalancingController({
+      playerPowerService: c.resolve('playerPowerService'),
+      pvpBalancingRules,
+    });
+  });
+
+  container.register('upkeepController', (c) => {
+    const createUpkeepController = require('./controllers/upkeepController');
+    return createUpkeepController({
+      upkeepService: c.resolve('upkeepService'),
+    });
+  });
+
+  container.register('unitUnlockController', (c) => {
+    const createUnitUnlockController = require('./controllers/unitUnlockController');
+    return createUnitUnlockController({
+      unitUnlockService: c.resolve('unitUnlockService'),
     });
   });
 
@@ -221,19 +299,125 @@ const createContainer = () => {
     });
   });
 
-  // Portal Service
+  // Portal System - New Phase 3 implementation
   container.register('portalRepository', () => {
     const PortalRepository = require('./modules/portals/infra/PortalRepository');
-    return new PortalRepository();
+    const { Portal } = require('./models');
+    return new PortalRepository({ Portal });
+  });
+
+  container.register('portalAttemptRepository', () => {
+    const PortalAttemptRepository = require('./modules/portals/infra/PortalAttemptRepository');
+    const { PortalAttempt } = require('./models');
+    return new PortalAttemptRepository({ PortalAttempt });
+  });
+
+  container.register('portalMasteryRepository', () => {
+    const PortalMasteryRepository = require('./modules/portals/infra/PortalMasteryRepository');
+    const { PortalMastery } = require('./models');
+    return new PortalMasteryRepository({ PortalMastery });
+  });
+
+  container.register('portalCombatService', (c) => {
+    const PortalCombatService = require('./modules/portals/application/PortalCombatService');
+    return new PortalCombatService({
+      portalRepository: c.resolve('portalRepository'),
+      portalAttemptRepository: c.resolve('portalAttemptRepository'),
+      userRepository: c.resolve('userRepository'),
+      unitRepository: null, // TODO: Implement unit repository
+      questService: c.resolve('portalQuestService'),
+    });
+  });
+
+  container.register('portalSpawnerService', (c) => {
+    const PortalSpawnerService = require('./modules/portals/application/PortalSpawnerService');
+    return new PortalSpawnerService({
+      portalRepository: c.resolve('portalRepository'),
+      rewardsConfigRepository: null, // Uses in-memory config
+    });
   });
 
   container.register('portalService', (c) => {
     const PortalService = require('./modules/portals/application/PortalService');
-    const { CityRepository } = require('./modules/buildings/infra/SequelizeRepositories');
     return new PortalService({
       portalRepository: c.resolve('portalRepository'),
-      cityRepository: new CityRepository()
+      portalAttemptRepository: c.resolve('portalAttemptRepository'),
+      portalMasteryRepository: c.resolve('portalMasteryRepository'),
+      portalCombatService: c.resolve('portalCombatService'),
+      userRepository: c.resolve('userRepository'),
     });
+  });
+
+  container.register('portalBossRepository', () => {
+    const PortalBossRepository = require('./modules/portals/infra/PortalBossRepository');
+    const models = require('./models');
+    return new PortalBossRepository({ models });
+  });
+
+  container.register('portalRaidRepository', () => {
+    const PortalRaidRepository = require('./modules/portals/infra/PortalRaidRepository');
+    const models = require('./models');
+    return new PortalRaidRepository({ models });
+  });
+
+  container.register('portalBossCombatService', (c) => {
+    const PortalBossCombatService = require('./modules/portals/application/PortalBossCombatService');
+    const models = require('./models');
+    return new PortalBossCombatService({
+      portalRepository: c.resolve('portalRepository'),
+      portalAttemptRepository: c.resolve('portalAttemptRepository'),
+      userRepository: c.resolve('userRepository'),
+      unitRepository: null,
+      models,
+      questService: c.resolve('portalQuestService'),
+    });
+  });
+
+  container.register('portalController', (c) => {
+    const createPortalController = require('./controllers/portalController');
+    return createPortalController({
+      portalService: c.resolve('portalService'),
+      portalSpawnerService: c.resolve('portalSpawnerService'),
+    });
+  });
+
+  container.register('portalBossController', (c) => {
+    const createPortalBossController = require('./controllers/portalBossController');
+    return createPortalBossController({
+      portalBossCombatService: c.resolve('portalBossCombatService'),
+      portalBossRepository: c.resolve('portalBossRepository'),
+      portalRaidRepository: c.resolve('portalRaidRepository'),
+    });
+  });
+
+  // Portal Quest System (new)
+  container.register('portalQuestRepository', (c) => {
+    const createQuestRepository = require('./modules/quests/infra/QuestRepository');
+    const models = require('./models');
+    const logger = require('./utils/logger');
+    return createQuestRepository({ models, logger, traceId: 'portal-quest-repository' });
+  });
+
+  container.register('portalQuestService', (c) => {
+    const createQuestService = require('./modules/quests/application/QuestService');
+    const logger = require('./utils/logger');
+    return createQuestService({
+      questRepository: c.resolve('portalQuestRepository'),
+      logger,
+      traceId: 'portal-quest-service',
+    });
+  });
+
+  container.register('portalQuestController', (c) => {
+    const createQuestController = require('./controllers/portalQuestController');
+    return createQuestController({
+      questService: c.resolve('portalQuestService'),
+    });
+  });
+
+  container.register('userRepository', () => {
+    const { User } = require('./models');
+    return { findById: (id) => User.findByPk(id) };
   });
 
   // Tutorial Service
@@ -331,6 +515,81 @@ const createContainer = () => {
     const createChatController = require('./controllers/chatController');
     return createChatController({
       chatService: c.resolve('chatService'),
+    });
+  });
+
+  // Alliance War System
+  container.register('allianceWarRepository', () => {
+    const AllianceWarRepository = require('./modules/alliances/infra/AllianceWarRepository');
+    return new AllianceWarRepository();
+  });
+
+  container.register('allianceWarService', (c) => {
+    const AllianceWarService = require('./modules/alliances/application/AllianceWarService');
+    return new AllianceWarService(c.resolve('allianceWarRepository'));
+  });
+
+  container.register('allianceWarController', (c) => {
+    const createAllianceWarController = require('./controllers/allianceWarController');
+    return createAllianceWarController({
+      allianceWarService: c.resolve('allianceWarService'),
+    });
+  });
+
+  // Resource T2 System
+  container.register('resourceT2Repository', () => {
+    return require('./repositories/ResourceT2Repository');
+  });
+
+  container.register('resourceT2Service', (c) => {
+    const ResourceT2Service = require('./services/ResourceT2Service');
+    return new ResourceT2Service(c.resolve('resourceT2Repository'));
+  });
+
+  container.register('resourceT2Controller', (c) => {
+    const createResourceT2Controller = require('./controllers/resourceT2Controller');
+    return createResourceT2Controller({
+      resourceT2Service: c.resolve('resourceT2Service'),
+    });
+  });
+
+  // Crafting System
+  container.register('craftingRepository', () => {
+    const CraftingRepository = require('./repositories/CraftingRepository');
+    return new CraftingRepository();
+  });
+
+  container.register('craftingService', (c) => {
+    const CraftingService = require('./services/CraftingService');
+    return new CraftingService({
+      craftingRepository: c.resolve('craftingRepository'),
+    });
+  });
+
+  container.register('craftingController', (c) => {
+    const createCraftingController = require('./controllers/craftingController');
+    return createCraftingController({
+      craftingService: c.resolve('craftingService'),
+    });
+  });
+
+  // Factions & Territorial Control System
+  container.register('factionRepository', () => {
+    const FactionRepository = require('./repositories/FactionRepository');
+    return new FactionRepository();
+  });
+
+  container.register('factionService', (c) => {
+    const FactionService = require('./services/FactionService');
+    return new FactionService({
+      factionRepository: c.resolve('factionRepository'),
+    });
+  });
+
+  container.register('factionController', (c) => {
+    const createFactionController = require('./controllers/factionController');
+    return createFactionController({
+      factionService: c.resolve('factionService'),
     });
   });
 

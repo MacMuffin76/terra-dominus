@@ -1,0 +1,116 @@
+/* frontend/src/components/units/TierProgressBar.css */
+
+.tier-progress-container {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.current-tier,
+.next-tier {
+  flex: 1;
+}
+
+.next-tier {
+  text-align: right;
+}
+
+.tier-label {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.progress-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: rgba(0, 217, 255, 0.2);
+  border: 1px solid rgba(0, 217, 255, 0.4);
+  border-radius: 16px;
+  color: #00d9ff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.progress-stats svg {
+  color: #00d9ff;
+}
+
+.progress-bar-wrapper {
+  position: relative;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 12px;
+  position: relative;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.5);
+}
+
+.progress-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+.progress-label {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: #b0b8c8;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .progress-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .current-tier,
+  .next-tier {
+    text-align: center;
+  }
+
+  .progress-stats {
+    justify-content: center;
+  }
+}

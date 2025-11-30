@@ -63,4 +63,31 @@ const City = sequelize.define('City', {
   timestamps: false,
 });
 
+// Define associations
+City.associate = function(models) {
+  // City belongs to User
+  City.belongsTo(models.User, {
+    foreignKey: 'user_id',
+    as: 'owner',
+  });
+
+  // City has many Units
+  City.hasMany(models.Unit, {
+    foreignKey: 'city_id',
+    as: 'units',
+  });
+
+  // City has many Buildings
+  City.hasMany(models.Building, {
+    foreignKey: 'city_id',
+    as: 'buildings',
+  });
+
+  // City has many Resources
+  City.hasMany(models.Resource, {
+    foreignKey: 'city_id',
+    as: 'resources',
+  });
+};
+
 module.exports = City;

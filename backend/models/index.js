@@ -21,7 +21,6 @@ const ResourceProduction = require('./ResourceProduction');
 const RefreshToken = require('./RefreshToken');
 const ConstructionQueue = require('./ConstructionQueue');
 const BattleReport = require('./BattleReport');
-const Blueprint = require('./Blueprint');
 const BlueprintAudit = require('./BlueprintAudit');
 
 // Import des modèles du système monde (déjà initialisés avec sequelize.define)
@@ -50,12 +49,24 @@ const MarketOrder = require('./MarketOrder');
 const MarketTransaction = require('./MarketTransaction');
 
 // Import des modèles portails
-const Portal = require('./Portal');
+const Portal = require('./Portal')(sequelize);
+const PortalAttempt = require('./PortalAttempt')(sequelize);
+const PortalMastery = require('./PortalMastery')(sequelize);
 const PortalExpedition = require('./PortalExpedition');
+const PortalBoss = require('./PortalBoss')(sequelize);
+const PortalBossAttempt = require('./PortalBossAttempt')(sequelize);
+const PortalAllianceRaid = require('./PortalAllianceRaid')(sequelize);
+const PortalRaidParticipant = require('./PortalRaidParticipant')(sequelize);
 
-// Import des modèles quêtes
+// Import des modèles quêtes (anciens - legacy)
 const Quest = require('./Quest');
-const UserQuest = require('./UserQuest');
+
+// Import des nouveaux modèles portail quest system
+const PortalQuest = require('./PortalQuest')(sequelize);
+const UserQuest = require('./UserQuest')(sequelize);
+const UserQuestUnlock = require('./UserQuestUnlock')(sequelize);
+const DailyQuestRotation = require('./DailyQuestRotation')(sequelize);
+const QuestStreak = require('./QuestStreak')(sequelize);
 
 // Import des modèles achievements
 const Achievement = require('./Achievement');
@@ -81,6 +92,27 @@ const AllianceTerritory = require('./AllianceTerritory')(sequelize);
 const AllianceWar = require('./AllianceWar')(sequelize);
 const AllianceWarBattle = require('./AllianceWarBattle')(sequelize);
 
+// Import des modèles T2 Resources
+const UserResourceT2 = require('./UserResourceT2')(sequelize);
+const ResourceConversion = require('./ResourceConversion')(sequelize);
+const ResourceConversionRecipe = require('./ResourceConversionRecipe')(sequelize);
+
+// Import des modèles unit system (PvP balance)
+const UnitStats = require('./UnitStats');
+const UnitUpkeep = require('./UnitUpkeep');
+
+// Import des modèles Crafting & Blueprints
+const BlueprintCrafting = require('./Blueprint')(sequelize);
+const PlayerBlueprint = require('./PlayerBlueprint')(sequelize);
+const CraftingQueue = require('./CraftingQueue')(sequelize);
+const PlayerCraftingStats = require('./PlayerCraftingStats')(sequelize);
+
+// Import des modèles Factions & Territorial Control
+const Faction = require('./Faction')(sequelize);
+const ControlZone = require('./ControlZone')(sequelize);
+const FactionControlPoints = require('./FactionControlPoints')(sequelize);
+const UserFaction = require('./UserFaction')(sequelize);
+
 // Initialiser les nouveaux modèles (classes)
 Attack.init(sequelize);
 AttackWave.init(sequelize);
@@ -88,14 +120,12 @@ DefenseReport.init(sequelize);
 SpyMission.init(sequelize);
 TradeRoute.init(sequelize);
 TradeConvoy.init(sequelize);
-Portal.init(sequelize);
+// Portal now uses factory function pattern, no need for init
 PortalExpedition.init(sequelize);
 
-// Définir les associations pour les quêtes
+// Définir les associations pour les quêtes (legacy)
 Quest.hasMany(UserQuest, { foreignKey: 'quest_id', as: 'userQuests' });
-UserQuest.belongsTo(Quest, { foreignKey: 'quest_id', as: 'quest' });
 User.hasMany(UserQuest, { foreignKey: 'user_id', as: 'userQuests' });
-UserQuest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Définir les associations pour les achievements
 Achievement.hasMany(UserAchievement, { foreignKey: 'achievement_id', as: 'userAchievements' });
@@ -120,7 +150,6 @@ const models = {
   RefreshToken,
   ConstructionQueue,
   BattleReport,
-  Blueprint,
   BlueprintAudit,
   WorldGrid,
   CitySlot,
@@ -140,9 +169,19 @@ const models = {
   MarketOrder,
   MarketTransaction,
   Portal,
+  PortalAttempt,
+  PortalMastery,
   PortalExpedition,
+  PortalBoss,
+  PortalBossAttempt,
+  PortalAllianceRaid,
+  PortalRaidParticipant,
   Quest,
+  PortalQuest,
   UserQuest,
+  UserQuestUnlock,
+  DailyQuestRotation,
+  QuestStreak,
   Achievement,
   UserAchievement,
   BattlePassSeason,
@@ -156,7 +195,20 @@ const models = {
   AllianceTreasuryLog,
   AllianceTerritory,
   AllianceWar,
-  AllianceWarBattle
+  AllianceWarBattle,
+  UserResourceT2,
+  ResourceConversion,
+  ResourceConversionRecipe,
+  BlueprintCrafting,
+  PlayerBlueprint,
+  CraftingQueue,
+  PlayerCraftingStats,
+  Faction,
+  ControlZone,
+  FactionControlPoints,
+  UserFaction,
+  UnitStats,
+  UnitUpkeep
 };
 
 // Ajouter sequelize et Sequelize pour les associations

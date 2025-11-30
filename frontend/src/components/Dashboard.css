@@ -58,6 +58,14 @@
   width: 100%;
 }
 
+/* PvP Power Section */
+.dashboard-power-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: var(--spacing-md) 0;
+}
+
 /* Progress Grid */
 .dashboard-progress-grid {
   display: grid;

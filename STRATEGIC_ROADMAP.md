@@ -913,7 +913,7 @@ const MOD_MANIFEST = {
 
 ---
 
-### 🚀 PHASE 2 : SOCIAL & ÉCONOMIE (Semaines 5-8) — **EN COURS** ⏳
+### 🚀 PHASE 2 : SOCIAL & ÉCONOMIE (Semaines 5-8) — ✅ **COMPLETE**
 
 **Objectif :** Créer interactions joueurs + meta-économie.
 
@@ -922,43 +922,192 @@ const MOD_MANIFEST = {
 | 5 | ✅ Chat global + alliance | 40h | **COMPLETE** | Social foundation |
 | 6 | ✅ Alliance Treasury System | 25h | **COMPLETE** | Resource pooling |
 | 6 | ✅ Alliance Territory System | 13h | **COMPLETE** | Spatial control |
-| 6 | ⏳ Alliance War System | 30h | **IN PROGRESS** | PvP coordination |
-| 6 | ❌ Ressources rares T2 (3 types) | 40h | TODO | Progression depth |
-| 7 | ❌ Crafting/Blueprints (10 recipes) | 60h | TODO | Engagement loop |
-| 8 | ❌ Factions & bonus territoriaux | 80h | TODO | Meta-jeu |
+| 6 | ✅ Alliance War System | 18h | **COMPLETE** ✅ | PvP coordination |
+| 6 | ✅ Ressources rares T2 (3 types) | 40h | **COMPLETE** ✅ | Progression depth |
+| 7 | ✅ Crafting/Blueprints (10 recipes) | 60h | **COMPLETE** ✅ | Engagement loop |
+| 8 | ✅ **Factions & Territorial Bonuses** | 80h | **COMPLETE** ✅ | Meta-jeu |
 
-**Progress:** **78h / 288h (27%)** | **Budget utilisé:** 4.3k€ / 16k€
+**Progress:** **276h / 276h (100%)** ✅ | **Budget utilisé:** 15.2k€ / 16k€
 
 **Systèmes complétés :**
 - ✅ **Chat System**: Messages globaux + alliance, persistance, temps réel (10 fichiers, 13/13 tests)
 - ✅ **Treasury System**: Dépôt/retrait, logs, contributions (75% MVP, API fonctionnelle)
 - ✅ **Territory System**: 4 types, défense upgradable, garrison, bonuses (90% MVP, 11/11 tests)
+- ✅ **War System**: Déclarations, batailles, scores, cessez-le-feu, terminaison (100% MVP, 10/10 tests)
+- ✅ **T2 Resources System**: Titanium, Plasma, Nanotubes - Production, storage, trading (100% MVP, API complet)
+- ✅ **Crafting & Blueprints System**: 10 blueprints (5 rarities), crafting queue, XP/level progression, speedup/cancel mechanics (100% MVP backend, 11 endpoints, 26 tests)
+- ✅ **Factions & Territorial Bonuses System**: 3 asymmetric factions (Terran/Nomad/Syndicate), 10 control zones, control points tracking (4 sources: buildings/military/attacks/trade), bonus aggregation with diminishing returns, 30-day faction change cooldown (100% MVP backend, 11 endpoints, 25 integration tests)
 
-**KPIs actuels :**
-- Rétention J30 : 10% (baseline)
-- Social interactions : Chat fonctionnel, alliance features actives
-- % joueurs en alliance : Systèmes prêts pour adoption
+**KPIs cibles atteints :**
+- ✅ Meta-strategy layer: 3 factions with unique bonuses competing for territorial control
+- ✅ Social systems: Chat, Alliances, Wars, Territory control all functional
+- ✅ Economic depth: T2 resources, crafting, trading systems complete
+- ✅ Progression systems: Blueprints, crafting levels, faction contributions ready
 
 ---
 
-### ⚔️ PHASE 3 : CONTENU PvE & ÉQUILIBRAGE (Semaines 9-12)
+### ⚔️ PHASE 3 : CONTENU PvE & ÉQUILIBRAGE (Semaines 9-12) — ✅ **EN COURS**
 
 **Objectif :** PvP équilibré + contenu PvE engageant via Portails.
 
-| Semaine | Tâche | Dev Hours | Priority | Impact |
-|---------|-------|-----------|----------|--------|
-| 9 | Tests E2E Playwright (10 scénarios) | 40h | P1 | Qualité |
-| 10 | Système Portails MVP (Gris, Vert, Bleu) | 80h | P0 | PvE immédiat |
-| 11 | Portails Avancés (Violet, Rouge, Doré) | 40h | P0 | Events rares |
-| 11-12 | Quêtes & Campagne Portails | 60h | P0 | Progression narrative |
-| 12 | Équilibrage PvP (cooldowns, matchmaking) | 40h | P0 | Fairness |
+| Semaine | Tâche | Dev Hours | Status | Impact |
+|---------|-------|-----------|--------|--------|
+| 9 | ✅ Tests E2E Playwright (130+ scénarios) | 40h | **COMPLETE** ✅ | 7 suites, CI/CD configuré |
+| 10-11 | ✅ **Système Portails Backend MVP** | 30h | **COMPLETE** ✅ | 6 tiers, spawning, combat |
+| 11 | ✅ **Portails Frontend UI (MVP)** | 30h | **COMPLETE** ✅ | 9 composants React + routing |
+| 11-12 | ✅ **Boss Battles & Advanced Mechanics** | 25h | **COMPLETE** ✅ | Multi-phase bosses, raids |
+| 12 | ✅ Quêtes & Campagne Portails (UI + Automation) | 4.5h | **COMPLETE** ✅ | Quest system integrated |
+| 12 | ✅ Équilibrage PvP (backend + frontend + deploy) | 10h | **COMPLETE** ✅ | Full PvP balancing system |
 
-**Total :** 260h | **Budget :** 14k€
+**Progress:** **143h / 195h (73.3%)** | **Budget utilisé:** 7.9k€ / 10.8k€
 
-**KPIs cibles :**
-- % joueurs font portails : 0% → 70% (PvE accessible)
-- Portails complétés/jour : 0 → 500+
-- Satisfaction PvP (sondage) : 3/10 → 7/10
+**Systèmes complétés :**
+- ✅ **Tests E2E Playwright**: 130+ scénarios sur 7 modules (auth, journeys, buildings, combat, alliance, market, factions), CI/CD 3 browsers
+- ✅ **Boss Battles System** (25h):
+  - **Backend (15h)**:
+    * 4 tables BDD: portal_bosses, portal_boss_attempts, portal_alliance_raids, portal_raid_participants
+    * 4 models Sequelize: PortalBoss (isAlive, getCurrentPhase, takeDamage), PortalBossAttempt (isVictory, getSurvivalRate), PortalAllianceRaid (canStart, isFull), PortalRaidParticipant (calculateContribution, getRewardMultiplier)
+    * Multi-phase combat: 4 phases (100-75%, 75-50%, 50-25%, 25-0%) avec triggers d'abilities
+    * 4 boss types: elite_guardian (2 phases), ancient_titan (3 phases), void_reaver (4 phases), cosmic_emperor (4 phases)
+    * 3 abilities spéciales: shield_regeneration (+15% HP heal, 30s CD), aoe_blast (10% damage ground units), unit_disable (30% random type stunned 15s)
+    * PortalBossCombatService: simulateBossBattle (max 50 rounds, phase transitions, ability triggers), estimateBossBattle, battle log tracking
+    * PortalBossRepository: CRUD, getActiveBosses, getBossStats, getBossLeaderboard, cleanupOldBosses
+    * PortalRaidRepository: Raid lifecycle (create, start, complete), addParticipant, contribution tracking, getRaidStats
+    * 16 API endpoints: GET /bosses (list, filter tier/type), GET /bosses/:id (details + stats), POST /bosses/:id/attack, POST /bosses/:id/estimate, GET /bosses/:id/leaderboard, GET /raids, POST /raids/create, POST /raids/:id/join, POST /raids/:id/start, 2 admin endpoints
+    * portalBossController: 15 fonctions avec runWithContext, authMiddleware, validation unités/boss vivant
+    * Container DI: portalBossRepository, portalRaidRepository, portalBossCombatService, portalBossController enregistrés
+    * Alliance raids: Min 3-10 participants, contribution tracking (0-100%), reward multipliers (0.5x-1.5x based on contribution)
+  - **Frontend (8h)**:
+    * 7 composants React: BossBattleModal (HP bar 4 segments, phase indicators), BossAttackModal (unit selection, 3 tactics), BossBattleResultModal (victory/defeat screen, rewards, battle log), BossListPanel (grid, filters, modals), BossLeaderboard (top 10 table), RaidPanel (alliance raids CRUD), Portals.jsx updated (2 new tabs)
+    * HP bar multi-phases: 4 colored segments with current HP fill, shimmer animation
+    * Phase indicators: 1-4 circles, current phase highlighted with golden glow
+    * Battle log: Scrollable with syntax coloring (rounds=gold, damage=red, phases=green, abilities=orange)
+    * Unit selection: 4 types (infantry/cavalry/archers/siege) with number inputs
+    * 3 tactics: Balanced (0%), Aggressive (+20% damage -10% defense), Defensive (-10% damage +20% defense)
+    * Rewards display: Gold, XP, phase bonus (+25% per phase, max +75%)
+    * Leaderboard: Ranks 1-3 with gold/silver/bronze medals, damage dealt, phases reached, victory/defeat chips
+    * Raid lobby: Creation dialog (select boss, min/max participants), join button, start button (leader only), participant list with contribution bars
+    * Material-UI styling: Dark cyber theme, golden accents, animations, error handling, loading states
+  - **Tests (2h)**:
+    * E2E Playwright: 20+ scenarios (navigation, boss list, filters, detail modal, attack flow, unit selection, tactic selection, estimate, leaderboard, raids, accessibility, performance)
+    * Integration tests: 15+ API endpoint tests (list bosses, filter, attack, estimate, leaderboard, raids CRUD, validation)
+    * Combat service unit tests: Power calculation, phase determination, tactic modifiers, ability triggers
+  - **Status**: Backend 100% operational, Frontend 100% integrated, Tests written ✅
+- ✅ **Portal System Backend**:
+  - 6 tiers de portails (grey→golden) avec spawn automatique
+  - Spawning service: Configuration par tier (fréquence, durée, spawn chance), génération coordonnées, expiry
+  - Combat service: Calcul puissance unités, modificateurs tactiques (balanced/aggressive/defensive), simulation bataille ±15% randomness
+  - Repositories: PortalAttempt (historique), PortalMastery (progression 0-4), PortalRewardsConfig (seeded)
+  - 10 API endpoints: list, details, attack, estimate, mastery, history, leaderboard, events, admin spawn, stats
+  - 3 cron jobs: spawn (2h), expiry (30min), cleanup (daily 3AM)
+  - Tables: portals, portal_attempts, portal_mastery, portal_leaderboard, portal_rewards_config
+  - DI container: Tous services enregistrés, routes intégrées
+  - Status: Serveur démarre sans erreur, cron jobs actifs ✅
+- ✅ **Portal System Frontend** (30h):
+  - Page principale: `Portals.jsx` avec 3 tabs (Portails Actifs | Maîtrise | Historique)
+  - Filtres: Tier dropdown (7 options), difficulty range (1-10), sort by (expiry/difficulty/power)
+  - Auto-refresh: setInterval 30 secondes, golden event banner
+  - **9 composants créés:**
+    1. `PortalCard.jsx` - Affichage grid avec tier badge, difficulty stars, power, coordinates, expiring alerts
+    2. `PortalDetailModal.jsx` - Vue détaillée + interface attaque + estimation bataille
+    3. `PortalAttackForm.jsx` - Sélection 6 types unités, tactiques (balanced/aggressive/defensive), presets
+    4. `PortalBattleEstimation.jsx` - Barres puissance, ratio, verdict victoire, pertes estimées
+    5. `PortalMasteryPanel.jsx` - 6 tier cards, mastery levels (0-4), progress bars, bonuses display
+    6. `PortalHistoryPanel.jsx` - Table historique batailles, filtres (result/tier), summary stats
+    7. `PortalCard.css` - Animations golden, expiring soon alerts, tier colors
+    8. `PortalDetailModal.css` - Modal responsive, dark theme
+    9. `index.js` - Barrel exports
+  - API client: `api/portals.js` updated avec 10 endpoints + legacy wrappers
+  - Routing: `/portals` route ajoutée dans App.js avec PrivateRoute
+  - Navigation: Menu.js entry "Portails PvE" avec ExploreIcon
+  - Thème: Dark cyber aesthetic (#0A0E27 gradient, cyan/orange accents, glow effects)
+  - Status: Frontend dev server compile avec warnings ESLint mineurs ✅
+
+**KPIs actuels :**
+- Backend infrastructure: 100% opérationnel
+- API endpoints: 10/10 fonctionnels
+- Cron jobs: 3/3 initialisés
+- Frontend UI: 100% MVP complet (9 composants, routing, navigation)
+- Tests E2E: Backend & Portal API testés, Frontend Portal UI à tester
+
+**PvP Balancing System (10h spent) ✅ COMPLETE:**
+- ✅ **Backend Infrastructure** (6h):
+  * pvpBalancingRules.js (310 lines): Power calc, cost/reward scaling, matchmaking
+  * PlayerPowerService (190 lines): Power calculation with 5min caching
+  * pvpBalancingController (243 lines): 6 API endpoints
+  * Container DI: Services + repositories registered (cityRepository, userRepository)
+  * Routes: /api/v1/pvp/* (power, matchmaking, cost estimation)
+- ✅ **Features Implemented**:
+  * Player power calculation (cities, buildings, units, resources)
+  * Attack cost scaling (fuel: 2x cost for weak targets, gold: +5000 fixed penalty)
+  * Attack cost formula: `baseFuel = unitCount × distance × 1`, `finalFuel = baseFuel × 2 (if weak)`
+  * Reward scaling (50% for weak, 150% for strong targets)
+  * Matchmaking fairness classification (optimal ±30%, fair ±50%, unfair >70%)
+  * Target suggestions API (power-based sorting)
+  * Cost estimation endpoint
+- ✅ **CombatService Integration** (0.5h):
+  * Power calculation in launchAttack() before attack creation
+  * Gold penalty (5000) deducted immediately if weak target
+  * Fuel cost calculated and multiplied by costMultiplier if weak target
+  * Reward scaling applied in resolveCombat() after victory
+  * Power cache invalidation after combat
+- ✅ **Protection System Already Complete** (from previous work):
+  * 72h beginner shield
+  * 1h raid cooldown per target
+  * 20 attacks/day limit
+  * Auto-removal on aggression
+- ✅ **Frontend UI Complete** (3.5h):
+  * PowerDisplay.js (190 lines): ⚡ power badge with modal breakdown
+  * PowerDisplay.css (360 lines): Futuristic purple gradient design
+  * FairnessWarning.js (225 lines): 4-tier fairness badges (🟢🟡🟠🔴), cost warnings
+  * FairnessWarning.css (310 lines): Alert animations, dynamic colors
+  * Dashboard integration: PowerDisplay between stats and progress cards
+  * API integration: Auto-refresh every 5min, real-time power updates
+  * Total frontend: 1,085 lines of production code
+- ✅ **Deployment & Validation**:
+  * Backend running on port 5000 without errors
+  * Frontend compiled successfully on port 3000
+  * All API endpoints functional (/pvp/power/me, /pvp/matchmaking/fairness/:id)
+  * Repository fixes: cityRepository registered in container.js
+  * Quest API exports fixed for compatibility
+  * Documentation: PVP_BALANCING_IMPLEMENTATION.md (650 lines), PVP_INTEGRATION_COMPLETE.md (450 lines)
+
+**Quest System Integration (4.5h spent):**
+- ✅ **Backend**: 100% Complete (discovered existing implementation)
+  * 5 tables: portal_quests, user_quests, user_quest_unlocks, daily_quest_rotation, quest_streaks
+  * 13 API endpoints at /api/v1/portal-quests/*
+  * PortalQuestController with full CRUD + progression tracking
+  * Quest progress tracking in PortalCombatService (7 objective types)
+  * Documentation: PORTAL_QUEST_IMPLEMENTATION.md (805 lines)
+- ✅ **Frontend UI Integration** (2h):
+  * PortalQuestPanel.jsx created (340 lines): 4 sub-tabs (Active, Available, Daily, Campaign)
+  * Quest cards with type badges, difficulty stars, progress bars, rewards display
+  * Accept/claim reward buttons with API integration
+  * Campaign chapter progression with quest chaining
+  * PortalQuestPanel.css created (589 lines): Dark cyber theme, responsive design
+  * Integrated into Portals.jsx as 6th tab "📜 Quêtes"
+- ✅ **Progress Automation** (2.5h):
+  * Custom event system (questProgressUpdate) for real-time UI refresh
+  * QuestProgressNotification component (toast notifications)
+  * Auto-refresh quest panel after portal battles
+  * 7 objective types tracked: portal_attempts, portal_victories, perfect_victories, tactic_victories, damage_dealt, gold_collected, units_sent
+  * Documentation: QUEST_PROGRESS_INTEGRATION.md (520 lines)
+- 📋 **Testing Phase**: UI integration + progress automation testing (see docs/QUEST_INTEGRATION_TEST_PLAN.md)
+- 📋 **Pending**: WebSocket real-time updates for multi-tab sync, sound effects, quest tracker overlay
+
+**Prochaines étapes immédiates :**
+1. ✅ ~~Frontend Portal UI (30h)~~ **COMPLETE**
+2. ✅ ~~Boss Battles & Advanced Mechanics (25h)~~ **COMPLETE**
+3. ✅ ~~Quêtes UI intégration + progression automation (4.5h)~~ **COMPLETE**
+4. ✅ ~~**Équilibrage PvP (10h)**~~ **COMPLETE**
+   - ✅ Cooldowns raids (1h entre attaques même cible) - already implemented
+   - ✅ Protection débutants (72h shield, auto-removal si agression) - already implemented
+   - ✅ Coûts d'attaque scaling (pénalité ×2 fuel + 5000 gold vs faibles) - implemented
+   - ✅ Matchmaking suggestions (±30% power level) - API complete
+   - ✅ UI power display + fairness warnings - integrated in Dashboard
+5. 📋 Quest system polish (8h) - WebSocket updates, sound effects, quest tracker overlay
+6. 📋 Boss battle polish (5h) - Animations, boss mechanics variety, loot tables
+7. 📋 Phase 3 completion testing (10h) - End-to-end validation of all systems
 
 ---
 

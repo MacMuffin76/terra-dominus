@@ -12,6 +12,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import PublicIcon from '@mui/icons-material/Public';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ExploreIcon from '@mui/icons-material/Explore';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
 
@@ -135,6 +136,14 @@ const Menu = () => {
             </Link>
           </li>
           <li>
+            <Link to="/units" onClick={closeMenuOnNavigation} id="menu-units">
+              <BuildIcon className="menu-icon" />
+              <div>
+                Unités
+              </div>
+            </Link>
+          </li>
+          <li>
             <Link to="/defense" onClick={closeMenuOnNavigation}>
               <SecurityIcon className="menu-icon" />
               <div>
@@ -171,6 +180,14 @@ const Menu = () => {
               <PublicIcon className="menu-icon" />
               <div>
                 Carte du Monde
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/portals" onClick={closeMenuOnNavigation} id="menu-portals">
+              <ExploreIcon className="menu-icon" />
+              <div>
+                Portails PvE
               </div>
             </Link>
           </li>

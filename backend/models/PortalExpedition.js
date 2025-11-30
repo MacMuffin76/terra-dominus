@@ -89,10 +89,11 @@ class PortalExpedition extends Model {
   }
 
   static associate(models) {
-    PortalExpedition.belongsTo(models.Portal, {
-      foreignKey: 'portal_id',
-      as: 'portal'
-    });
+    // Temporarily commented - Portal model changed to factory function
+    // PortalExpedition.belongsTo(models.Portal, {
+    //   foreignKey: 'portal_id',
+    //   as: 'portal'
+    // });
     PortalExpedition.belongsTo(models.User, {
       foreignKey: 'user_id',
       as: 'user'
