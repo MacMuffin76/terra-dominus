@@ -198,7 +198,7 @@ class TokenService {
     try {
       // Ajouter l'utilisateur à une liste de révocation globale
       const key = `user_revoked:${userId}`;
-      const now = Date.now();
+      const now = Math.floor(Date.now() / 1000); // En secondes pour correspondre à iat
       
       // Stocker le timestamp de révocation
       // Tous les tokens émis avant ce timestamp seront considérés invalides
@@ -226,7 +226,7 @@ class TokenService {
       }
 
       // Vérifier si le token a été émis avant la révocation
-      const tokenIssuedAt = decoded.iat * 1000; // Convertir en ms
+      const tokenIssuedAt = decoded.iat; // iat est déjà en secondes
       const isValid = tokenIssuedAt > parseInt(revokedAt);
       
       if (!isValid) {

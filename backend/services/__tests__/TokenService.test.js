@@ -111,7 +111,7 @@ describe('TokenService', () => {
   describe('revokeAllUserTokens', () => {
     it('devrait ajouter userId à la révocation globale avec timestamp', async () => {
       const userId = 123;
-      const timestamp = Date.now();
+      const timestamp = Math.floor(Date.now() / 1000); // En secondes
 
       await tokenService.revokeAllUserTokens(userId);
 
@@ -171,7 +171,7 @@ describe('TokenService', () => {
 
   describe('rotateRefreshToken', () => {
     it('devrait révoquer l\'ancien token et retourner de nouveaux tokens', async () => {
-      const oldToken = jwt.sign({ id: 1, type: 'refresh' }, 'test-secret-key', { expiresIn: '7d' });
+      const oldToken = jwt.sign({ id: 1, type: 'refresh', iat: Math.floor(Date.now() / 1000) - 100 }, 'test-secret-key', { expiresIn: '7d', noTimestamp: true });
       mockRedis.exists.mockResolvedValueOnce(0); // Token pas blacklisté
       
       const result = await tokenService.rotateRefreshToken(oldToken);

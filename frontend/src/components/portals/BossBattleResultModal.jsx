@@ -233,6 +233,70 @@ const BossBattleResultModal = ({ open, onClose, result }) => {
                 />
               </Box>
             )}
+            
+            {/* Items Obtained */}
+            {result.rewards.items && result.rewards.items.length > 0 && (
+              <>
+                <Divider style={{ margin: '16px 0', background: 'rgba(255, 255, 255, 0.1)' }} />
+                <Typography variant="body1" gutterBottom style={{ color: '#FFD700', fontWeight: 'bold' }}>
+                  🎁 Items Obtained ({result.rewards.items.length})
+                </Typography>
+                <List>
+                  {result.rewards.items.map((item, index) => {
+                    const rarityColors = {
+                      common: '#9E9E9E',
+                      uncommon: '#4CAF50',
+                      rare: '#2196F3',
+                      epic: '#9C27B0',
+                      legendary: '#FFD700',
+                      mythic: '#FF4081',
+                    };
+                    const rarityColor = rarityColors[item.rarity] || '#9E9E9E';
+                    return (
+                      <ListItem
+                        key={index}
+                        style={{
+                          padding: '8px',
+                          marginBottom: '4px',
+                          background: `rgba(${parseInt(rarityColor.slice(1, 3), 16)}, ${parseInt(rarityColor.slice(3, 5), 16)}, ${parseInt(rarityColor.slice(5, 7), 16)}, 0.1)`,
+                          border: `1px solid ${rarityColor}`,
+                          borderRadius: '4px',
+                        }}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography style={{ color: rarityColor, fontWeight: 'bold' }}>
+                              {item.type.replace(/_/g, ' ').toUpperCase()}
+                              {item.quantity > 1 && ` x${item.quantity}`}
+                            </Typography>
+                          }
+                          secondary={
+                            <>
+                              <Chip
+                                label={item.rarity.toUpperCase()}
+                                size="small"
+                                style={{
+                                  background: rarityColor,
+                                  color: '#fff',
+                                  fontSize: '0.7rem',
+                                  height: '20px',
+                                  marginTop: '4px',
+                                }}
+                              />
+                              {item.stat && (
+                                <Typography variant="caption" style={{ marginLeft: '8px', color: '#aaa' }}>
+                                  {item.stat}
+                                </Typography>
+                              )}
+                            </>
+                          }
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </>
+            )}
           </Box>
         )}
 

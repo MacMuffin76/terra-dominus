@@ -64,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
   hpFill: {
     height: '100%',
     background: 'linear-gradient(90deg, #ff4444 0%, #cc0000 100%)',
-    transition: 'width 0.5s ease',
+    transition: 'width 0.5s ease, background 0.3s ease',
     position: 'relative',
     '&::after': {
       content: '""',
@@ -77,9 +77,30 @@ const useStyles = makeStyles((theme) => ({
       animation: '$shimmer 2s infinite',
     },
   },
+  hpFillLow: {
+    background: 'linear-gradient(90deg, #ff0000 0%, #8b0000 100%) !important',
+    animation: '$pulse 1s infinite',
+  },
+  hpFillCritical: {
+    background: 'linear-gradient(90deg, #ff0000 0%, #ff4400 100%) !important',
+    animation: '$pulseFast 0.5s infinite, $shake 0.1s infinite',
+  },
   '@keyframes shimmer': {
     '0%': { transform: 'translateX(-100%)' },
     '100%': { transform: 'translateX(100%)' },
+  },
+  '@keyframes pulse': {
+    '0%, 100%': { boxShadow: '0 0 10px rgba(255, 0, 0, 0.5)' },
+    '50%': { boxShadow: '0 0 25px rgba(255, 0, 0, 0.9)' },
+  },
+  '@keyframes pulseFast': {
+    '0%, 100%': { boxShadow: '0 0 15px rgba(255, 0, 0, 0.7)' },
+    '50%': { boxShadow: '0 0 35px rgba(255, 0, 0, 1)' },
+  },
+  '@keyframes shake': {
+    '0%, 100%': { transform: 'translateX(0)' },
+    '25%': { transform: 'translateX(-2px)' },
+    '75%': { transform: 'translateX(2px)' },
   },
   hpText: {
     position: 'absolute',
@@ -106,10 +127,16 @@ const useStyles = makeStyles((theme) => ({
     background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
     color: '#000',
     boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
+    animation: '$phaseGlow 2s infinite',
   },
   phaseInactive: {
     background: '#2a2f45',
     color: '#666',
+    transition: 'all 0.3s ease',
+  },
+  '@keyframes phaseGlow': {
+    '0%, 100%': { boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)' },
+    '50%': { boxShadow: '0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 165, 0, 0.5)' },
   },
   abilitiesContainer: {
     marginTop: theme.spacing(3),
@@ -122,6 +149,22 @@ const useStyles = makeStyles((theme) => ({
     background: 'rgba(255, 215, 0, 0.1)',
     border: '1px solid rgba(255, 215, 0, 0.3)',
     color: '#FFD700',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      background: 'rgba(255, 215, 0, 0.2)',
+      boxShadow: '0 0 15px rgba(255, 215, 0, 0.4)',
+      transform: 'scale(1.05)',
+    },
+  },
+  abilityActive: {
+    animation: '$abilityPulse 1s infinite',
+    background: 'rgba(255, 68, 68, 0.2) !important',
+    border: '1px solid rgba(255, 68, 68, 0.5) !important',
+    color: '#ff4444 !important',
+  },
+  '@keyframes abilityPulse': {
+    '0%, 100%': { transform: 'scale(1)' },
+    '50%': { transform: 'scale(1.1)', boxShadow: '0 0 20px rgba(255, 68, 68, 0.8)' },
   },
   statsGrid: {
     marginTop: theme.spacing(2),
@@ -255,6 +298,13 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
 
   const hpPercent = (boss.hp.current / boss.hp.max) * 100;
   const currentPhase = boss.phase;
+  
+  // Determine HP bar state for animations
+  const hpBarClass = hpPercent <= 10 
+    ? classes.hpFillCritical 
+    : hpPercent <= 25 
+    ? classes.hpFillLow 
+    : '';
 
   return (
     <Dialog open={open} onClose={onClose} className={classes.dialog} maxWidth="md" fullWidth>
@@ -263,19 +313,24 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
           <Typography className={classes.bossType}>
             🐉 {BOSS_TYPE_NAMES[boss.boss_type] || boss.boss_type}
           </Typography>
-          <Typography variant="body2">Boss Battle - Tier {boss.tier?.toUpperCase()}</Typography>
+          <Typography variant="body2">Boss Battle - Tier {boss.tier?.toUpperCase()} | Phase {currentPhase}/4</Typography>
         </Box>
         <CloseIcon style={{ cursor: 'pointer' }} onClick={onClose} />
       </DialogTitle>
 
       <DialogContent>
-        {/* HP Bar */}
+        {/* HP Bar with Dynamic Animations */}
         <Box className={classes.hpContainer}>
-          <Typography variant="body2" style={{ marginBottom: '8px', color: '#aaa' }}>
-            Boss Health
-          </Typography>
+          <Box style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <Typography variant="body2" style={{ color: '#aaa' }}>
+              Boss Health
+            </Typography>
+            <Typography variant="body2" style={{ color: hpPercent <= 25 ? '#ff4444' : '#FFD700', fontWeight: 'bold' }}>
+              {hpPercent <= 25 ? '⚠️ CRITICAL' : hpPercent <= 50 ? '⚠️ LOW HP' : '✅ HEALTHY'}
+            </Typography>
+          </Box>
           <Box className={classes.hpBar}>
-            <Box className={classes.hpFill} style={{ width: `${hpPercent}%` }} />
+            <Box className={`${classes.hpFill} ${hpBarClass}`} style={{ width: `${hpPercent}%` }} />
             <Typography className={classes.hpText}>
               {boss.hp.current.toLocaleString()} / {boss.hp.max.toLocaleString()} HP
               ({boss.hp.percent}%)

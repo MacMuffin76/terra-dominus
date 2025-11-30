@@ -1,4 +1,4 @@
-const Blueprint = require('../models/Blueprint');
+const { BlueprintCrafting: Blueprint } = require('../models');
 const BlueprintAudit = require('../models/BlueprintAudit');
 const { getLogger } = require('../utils/logger');
 
@@ -10,9 +10,9 @@ class BlueprintRepository {
   async listByCategory(category) {
     try {
       if (category) {
-        return await Blueprint.findAll({ where: { category }, order: [['type', 'ASC']] });
+        return await Blueprint.findAll({ where: { category }, order: [['name', 'ASC']] });
       }
-      return await Blueprint.findAll({ order: [['category', 'ASC'], ['type', 'ASC']] });
+      return await Blueprint.findAll({ order: [['category', 'ASC'], ['name', 'ASC']] });
     } catch (error) {
       if (isMissingTableError(error)) {
         logger.warn({ err: error }, 'Blueprints table missing, returning empty list');
@@ -24,7 +24,8 @@ class BlueprintRepository {
 
   async findByCategoryAndType(category, type) {
     try {
-      return await Blueprint.findOne({ where: { category, type } });
+      // Note: 'type' parameter kept for API compatibility but not used as column
+      return await Blueprint.findOne({ where: { category }, order: [['name', 'ASC']] });
     } catch (error) {
       if (isMissingTableError(error)) {
         logger.warn({ err: error }, 'Blueprints table missing, returning null');

@@ -13,24 +13,32 @@ const BOSS_PHASES = {
     behavior: 'standard',
     abilities: [],
     trigger_message: null,
+    attack_modifier: 1.0,
+    defense_modifier: 1.0,
   },
   phase_2: {
     hp_range: [75, 50],
     behavior: 'defensive',
-    abilities: ['shield_regeneration'],
+    abilities: ['shield_regeneration', 'life_drain'],
     trigger_message: '⚠️ Le boss active ses boucliers!',
+    attack_modifier: 0.9,
+    defense_modifier: 1.2,
   },
   phase_3: {
     hp_range: [50, 25],
     behavior: 'aggressive',
-    abilities: ['shield_regeneration', 'aoe_blast'],
+    abilities: ['aoe_blast', 'summon_minions', 'rage_mode'],
     trigger_message: '🔥 Le boss entre en rage!',
+    attack_modifier: 1.3,
+    defense_modifier: 0.9,
   },
   phase_4: {
     hp_range: [25, 0],
     behavior: 'berserk',
-    abilities: ['shield_regeneration', 'aoe_blast', 'unit_disable'],
+    abilities: ['unit_disable', 'time_warp', 'aoe_blast', 'life_drain'],
     trigger_message: '💀 Phase finale! Le boss est désespéré!',
+    attack_modifier: 1.5,
+    defense_modifier: 0.8,
   },
 };
 
@@ -39,7 +47,7 @@ const BOSS_ABILITIES = {
   shield_regeneration: {
     name: 'Shield Regeneration',
     icon: '🛡️',
-    cooldown: 30000, // 30 seconds
+    cooldown: 30000,
     effect: (boss) => {
       const healAmount = Math.floor(boss.base_hp * 0.15);
       boss.current_hp = Math.min(boss.base_hp, boss.current_hp + healAmount);
@@ -47,15 +55,16 @@ const BOSS_ABILITIES = {
         type: 'heal',
         amount: healAmount,
         message: `🛡️ Le boss régénère ${healAmount} HP!`,
+        animation: 'heal_pulse',
       };
     },
   },
   aoe_blast: {
     name: 'AoE Blast',
     icon: '💥',
-    chance: 0.3, // 30% per round
+    chance: 0.3,
     effect: (playerUnits) => {
-      const aoeDamage = 0.1; // 10% of unit count
+      const aoeDamage = 0.1;
       const losses = {};
       let totalLosses = 0;
 
@@ -73,6 +82,7 @@ const BOSS_ABILITIES = {
         losses,
         totalLosses,
         message: `💥 AoE Blast! ${totalLosses} unités terrestres détruites!`,
+        animation: 'explosion',
       };
     },
   },
@@ -95,6 +105,88 @@ const BOSS_ABILITIES = {
         target: targetType,
         count: disableCount,
         message: `⚡ ${disableCount} ${targetType} désactivées!`,
+        animation: 'lightning',
+      };
+    },
+  },
+  summon_minions: {
+    name: 'Summon Minions',
+    icon: '👹',
+    chance: 0.25,
+    effect: (playerUnits, boss) => {
+      // Minions deal flat damage over time
+      const minionDamage = Math.floor(boss.base_hp * 0.05);
+      const unitTypes = Object.keys(playerUnits).filter((t) => playerUnits[t] > 0);
+      if (unitTypes.length > 0) {
+        const targetType = unitTypes[Math.floor(Math.random() * unitTypes.length)];
+        const casualties = Math.ceil(playerUnits[targetType] * 0.05);
+        playerUnits[targetType] = Math.max(0, playerUnits[targetType] - casualties);
+        return {
+          type: 'summon',
+          damage: minionDamage,
+          casualties,
+          target: targetType,
+          message: `👹 Le boss invoque des serviteurs! ${casualties} ${targetType} perdues!`,
+          animation: 'summon',
+        };
+      }
+      return { type: 'summon_failed', message: '👹 Invocation échouée!' };
+    },
+  },
+  rage_mode: {
+    name: 'Rage Mode',
+    icon: '😡',
+    chance: 0.2,
+    effect: (boss) => {
+      // Temporary attack boost
+      return {
+        type: 'buff',
+        boost: 1.5, // +50% attack for 3 rounds
+        duration: 3,
+        message: '😡 Le boss entre en RAGE! +50% attaque pendant 3 rounds!',
+        animation: 'rage_aura',
+      };
+    },
+  },
+  time_warp: {
+    name: 'Time Warp',
+    icon: '⏰',
+    chance: 0.15,
+    effect: (playerUnits) => {
+      // Resets cooldowns and delays player attacks
+      const allUnitCount = Object.values(playerUnits).reduce((sum, count) => sum + count, 0);
+      return {
+        type: 'debuff',
+        effect: 'slow',
+        penalty: 0.3, // -30% damage next round
+        message: `⏰ Distorsion temporelle! -30% dégâts au prochain round!`,
+        animation: 'time_distortion',
+      };
+    },
+  },
+  life_drain: {
+    name: 'Life Drain',
+    icon: '🩸',
+    chance: 0.25,
+    effect: (playerUnits, boss) => {
+      const totalUnits = Object.values(playerUnits).reduce((sum, count) => sum + count, 0);
+      const drainAmount = Math.floor(totalUnits * 50); // 50 HP per unit
+      const actualHeal = Math.min(drainAmount, boss.base_hp - boss.current_hp);
+      boss.current_hp = Math.min(boss.base_hp, boss.current_hp + actualHeal);
+      
+      // Also damages units slightly
+      const unitTypes = Object.keys(playerUnits).filter((t) => playerUnits[t] > 0);
+      if (unitTypes.length > 0) {
+        const targetType = unitTypes[Math.floor(Math.random() * unitTypes.length)];
+        const drainLoss = Math.ceil(playerUnits[targetType] * 0.08);
+        playerUnits[targetType] = Math.max(0, playerUnits[targetType] - drainLoss);
+      }
+      
+      return {
+        type: 'drain',
+        amount: actualHeal,
+        message: `🩸 Le boss draine la vie! +${actualHeal} HP récupérés!`,
+        animation: 'life_drain',
       };
     },
   },
@@ -239,14 +331,15 @@ class PortalBossCombatService {
     const results = [];
 
     for (const abilityId of phaseData.abilities) {
-      if (abilityId === 'shield_regeneration') continue; // Only on phase transition
+      if (abilityId === 'shield_regeneration' || abilityId === 'life_drain') continue; // Only on phase transition
 
       const ability = BOSS_ABILITIES[abilityId];
       if (Math.random() < (ability.chance || 0.3)) {
-        const result = ability.effect(playerUnits);
+        const result = ability.effect(playerUnits, boss);
         battleLog.push({
           event: 'boss_ability',
           ability: abilityId,
+          phase,
           ...result,
         });
         results.push(result);
@@ -288,6 +381,126 @@ class PortalBossCombatService {
    */
   consolationRewards(baseRewards) {
     return this.multiplyRewards(baseRewards, 0.25); // 25% of base rewards
+  }
+
+  /**
+   * Generate tier-specific loot tables
+   */
+  generateTierLoot(tier, phasesReached, bossType) {
+    const TIER_LOOT = {
+      grey: {
+        gold: { min: 800, max: 1200 },
+        experience: { min: 80, max: 120 },
+        items: [
+          { type: 'resource_pack', rarity: 'common', chance: 0.5 },
+          { type: 'unit_blueprint', rarity: 'common', chance: 0.3 },
+        ],
+      },
+      green: {
+        gold: { min: 2000, max: 3000 },
+        experience: { min: 200, max: 300 },
+        items: [
+          { type: 'resource_pack', rarity: 'uncommon', chance: 0.6 },
+          { type: 'unit_blueprint', rarity: 'uncommon', chance: 0.4 },
+          { type: 'building_upgrade', rarity: 'common', chance: 0.35 },
+        ],
+      },
+      blue: {
+        gold: { min: 4500, max: 5500 },
+        experience: { min: 450, max: 550 },
+        items: [
+          { type: 'resource_pack', rarity: 'rare', chance: 0.7 },
+          { type: 'unit_blueprint', rarity: 'rare', chance: 0.5 },
+          { type: 'building_upgrade', rarity: 'uncommon', chance: 0.45 },
+          { type: 'artifact_fragment', rarity: 'rare', chance: 0.25 },
+        ],
+      },
+      purple: {
+        gold: { min: 9000, max: 11000 },
+        experience: { min: 900, max: 1100 },
+        items: [
+          { type: 'resource_pack', rarity: 'epic', chance: 0.8 },
+          { type: 'unit_blueprint', rarity: 'epic', chance: 0.6 },
+          { type: 'building_upgrade', rarity: 'rare', chance: 0.55 },
+          { type: 'artifact_fragment', rarity: 'epic', chance: 0.4 },
+          { type: 'boss_token', rarity: 'epic', chance: 0.3 },
+        ],
+      },
+      red: {
+        gold: { min: 22000, max: 28000 },
+        experience: { min: 2200, max: 2800 },
+        items: [
+          { type: 'resource_pack', rarity: 'legendary', chance: 0.85 },
+          { type: 'unit_blueprint', rarity: 'legendary', chance: 0.7 },
+          { type: 'building_upgrade', rarity: 'epic', chance: 0.65 },
+          { type: 'artifact_fragment', rarity: 'legendary', chance: 0.5 },
+          { type: 'boss_token', rarity: 'legendary', chance: 0.45 },
+          { type: 'exclusive_skin', rarity: 'legendary', chance: 0.15 },
+        ],
+      },
+      golden: {
+        gold: { min: 90000, max: 110000 },
+        experience: { min: 9000, max: 11000 },
+        items: [
+          { type: 'resource_pack', rarity: 'mythic', chance: 1.0 },
+          { type: 'unit_blueprint', rarity: 'mythic', chance: 0.85 },
+          { type: 'building_upgrade', rarity: 'legendary', chance: 0.75 },
+          { type: 'artifact', rarity: 'mythic', chance: 0.6 },
+          { type: 'boss_token', rarity: 'mythic', chance: 0.55 },
+          { type: 'exclusive_skin', rarity: 'mythic', chance: 0.3 },
+          { type: 'title', rarity: 'mythic', chance: 0.2 },
+        ],
+      },
+    };
+
+    const tierData = TIER_LOOT[tier] || TIER_LOOT.grey;
+    const phaseBonus = 1 + (phasesReached - 1) * 0.25;
+
+    // Generate loot
+    const loot = {
+      gold: Math.floor(
+        (tierData.gold.min + Math.random() * (tierData.gold.max - tierData.gold.min)) * phaseBonus
+      ),
+      experience: Math.floor(
+        (tierData.experience.min +
+          Math.random() * (tierData.experience.max - tierData.experience.min)) *
+          phaseBonus
+      ),
+      items: [],
+    };
+
+    // Roll for items
+    for (const itemDef of tierData.items) {
+      if (Math.random() < itemDef.chance) {
+        loot.items.push({
+          type: itemDef.type,
+          rarity: itemDef.rarity,
+          quantity: itemDef.type === 'resource_pack' ? Math.ceil(phasesReached * 2) : 1,
+        });
+      }
+    }
+
+    // Boss-type specific bonus
+    const bossTypeBonus = this.getBossTypeBonus(bossType);
+    if (bossTypeBonus) {
+      loot.items.push(bossTypeBonus);
+    }
+
+    return loot;
+  }
+
+  /**
+   * Get boss-type specific bonus items
+   */
+  getBossTypeBonus(bossType) {
+    const BOSS_TYPE_BONUSES = {
+      elite_guardian: { type: 'defense_rune', rarity: 'rare', stat: 'defense +10%' },
+      ancient_titan: { type: 'strength_rune', rarity: 'rare', stat: 'attack +10%' },
+      void_reaver: { type: 'speed_rune', rarity: 'rare', stat: 'movement +15%' },
+      cosmic_emperor: { type: 'cosmic_essence', rarity: 'epic', stat: 'all stats +5%' },
+    };
+
+    return BOSS_TYPE_BONUSES[bossType] || null;
   }
 
   /**
@@ -378,11 +591,23 @@ class PortalBossCombatService {
         const phasesReached = currentPhase;
         const damageDealt = boss.base_hp - Math.max(0, bossHP);
 
-        // Calculate rewards
-        const baseRewards = boss.rewards;
-        const phaseBonus = 1 + (phasesReached - 1) * 0.25; // +25% per phase
+        // Get portal tier for loot calculation
+        const portalTier = boss.portal?.tier || 'grey';
+
+        // Generate tier-specific loot
+        const loot = victory
+          ? this.generateTierLoot(portalTier, phasesReached, boss.boss_type)
+          : {
+              gold: Math.floor(this.generateTierLoot(portalTier, phasesReached, boss.boss_type).gold * 0.25),
+              experience: Math.floor(this.generateTierLoot(portalTier, phasesReached, boss.boss_type).experience * 0.25),
+              items: [],
+            };
+
+        // Legacy rewards for backward compatibility
+        const baseRewards = boss.rewards || { gold: loot.gold, experience: loot.experience };
+        const phaseBonus = 1 + (phasesReached - 1) * 0.25;
         const finalRewards = victory
-          ? this.multiplyRewards(baseRewards, phaseBonus)
+          ? { ...this.multiplyRewards(baseRewards, phaseBonus), ...loot }
           : this.consolationRewards(baseRewards);
 
         // Calculate losses

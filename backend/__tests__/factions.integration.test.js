@@ -6,7 +6,7 @@
 const request = require('supertest');
 const app = require('../app');
 const { User, Faction, ControlZone, FactionControlPoints, UserFaction } = require('../models');
-const { generateToken } = require('../utils/jwt');
+const { getTokenService } = require('../services/TokenService');
 
 describe('Factions System Integration Tests', () => {
   let authToken;
@@ -14,8 +14,11 @@ describe('Factions System Integration Tests', () => {
   let terranFaction;
   let nomadFaction;
   let testZone;
+  let tokenService;
 
   beforeAll(async () => {
+    tokenService = getTokenService();
+    
     // Create test user
     testUser = await User.create({
       username: `faction_test_${Date.now()}`,
@@ -23,7 +26,7 @@ describe('Factions System Integration Tests', () => {
       password: 'hashedPassword123'
     });
 
-    authToken = generateToken({ id: testUser.id, username: testUser.username });
+    authToken = tokenService.generateAccessToken({ id: testUser.id, username: testUser.username });
 
     // Get existing factions from seed data
     terranFaction = await Faction.findOne({ where: { id: 'TERRAN_FEDERATION' } });
