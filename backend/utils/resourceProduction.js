@@ -8,8 +8,9 @@ function calculateResourceProduction(level) {
 
 // Formule de production d'énergie
 function calculateEnergyProduction(level) {
-  // exemple : 20 * 1.05^level, arrondi vers le bas
-  return Math.floor(1 * Math.pow(1.05, level));
+  if (level === 0) return 0;
+  // 50 * 1.1^(level-1)
+  return Math.floor(50 * Math.pow(1.1, level - 1));
 }
 
 module.exports = {

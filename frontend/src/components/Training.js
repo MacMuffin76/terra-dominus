@@ -9,7 +9,7 @@ import './Training.css';
 import ResourcesWidget from './ResourcesWidget';
 import TrainingDetail from './TrainingDetail';
 import TrainingCard from './training/TrainingCard';
-import { Alert, Loader } from './ui';
+import { Alert, Loader, Modal } from './ui';
 
 const Training = () => {
   const { error, catchError } = useAsyncError('Training');
@@ -96,13 +96,6 @@ const Training = () => {
           />
         )}
 
-        {selectedTraining && (
-          <TrainingDetail
-            training={selectedTraining}
-            onTrainingUpdated={handleTrainingUpdated}
-          />
-        )}
-
         <div className="training-grid">
           {(loading ? Array.from({ length: 4 }) : trainings).map((training, idx) => (
             <TrainingCard
@@ -115,6 +108,20 @@ const Training = () => {
           ))}
         </div>
       </div>
+
+      <Modal
+        isOpen={!!selectedTraining}
+        onClose={() => setSelectedTraining(null)}
+        title="Détails du centre d'entraînement"
+      >
+        {selectedTraining && (
+          <TrainingDetail
+            training={selectedTraining}
+            onTrainingUpdated={handleTrainingUpdated}
+            onClose={() => setSelectedTraining(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

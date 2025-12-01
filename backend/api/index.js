@@ -32,6 +32,9 @@ const createCraftingRouter = require('../routes/craftingRoutes');
 const createFactionRouter = require('../routes/factionRoutes');
 const createUpkeepRouter = require('../routes/upkeepRoutes');
 const createUnitUnlockRouter = require('../routes/unitUnlockRoutes');
+const createDefenseUnlockRouter = require('../modules/combat/api/defenseUnlockRoutes');
+const createResearchUnlockRouter = require('../modules/research/api/researchUnlockRoutes');
+const createFacilityUnlockRouter = require('../modules/facilities/api/facilityUnlockRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
@@ -94,6 +97,9 @@ const createApiRouter = (container) => {
   router.use('/factions', createFactionRouter(container.resolve('factionController')));
   router.use('/upkeep', createUpkeepRouter(container));
   router.use('/units/unlock', createUnitUnlockRouter(container));
+  router.use('/defense/unlock', createDefenseUnlockRouter(container));
+  router.use('/research/unlock', createResearchUnlockRouter(container));
+  router.use('/facilities/unlock', createFacilityUnlockRouter(container));
   router.use('/', createDashboardRouter(container));
   router.use('/', createUnitRouter(container));
   router.use('/admin', createBlueprintAdminRouter(container));

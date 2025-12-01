@@ -3,6 +3,7 @@ const Resource = require('../../../models/Resource');
 const Building = require('../../../models/Building');
 const ResourceCost = require('../../../models/ResourceCost');
 const Entity = require('../../../models/Entity');
+const ConstructionQueue = require('../../../models/ConstructionQueue');
 const { getQueue, queueNames, serializeJobData } = require('../../../jobs/queueConfig');
 const { getUserMainCity } = require('../../../utils/cityUtils');
 const { getProductionPerSecond, getBuildDurationSeconds } = require('../../../utils/balancing');
@@ -14,6 +15,7 @@ const {
   ENERGY_CONSUMPTION_PER_LEVEL,
   calculateStorageCapacities,
 } = require('../domain/resourceRules');
+const { scheduleConstructionCompletion } = require('../../../jobs/constructionQueue');
 
 class ResourceService {
   constructor({ transactionProvider = defaultTransactionProvider } = {}) {
@@ -84,18 +86,6 @@ class ResourceService {
     return { status, constructionEndsAt, etaSeconds };
   }
 
-  scheduleResourceUpgradeJob({ buildingId, userId, cityId, delayMs }) {
-    const queue = getQueue(queueNames.RESOURCE_UPGRADE);
-
-    return queue.add(
-      'resource-building-upgrade',
-      serializeJobData({ buildingId, userId, cityId }),
-      {
-        delay: Math.max(0, delayMs),
-      }
-    );
-  }
-
   async getResourceBuildings(userId) {
     const city = await this.withCity(userId);
 
@@ -131,8 +121,42 @@ class ResourceService {
       );
     }
 
-    return buildings.map((building) => {
-      const { status, constructionEndsAt, etaSeconds } = this.getBuildingState(building);
+    // Charger les statuts de construction depuis la queue
+    const buildingIds = buildings.map(b => b.id);
+    const entityIds = await Promise.all(
+      buildings.map(b => this.getBuildingEntityId(b))
+    );
+
+    const queueItems = await ConstructionQueue.findAll({
+      where: {
+        cityId: city.id,
+        type: 'building',
+        status: { [Op.in]: ['queued', 'in_progress'] },
+      },
+    });
+
+    const queueByEntityId = new Map();
+    queueItems.forEach(item => {
+      queueByEntityId.set(item.entityId, item);
+    });
+
+    return buildings.map((building, index) => {
+      const entityId = entityIds[index];
+      const queueItem = queueByEntityId.get(entityId);
+
+      let status = 'idle';
+      let constructionEndsAt = null;
+      let etaSeconds = 0;
+
+      if (queueItem) {
+        constructionEndsAt = queueItem.finishTime;
+        // Map 'in_progress' to 'building' for frontend compatibility
+        status = queueItem.status === 'in_progress' ? 'building' : 'queued';
+        etaSeconds = constructionEndsAt
+          ? Math.max(0, Math.ceil((new Date(constructionEndsAt) - new Date()) / 1000))
+          : 0;
+      }
+
       return {
         ...building.toJSON(),
         status,
@@ -158,12 +182,33 @@ class ResourceService {
       throw error;
     }
 
-    const { status, constructionEndsAt, etaSeconds } = this.getBuildingState(building);
-
     const currentLevel = Number(building.level) || 0;
     const nextLevel = currentLevel + 1;
 
     const entityId = await this.getBuildingEntityId(building);
+
+    // Vérifier la construction queue
+    const queueItem = await ConstructionQueue.findOne({
+      where: {
+        cityId: city.id,
+        entityId: entityId,
+        type: 'building',
+        status: { [Op.in]: ['queued', 'in_progress'] },
+      },
+    });
+
+    let status = 'idle';
+    let constructionEndsAt = null;
+    let etaSeconds = 0;
+
+    if (queueItem) {
+      constructionEndsAt = queueItem.finishTime;
+      // Map 'in_progress' to 'building' for frontend compatibility
+      status = queueItem.status === 'in_progress' ? 'building' : 'queued';
+      etaSeconds = constructionEndsAt
+        ? Math.max(0, Math.ceil((new Date(constructionEndsAt) - new Date()) / 1000))
+        : 0;
+    }
 
     const costs = await ResourceCost.findAll({
       where: {
@@ -212,30 +257,21 @@ class ResourceService {
             throw error;
           }
 
-          const { status } = this.getBuildingState(building);
+          // Vérifier qu'il n'y a pas déjà une construction en cours
+          const activeConstruction = await ConstructionQueue.findOne({
+            where: {
+              cityId: city.id,
+              type: 'building',
+              status: 'in_progress',
+            },
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          });
 
-          if (status === 'in_progress') {
-            const error = new Error('Construction déjà en cours pour ce bâtiment.');
+          if (activeConstruction) {
+            const error = new Error('Une construction de bâtiment est déjà en cours. Attendez qu\'elle se termine.');
             error.status = 400;
             throw error;
-          }
-
-          if (status === 'ready') {
-            const currentVersion = Number(building.version) || 0;
-            const [affected] = await Building.update(
-              {
-                build_start: null,
-                build_duration: null,
-                level: Number(building.level) + 1,
-                version: currentVersion + 1,
-              },
-              {
-                where: { id: building.id, version: currentVersion },
-                transaction,
-              }
-            );
-            this.assertOptimisticUpdate(affected);
-            building = await this.reloadBuildingWithLock(city.id, buildingId, transaction);
           }
 
           const currentLevel = Number(building.level) || 0;
@@ -292,44 +328,73 @@ class ResourceService {
           }
 
           const buildDuration = getBuildDurationSeconds(nextLevel);
-          const currentVersion = Number(building.version) || 0;
-          const build_start = new Date();
 
-          const [affected, updatedBuildings] = await Building.update(
-            {
-              build_start,
-              build_duration: buildDuration,
-              version: currentVersion + 1,
-            },
-            {
-              where: { id: building.id, version: currentVersion },
-              transaction,
-              returning: true,
+          // Utiliser Date.now() en millisecondes pour éviter les conversions de timezone
+          const nowMs = Date.now();
+          const finishTimeMs = nowMs + buildDuration * 1000;
+
+          // Créer une entrée dans la construction queue
+          const queueItem = await ConstructionQueue.create({
+            cityId: city.id,
+            entityId: entityId,
+            type: 'building',
+            status: 'in_progress',
+            startTime: new Date(nowMs),
+            finishTime: new Date(finishTimeMs),
+            slot: 1,
+          }, { transaction });
+
+          // Capturer l'ID et le finishTime avant le commit pour le retour
+          const queueId = queueItem.id;
+          const finishTime = queueItem.finishTime;
+
+          transaction.afterCommit(async () => {
+            try {
+              // Relire le queueItem depuis la DB pour avoir les dates correctement formatées
+              const committedItem = await ConstructionQueue.findByPk(queueId);
+              
+              if (!committedItem) {
+                console.error(`[ResourceService] Cannot find construction queue item with id ${queueId} after commit`);
+                return;
+              }
+
+              console.log(`[ResourceService] committedItem:`, JSON.stringify({
+                id: committedItem.id,
+                finishTime: committedItem.finishTime,
+                startTime: committedItem.startTime,
+                status: committedItem.status,
+              }));
+              
+              const { getIO } = require('../../../socket');
+              const io = getIO();
+              if (io) {
+                const queue = await ConstructionQueue.findAll({
+                  where: { cityId: city.id },
+                  order: [['slot', 'ASC']],
+                });
+                io.to(`user_${userId}`).emit('construction_queue:update', queue);
+              }
+
+              // Programmer la finalisation avec les données lues depuis la DB
+              console.log(`[ResourceService] Scheduling construction completion for queueItem ${queueId}`);
+              await scheduleConstructionCompletion({
+                id: committedItem.id,
+                finishTime: committedItem.finishTime,
+              }, { userId });
+              console.log(`[ResourceService] Successfully scheduled construction completion for queueItem ${queueId}`);
+            } catch (err) {
+              console.error(`[ResourceService] Error in afterCommit for queueItem ${queueId}:`, err);
             }
-          );
-
-          this.assertOptimisticUpdate(affected);
-          const updatedBuilding = updatedBuildings?.[0] || (await this.reloadBuildingWithLock(city.id, buildingId, transaction));
-
-          transaction.afterCommit(() =>
-            this.scheduleResourceUpgradeJob({
-              buildingId: updatedBuilding.id,
-              userId,
-              cityId: city.id,
-              delayMs: buildDuration * 1000,
-            })
-          );
+          });
 
           return {
-            message: 'Amélioration en cours.',
-            id: updatedBuilding.id,
-            name: updatedBuilding.name,
-            level: Number(updatedBuilding.level) || currentLevel,
-            build_start: updatedBuilding.build_start,
-            build_duration: updatedBuilding.build_duration,
-            buildDuration,
+            message: 'Construction démarrée.',
+            queueId: queueItem.id,
+            buildingId: building.id,
+            buildingName: building.name,
             status: 'in_progress',
-            constructionEndsAt: updatedBuilding.constructionEndsAt,
+            finishTime: finishTime,
+            buildDuration,
           };
         });
       } catch (err) {
@@ -421,65 +486,6 @@ class ResourceService {
     return { message: 'Bâtiment détruit.' };
   }
 
-  async finalizeResourceUpgrade(buildingId, userId) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        return await this.transactionProvider(async (transaction) => {
-          const building = await Building.findOne({
-            where: { id: buildingId },
-            transaction,
-            lock: transaction.LOCK.UPDATE,
-          });
-
-          if (!building) {
-            const error = new Error('Bâtiment introuvable.');
-            error.status = 404;
-            throw error;
-          }
-
-          const { status, constructionEndsAt } = this.getBuildingState(building);
-
-          if (status === 'idle') {
-            return building;
-          }
-
-          if (status === 'in_progress' && constructionEndsAt && constructionEndsAt > new Date()) {
-            const delayMs = constructionEndsAt.getTime() - Date.now();
-            transaction.afterCommit(() =>
-              this.scheduleResourceUpgradeJob({ buildingId, userId, cityId: building.city_id, delayMs })
-            );
-            return building;
-          }
-
-          const currentLevel = Number(building.level) || 0;
-          const currentVersion = Number(building.version) || 0;
-          const [affected, updatedBuildings] = await Building.update(
-            {
-              level: currentLevel + 1,
-              build_start: null,
-              build_duration: null,
-              version: currentVersion + 1,
-            },
-            {
-              where: { id: building.id, version: currentVersion },
-              transaction,
-              returning: true,
-            }
-          );
-
-          this.assertOptimisticUpdate(affected);
-          return updatedBuildings?.[0] || (await this.reloadBuildingWithLock(building.city_id, building.id, transaction));
-        });
-      } catch (err) {
-        if (err.status === 409 && attempt < 2) {
-          continue;
-        }
-        throw err;
-      }
-    }
-    throw new Error('Unable to finalize building upgrade');
-  }
-
   async getUserResources(userId) {
     return this.transactionProvider(async (transaction) => {
       const city = await this.withCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
@@ -511,36 +517,9 @@ class ResourceService {
       const effectiveLevelsByName = new Map();
 
       for (const building of buildings) {
-        let effectiveLevel = Number(building.level) || 0;
-
-        const { status, constructionEndsAt } = this.getBuildingState(building);
-
-        if (status !== 'idle' && constructionEndsAt && constructionEndsAt <= now) {
-          const currentVersion = Number(building.version) || 0;
-          const [affected] = await Building.update(
-            {
-              build_start: null,
-              build_duration: null,
-              level: effectiveLevel + 1,
-              version: currentVersion + 1,
-            },
-            {
-              where: { id: building.id, version: currentVersion },
-              transaction,
-            }
-          );
-
-          this.assertOptimisticUpdate(affected);
-          effectiveLevel += 1;
-          building.build_start = null;
-          building.build_duration = null;
-          building.version = currentVersion + 1;
-        }
-
+        const effectiveLevel = Number(building.level) || 0;
         effectiveLevelsByName.set(building.name, effectiveLevel);
       }
-
-      
 
       const hangarLevel = effectiveLevelsByName.get('Hangar') || 0;
       const reservoirLevel = effectiveLevelsByName.get('Réservoir') || 0;
@@ -567,12 +546,16 @@ class ResourceService {
           amount: cappedEnergy,
           last_update: now,
           production_rate: netEnergyRate,
+          level: centraleLevel,
         });
       }
 
-      for (const resource of resources) {
-        const type = resource.type;
-        if (type === 'energie') continue;
+      // Ordre fixe des ressources : metal, or, carburant
+      const orderedTypes = ['metal', 'or', 'carburant'];
+      
+      for (const type of orderedTypes) {
+        const resource = resources.find(r => r.type === type);
+        if (!resource) continue;
 
         const prodBuildingName = TYPE_TO_BUILDING_NAME[type];
         const bKey = prodBuildingName ? buildingKey(resource.city_id, prodBuildingName) : null;
@@ -629,6 +612,10 @@ class ResourceService {
         });
       }
 
+      // Trier les résultats dans l'ordre : energie, metal, or, carburant
+      const typeOrder = { energie: 0, metal: 1, or: 2, carburant: 3 };
+      results.sort((a, b) => (typeOrder[a.type] ?? 999) - (typeOrder[b.type] ?? 999));
+
       return results;
     });
   }
@@ -681,7 +668,7 @@ class ResourceService {
         if (!amount || amount <= 0) continue;
 
         // Map frontend type to database type
-        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'essence' : 'energie';
+        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'carburant' : 'energie';
 
         let resource = await Resource.findOne({
           where: { city_id: city.id, type: dbType },
@@ -751,7 +738,7 @@ class ResourceService {
         const amount = resources[type];
         if (!amount || amount <= 0) continue;
 
-        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'essence' : 'energie';
+        const dbType = type === 'gold' ? 'or' : type === 'metal' ? 'metal' : type === 'fuel' ? 'carburant' : 'energie';
 
         const resource = await Resource.findOne({
           where: { city_id: city.id, type: dbType },
@@ -831,7 +818,7 @@ class ResourceService {
 
       if (type === 'or') amounts.gold = amount;
       else if (type === 'metal') amounts.metal = amount;
-      else if (type === 'essence') amounts.fuel = amount;
+      else if (type === 'carburant') amounts.fuel = amount;
       else if (type === 'energie') amounts.energy = amount;
     }
 

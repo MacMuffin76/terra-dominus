@@ -135,10 +135,17 @@ class CityService {
       order: [['is_capital', 'DESC'], ['id', 'ASC']]
     });
 
-    return cities.map(city => ({
-      ...city.toJSON(),
-      bonuses: this.getSpecializationBonuses(city.specialization)
-    }));
+    return cities.map(city => {
+      const cityData = city.toJSON();
+      return {
+        ...cityData,
+        coords: {
+          x: cityData.coord_x,
+          y: cityData.coord_y
+        },
+        bonuses: this.getSpecializationBonuses(city.specialization)
+      };
+    });
   }
 
   /**

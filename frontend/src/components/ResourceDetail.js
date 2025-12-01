@@ -37,6 +37,7 @@ const ResourceDetail = ({
   building,
   onBuildingUpgraded,
   onBuildingDowngraded,
+  onClose,
 }) => {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -175,12 +176,21 @@ const ResourceDetail = ({
   };
 
   useEffect(() => {
+    console.log('[ResourceDetail] detail changed:', {
+      status: detail?.status,
+      constructionEndsAt: detail?.constructionEndsAt,
+      remainingTime: detail?.remainingTime,
+      isBuilding
+    });
+    
     if (!detail?.constructionEndsAt) {
       setRemainingSeconds(null);
       return undefined;
     }
 
     const end = new Date(detail.constructionEndsAt).getTime();
+    console.log('[ResourceDetail] Setting up timer, end:', new Date(end), 'now:', new Date());
+    
     const updateRemaining = () => {
       const diffSeconds = Math.ceil((end - Date.now()) / 1000);
       setRemainingSeconds(Math.max(0, diffSeconds));
@@ -357,6 +367,7 @@ ResourceDetail.propTypes = {
   }).isRequired,
   onBuildingUpgraded: PropTypes.func.isRequired,
   onBuildingDowngraded: PropTypes.func.isRequired,
+  onClose: PropTypes.func,
 };
 
 export default ResourceDetail;

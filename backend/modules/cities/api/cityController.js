@@ -1,5 +1,6 @@
 // backend/modules/cities/api/cityController.js
-const logger = require('../../../utils/logger');
+const { getLogger } = require('../../../utils/logger');
+const logger = getLogger('CityController');
 
 function createCityController({ cityService }) {
   /**
@@ -7,10 +8,13 @@ function createCityController({ cityService }) {
    */
   async function getUserCities(req, res) {
     try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const cities = await cityService.getUserCitiesWithSpecializations(req.user.id);
       res.json(cities);
     } catch (error) {
-      logger.error('Error getting user cities:', error);
+      logger.error({ err: error }, 'Error getting user cities');
       res.status(500).json({ message: 'Failed to retrieve cities' });
     }
   }
@@ -20,6 +24,9 @@ function createCityController({ cityService }) {
    */
   async function getCityDetails(req, res) {
     try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { cityId } = req.params;
       const city = await cityService.getCityWithSpecialization(
         parseInt(cityId),
@@ -27,7 +34,7 @@ function createCityController({ cityService }) {
       );
       res.json(city);
     } catch (error) {
-      logger.error('Error getting city details:', error);
+      logger.error({ err: error }, 'Error getting city details');
       if (error.message.includes('not found')) {
         return res.status(404).json({ message: error.message });
       }

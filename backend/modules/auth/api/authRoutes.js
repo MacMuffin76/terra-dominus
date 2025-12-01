@@ -32,5 +32,21 @@ module.exports = (container) => {
   const { protect } = require('../../../middleware/authMiddleware');
   router.post('/logout', protect, controller.logout);
 
+  // GET /api/v1/auth/me - Récupérer les infos de l'utilisateur connecté
+  router.get('/me', protect, async (req, res) => {
+    try {
+      res.json({
+        id: req.user.id,
+        username: req.user.username,
+        email: req.user.email
+      });
+    } catch (error) {
+      const { getLogger } = require('../../../utils/logger');
+      const logger = getLogger({ module: 'AuthRoutes' });
+      logger.error({ err: error, userId: req.user?.id }, 'Failed to get user info');
+      res.status(500).json({ message: 'Erreur lors de la récupération des informations utilisateur' });
+    }
+  });
+
   return router;
 };

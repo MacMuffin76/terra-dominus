@@ -11,10 +11,11 @@ const Register = () => {
   const { isAuthenticated } = authState;
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Rediriger uniquement après une inscription réussie
+    if (status === 'success' && isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [status, isAuthenticated, navigate]);
 
   return (
     <div className="auth-page full-height-center">

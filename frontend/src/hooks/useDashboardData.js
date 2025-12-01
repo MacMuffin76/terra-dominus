@@ -11,7 +11,6 @@ const socketUrl = process.env.REACT_APP_SOCKET_URL || window.location.origin;
 
 let socketClient = null;
 let listenersCount = 0;
-let hasBootstrapped = false;
 
 const useDashboardData = () => {
   const dispatch = useDispatch();
@@ -21,9 +20,10 @@ const useDashboardData = () => {
 
   const [error, setError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState(
-    'Initialisation de la connexion...'
+    'Connexion en cours...'
   );
   const [notifications, setNotifications] = useState([]);
+  const [hasBootstrapped, setHasBootstrapped] = useState(false);
 
   const userId = authUser?.id || safeStorage.getItem('userId');
   const storedToken = token || safeStorage.getItem('jwtToken');
@@ -43,8 +43,9 @@ const useDashboardData = () => {
 
   const bootstrapDashboard = useCallback(
     async (force = false) => {
-      if (!userId || (hasBootstrapped && !force)) return;
-      hasBootstrapped = true;
+      // Ne charge pas si pas de userId OU pas de token
+      if (!userId || !storedToken || (hasBootstrapped && !force)) return;
+      setHasBootstrapped(true);
 
       try {
         await dispatch(fetchDashboardData()).unwrap();
@@ -63,7 +64,7 @@ const useDashboardData = () => {
 
       await loadUser();
     },
-    [dispatch, loadUser, userId]
+    [dispatch, loadUser, userId, storedToken, hasBootstrapped]
   );
 
   const socket = useMemo(() => {

@@ -41,6 +41,7 @@ const getSequelizeOptions = () => {
     dialect: 'postgres',
     logging: process.env.DB_LOGGING === 'true' ? console.log : false,
     dialectOptions: ssl ? { ssl } : undefined,
+    timezone: '+01:00', // Match server timezone (Europe centrale)
   };
 };
 

@@ -16,9 +16,17 @@ const ResourcesWidget = ({ resources }) => {
     return new Intl.NumberFormat('fr-FR').format(Math.floor(num));
   };
 
+  // Ordre fixe : metal, or, carburant, energie
+  const resourceOrder = ['metal', 'or', 'carburant', 'energie'];
+  const sortedResources = [...resources].sort((a, b) => {
+    const indexA = resourceOrder.indexOf(a.type);
+    const indexB = resourceOrder.indexOf(b.type);
+    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+  });
+
   return (
     <div className="terra-resources-widget">
-      {resources.map((resource) => {
+      {sortedResources.map((resource) => {
         const amount = Math.floor(Number(resource.amount) || 0);
         const production = Number(resource.production) || 0;
         const displayName = resource.type.charAt(0).toUpperCase() + resource.type.slice(1);

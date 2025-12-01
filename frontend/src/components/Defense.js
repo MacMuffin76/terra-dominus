@@ -7,7 +7,7 @@ import { useAsyncError } from '../hooks/useAsyncError';
 import './Defense.css';
 import DefenseDetail from './DefenseDetail';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader } from './ui';
+import { Alert, Loader, Modal } from './ui';
 import DefenseCard from './defense/DefenseCard';
 
 const Defense = () => {
@@ -85,12 +85,23 @@ const Defense = () => {
                 isSelected={selectedDefense?.id === defense.id}
                 onClick={handleDefenseClick}
               />
-            ))
-          )}
+          ))
+        )}
         </div>
-
-        {selectedDefense && <DefenseDetail defense={selectedDefense} />}
       </div>
+
+      <Modal
+        isOpen={!!selectedDefense}
+        onClose={() => setSelectedDefense(null)}
+        title="Détails de la défense"
+      >
+        {selectedDefense && (
+          <DefenseDetail
+            defense={selectedDefense}
+            onClose={() => setSelectedDefense(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

@@ -77,7 +77,7 @@ const testAllianceTreasury = async () => {
     const resourceTypesMap = {
       or: 50000,      // gold
       metal: 30000,   // metal
-      essence: 20000, // fuel
+      carburant: 20000, // fuel
       energie: 10000, // energy
     };
     

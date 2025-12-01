@@ -12,11 +12,13 @@ const Login = () => {
   const { isAuthenticated, token } = authState;
 
   useEffect(() => {
-    if (isAuthenticated) {
-      safeStorage.setItem('jwtToken', token); // Stocker le token dans localStorage même si localStorage est indisponible
+    // Rediriger uniquement après une connexion réussie (status === 'success')
+    // et non simplement parce que isAuthenticated est true
+    if (status === 'success' && isAuthenticated && token) {
+      safeStorage.setItem('jwtToken', token);
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate, token]);
+  }, [status, isAuthenticated, navigate, token]);
 
   return (
     <div className="auth-page full-height-center">

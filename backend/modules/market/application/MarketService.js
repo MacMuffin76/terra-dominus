@@ -437,7 +437,6 @@ class MarketService {
           [sequelize.fn('SUM', sequelize.col('quantity')), 'totalVolume']
         ],
         limit: 100,
-        order: [['createdAt', 'DESC']],
         raw: true
       })
     ]);

@@ -1,12 +1,17 @@
 /* Trade Panel Styles - Terra UI Enhanced */
 
 .trade-panel-container {
-  padding: var(--spacing-xl);
-  max-width: 1400px;
-  margin: 0 auto;
+  display: flex;
+  align-items: center;
   background: var(--bg-void);
   min-height: 100vh;
-  color: var(--text-primary);
+}
+
+.trade-panel-content {
+  width: calc(100% - 280px);
+  margin-left: 280px;
+  padding: var(--spacing-xl);
+  max-width: 1400px;
 }
 
 .trade-panel-header {
@@ -365,6 +370,12 @@ fieldset.auto-transfer-section legend {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .trade-panel-content {
+    width: 100%;
+    margin-left: 0;
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
   .trade-panel-container {
     padding: 10px;
   }

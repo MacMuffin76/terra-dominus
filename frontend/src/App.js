@@ -13,11 +13,10 @@ import Loader from './components/ui/Loader';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Resources = React.lazy(() => import('./components/Resources'));
-const Facilities = React.lazy(() => import('./components/Facilities'));
-const Research = React.lazy(() => import('./components/Research'));
-const Training = React.lazy(() => import('./components/Training'));
-const UnitTraining = React.lazy(() => import('./components/units/UnitTrainingPanel'));
-const Defense = React.lazy(() => import('./components/Defense'));
+const FacilitiesUnified = React.lazy(() => import('./components/FacilitiesUnified'));
+const ResearchUnified = React.lazy(() => import('./components/ResearchUnified'));
+const TrainingUnified = React.lazy(() => import('./components/TrainingUnified'));
+const DefenseUnified = React.lazy(() => import('./components/DefenseUnified'));
 const Fleet = React.lazy(() => import('./components/Fleet'));
 const Alliance = React.lazy(() => import('./components/Alliance'));
 const TradePanel = React.lazy(() => import('./components/TradePanel'));
@@ -76,7 +75,7 @@ function App() {
                 path="/facilities"
                 element={(
                   <PrivateRoute>
-                    <Facilities />
+                    <FacilitiesUnified />
                   </PrivateRoute>
                 )}
               />
@@ -84,7 +83,7 @@ function App() {
                 path="/research"
                 element={(
                   <PrivateRoute>
-                    <Research />
+                    <ResearchUnified />
                   </PrivateRoute>
                 )}
               />
@@ -92,7 +91,7 @@ function App() {
                 path="/training"
                 element={(
                   <PrivateRoute>
-                    <Training />
+                    <TrainingUnified />
                   </PrivateRoute>
                 )}
               />
@@ -100,7 +99,7 @@ function App() {
                 path="/units"
                 element={(
                   <PrivateRoute>
-                    <UnitTraining />
+                    <TrainingUnified />
                   </PrivateRoute>
                 )}
               />
@@ -108,7 +107,7 @@ function App() {
                 path="/defense"
                 element={(
                   <PrivateRoute>
-                    <Defense />
+                    <DefenseUnified />
                   </PrivateRoute>
                 )}
               />

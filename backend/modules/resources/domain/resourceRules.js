@@ -1,6 +1,6 @@
 const RESOURCE_BUILDINGS = [
-  "Mine d'or",
   'Mine de métal',
+  "Mine d'or",
   'Extracteur',
   'Centrale électrique',
   'Hangar',

@@ -8,7 +8,7 @@ import { logger } from '../utils/logger';
 import './Research.css';
 import ResearchDetail from './ResearchDetail';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader } from './ui';
+import { Alert, Loader, Modal } from './ui';
 import ResearchCard from './research/ResearchCard';
 
 const Research = () => {
@@ -85,14 +85,23 @@ const Research = () => {
                 isSelected={selectedResearch?.id === research.id}
                 onClick={handleResearchClick}
               />
-            ))
-          )}
-        </div>
-
-        {selectedResearch && (
-          <ResearchDetail research={selectedResearch} />
+          ))
         )}
+        </div>
       </div>
+
+      <Modal
+        isOpen={!!selectedResearch}
+        onClose={() => setSelectedResearch(null)}
+        title="Détails de la recherche"
+      >
+        {selectedResearch && (
+          <ResearchDetail
+            research={selectedResearch}
+            onClose={() => setSelectedResearch(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

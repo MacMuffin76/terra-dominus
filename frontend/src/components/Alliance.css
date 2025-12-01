@@ -1,22 +1,27 @@
 .alliance-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  background: var(--bg-void);
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 .alliance-content {
-  flex: 1;
-  padding: var(--spacing-lg) 20px 20px 20px;
-  margin-top: 80px;
-  color: #ffffff;
+  width: calc(100% - 280px);
+  max-width: 1600px;
+  margin-left: 280px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
+  box-sizing: border-box;
 }
 
 .alliance-content h1 {
-  font-size: 2.5rem;
-  padding: 0;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-xl) 0;
 }
 
 .error-message {
@@ -537,12 +542,13 @@
 /* Responsive */
 @media (max-width: 768px) {
   .alliance-content {
-    padding: 15px;
-    margin-top: 70px;
+    width: 100%;
+    margin-left: 0;
+    padding: var(--spacing-lg) var(--spacing-md);
   }
 
   .alliance-content h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .alliance-tabs {

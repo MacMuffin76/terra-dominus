@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getTutorialProgress, completeStep, skipTutorial } from '../api/tutorial';
+import safeStorage from '../utils/safeStorage';
 
 const TutorialContext = createContext(null);
 
@@ -22,6 +23,13 @@ export const TutorialProvider = ({ children }) => {
   });
 
   const loadTutorialProgress = async () => {
+    // Ne pas charger si pas de token JWT (utilisateur non authentifié)
+    const token = safeStorage.getItem('jwtToken');
+    if (!token) {
+      setTutorialState(prev => ({ ...prev, loading: false, showTutorial: false }));
+      return null;
+    }
+
     try {
       const data = await getTutorialProgress();
       const showTutorial = !data.progress.completed && !data.progress.skipped;

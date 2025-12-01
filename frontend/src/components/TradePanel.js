@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   getUserTradeRoutes, 
   establishTradeRoute, 
@@ -8,6 +8,7 @@ import {
   getRouteConvoys 
 } from '../api/trade';
 import { getUserCities } from '../api/world';
+import Menu from './Menu';
 import './Trade.css';
 
 const TradePanel = () => {
@@ -39,11 +40,7 @@ const TradePanel = () => {
     escortUnits: []
   });
 
-  useEffect(() => {
-    loadData();
-  }, [selectedTab]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -59,7 +56,11 @@ const TradePanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTab]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const loadConvoys = async (routeId) => {
     setLoading(true);
@@ -120,29 +121,6 @@ const TradePanel = () => {
       loadData();
     } catch (err) {
       setError(err.message);
-    }
-  };
-
-  const handleSendConvoy = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await sendConvoy(convoyForm);
-      alert(`Convoi envoyé ! Arrivée prévue : ${new Date(result.arrivalTime).toLocaleString()}`);
-      setConvoyForm({
-        tradeRouteId: '',
-        cargoGold: 0,
-        cargoMetal: 0,
-        cargoFuel: 0,
-        escortUnits: []
-      });
-      loadData();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -285,8 +263,9 @@ const TradePanel = () => {
       <h3>Créer une Route Commerciale</h3>
       <form onSubmit={handleCreateRoute}>
         <div className="form-group">
-          <label>Ville d'origine</label>
-          <select 
+          <label htmlFor="originCityId">Ville d'origine</label>
+          <select
+            id="originCityId" 
             value={routeForm.originCityId}
             onChange={(e) => setRouteForm({...routeForm, originCityId: e.target.value})}
             required
@@ -301,8 +280,9 @@ const TradePanel = () => {
         </div>
 
         <div className="form-group">
-          <label>Ville de destination</label>
-          <select 
+          <label htmlFor="destinationCityId">Ville de destination</label>
+          <select
+            id="destinationCityId" 
             value={routeForm.destinationCityId}
             onChange={(e) => setRouteForm({...routeForm, destinationCityId: e.target.value})}
             required
@@ -319,8 +299,9 @@ const TradePanel = () => {
         </div>
 
         <div className="form-group">
-          <label>Type de route</label>
-          <select 
+          <label htmlFor="routeType">Type de route</label>
+          <select
+            id="routeType" 
             value={routeForm.routeType}
             onChange={(e) => setRouteForm({...routeForm, routeType: e.target.value})}
           >
@@ -334,8 +315,9 @@ const TradePanel = () => {
           <p className="help-text">Les ressources seront transférées automatiquement selon la fréquence définie</p>
           
           <div className="form-group">
-            <label>Or par transfert</label>
-            <input 
+            <label htmlFor="autoTransferGold">Or par transfert</label>
+            <input
+              id="autoTransferGold" 
               type="number"
               min="0"
               value={routeForm.autoTransferGold}
@@ -344,8 +326,9 @@ const TradePanel = () => {
           </div>
 
           <div className="form-group">
-            <label>Métal par transfert</label>
-            <input 
+            <label htmlFor="autoTransferMetal">Métal par transfert</label>
+            <input
+              id="autoTransferMetal" 
               type="number"
               min="0"
               value={routeForm.autoTransferMetal}
@@ -354,8 +337,9 @@ const TradePanel = () => {
           </div>
 
           <div className="form-group">
-            <label>Carburant par transfert</label>
-            <input 
+            <label htmlFor="autoTransferFuel">Carburant par transfert</label>
+            <input
+              id="autoTransferFuel" 
               type="number"
               min="0"
               value={routeForm.autoTransferFuel}
@@ -364,8 +348,9 @@ const TradePanel = () => {
           </div>
 
           <div className="form-group">
-            <label>Fréquence</label>
-            <select 
+            <label htmlFor="transferFrequency">Fréquence</label>
+            <select
+              id="transferFrequency" 
               value={routeForm.transferFrequency}
               onChange={(e) => setRouteForm({...routeForm, transferFrequency: parseInt(e.target.value)})}
             >
@@ -387,11 +372,14 @@ const TradePanel = () => {
   );
 
   return (
-    <div className="trade-panel-container">
-      <div className="trade-panel-header">
-        <h1>🚢 Commerce Inter-Villes</h1>
-        <p className="subtitle">Gérez vos routes commerciales et convois de ressources</p>
-      </div>
+    <>
+      <Menu />
+      <div className="trade-panel-container">
+        <div className="trade-panel-content">
+          <div className="trade-panel-header">
+            <h1>🚢 Commerce Inter-Villes</h1>
+            <p className="subtitle">Gérez vos routes commerciales et convois de ressources</p>
+          </div>
 
       {error && (
         <div className="error-message">
@@ -428,7 +416,9 @@ const TradePanel = () => {
         {!loading && selectedTab === 'convoys' && renderConvoys()}
         {!loading && selectedTab === 'create' && renderCreateRoute()}
       </div>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 

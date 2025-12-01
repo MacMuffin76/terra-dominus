@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -19,6 +19,9 @@ import { useTheme } from '../context/ThemeContext';
 const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
     const handleResize = () => {
@@ -96,7 +99,7 @@ const Menu = () => {
         </div>
         <ul className="menu-list">
           <li>
-            <Link to="/dashboard" onClick={closeMenuOnNavigation} id="menu-dashboard">
+            <Link to="/dashboard" onClick={closeMenuOnNavigation} id="menu-dashboard" className={isActive('/dashboard') ? 'active' : ''}>
               <DashboardIcon className="menu-icon" />
               <div>
                 Tableau de bord
@@ -104,7 +107,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/resources" onClick={closeMenuOnNavigation} id="menu-resources">
+            <Link to="/resources" onClick={closeMenuOnNavigation} id="menu-resources" className={isActive('/resources') ? 'active' : ''}>
               <CategoryIcon className="menu-icon" />
               <div>
                 Ressource
@@ -112,7 +115,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/facilities" onClick={closeMenuOnNavigation} id="menu-facilities">
+            <Link to="/facilities" onClick={closeMenuOnNavigation} id="menu-facilities" className={isActive('/facilities') ? 'active' : ''}>
               <BusinessIcon className="menu-icon" />
               <div>
                 Installation
@@ -120,7 +123,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/research" onClick={closeMenuOnNavigation} id="menu-research">
+            <Link to="/research" onClick={closeMenuOnNavigation} id="menu-research" className={isActive('/research') ? 'active' : ''}>
               <ScienceIcon className="menu-icon" />
               <div>
                 Recherche
@@ -128,7 +131,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/training" onClick={closeMenuOnNavigation} id="menu-training">
+            <Link to="/training" onClick={closeMenuOnNavigation} id="menu-training" className={isActive('/training') ? 'active' : ''}>
               <BuildIcon className="menu-icon" />
               <div>
                 Centre d'entrainement
@@ -136,15 +139,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/units" onClick={closeMenuOnNavigation} id="menu-units">
-              <BuildIcon className="menu-icon" />
-              <div>
-                Unités
-              </div>
-            </Link>
-          </li>
-          <li>
-            <Link to="/defense" onClick={closeMenuOnNavigation}>
+            <Link to="/defense" onClick={closeMenuOnNavigation} className={isActive('/defense') ? 'active' : ''}>
               <SecurityIcon className="menu-icon" />
               <div>
                 Defense
@@ -152,7 +147,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/fleet" onClick={closeMenuOnNavigation}>
+            <Link to="/fleet" onClick={closeMenuOnNavigation} className={isActive('/fleet') ? 'active' : ''}>
               <DirectionsBoatIcon className="menu-icon" />
               <div>
                 Flotte
@@ -160,7 +155,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/trade" onClick={closeMenuOnNavigation}>
+            <Link to="/trade" onClick={closeMenuOnNavigation} className={isActive('/trade') ? 'active' : ''}>
               <LocalShippingIcon className="menu-icon" />
               <div>
                 Commerce
@@ -168,7 +163,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/market" onClick={closeMenuOnNavigation}>
+            <Link to="/market" onClick={closeMenuOnNavigation} className={isActive('/market') ? 'active' : ''}>
               <ShoppingCartIcon className="menu-icon" />
               <div>
                 Marché
@@ -176,7 +171,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/world" onClick={closeMenuOnNavigation} id="menu-world">
+            <Link to="/world" onClick={closeMenuOnNavigation} id="menu-world" className={isActive('/world') ? 'active' : ''}>
               <PublicIcon className="menu-icon" />
               <div>
                 Carte du Monde
@@ -184,7 +179,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/portals" onClick={closeMenuOnNavigation} id="menu-portals">
+            <Link to="/portals" onClick={closeMenuOnNavigation} id="menu-portals" className={isActive('/portals') ? 'active' : ''}>
               <ExploreIcon className="menu-icon" />
               <div>
                 Portails PvE
@@ -192,7 +187,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/cities" onClick={closeMenuOnNavigation}>
+            <Link to="/cities" onClick={closeMenuOnNavigation} className={isActive('/cities') ? 'active' : ''}>
               <LocationCityIcon className="menu-icon" />
               <div>
                 Spécialisation
@@ -200,7 +195,7 @@ const Menu = () => {
             </Link>
           </li>
           <li>
-            <Link to="/alliance" onClick={closeMenuOnNavigation}>
+            <Link to="/alliance" onClick={closeMenuOnNavigation} className={isActive('/alliance') ? 'active' : ''}>
               <GroupIcon className="menu-icon" />
               <div>
                 Alliance

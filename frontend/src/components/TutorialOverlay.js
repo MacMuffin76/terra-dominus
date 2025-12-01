@@ -104,6 +104,7 @@ const TutorialOverlay = ({
             width: targetElement.getBoundingClientRect().width + 10,
             height: targetElement.getBoundingClientRect().height + 10,
             zIndex: 10000,
+            pointerEvents: 'none', /* Ensure clicks pass through to the element below */
           }}
         />
       );
@@ -113,10 +114,7 @@ const TutorialOverlay = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className={`tutorial-backdrop ${isVisible ? 'visible' : ''}`} />
-      
-      {/* Highlight target element */}
+      {/* Highlight target element - box-shadow creates backdrop with cutout */}
       {highlightTarget()}
       
       {/* Tutorial card */}

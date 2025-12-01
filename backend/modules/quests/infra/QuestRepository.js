@@ -101,7 +101,7 @@ module.exports = ({ models, logger, traceId }) => {
       return await UserQuest.findAll({
         where: {
           user_id: userId,
-          status: 'active',
+          status: 'in_progress',
         },
         include: [
           { model: PortalQuest, as: 'quest' },
@@ -114,7 +114,7 @@ module.exports = ({ models, logger, traceId }) => {
       return await UserQuest.findAll({
         where: {
           user_id: userId,
-          status: 'active',
+          status: 'in_progress',
           expires_at: { [Op.lt]: new Date() },
         },
         include: [
@@ -138,11 +138,10 @@ module.exports = ({ models, logger, traceId }) => {
       return await UserQuest.create({
         user_id: userId,
         quest_id: questId,
-        status: 'active',
+        status: 'in_progress',
         progress,
         started_at: new Date(),
         expires_at: expiresAt,
-        rewards_claimed: false,
       });
     },
 
@@ -182,7 +181,8 @@ module.exports = ({ models, logger, traceId }) => {
       const userQuest = await UserQuest.findByPk(userQuestId);
       if (!userQuest) throw new Error(`UserQuest ${userQuestId} not found`);
 
-      userQuest.rewards_claimed = true;
+      userQuest.status = 'claimed';
+      userQuest.claimed_at = new Date();
       await userQuest.save();
 
       return userQuest;
@@ -324,7 +324,7 @@ module.exports = ({ models, logger, traceId }) => {
     async getUserQuestStats(userId) {
       const [total, active, completed] = await Promise.all([
         UserQuest.count({ where: { user_id: userId } }),
-        UserQuest.count({ where: { user_id: userId, status: 'active' } }),
+        UserQuest.count({ where: { user_id: userId, status: 'in_progress' } }),
         UserQuest.count({ where: { user_id: userId, status: 'completed' } }),
       ]);
 

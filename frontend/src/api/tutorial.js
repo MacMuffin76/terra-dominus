@@ -1,12 +1,10 @@
 import axios from '../utils/axiosInstance';
 
-const API_URL = process.env.REACT_APP_API_URL || '/api/v1';
-
 /**
  * Get tutorial progress for current user
  */
 export const getTutorialProgress = async () => {
-  const response = await axios.get(`${API_URL}/tutorial/progress`);
+  const response = await axios.get('/tutorial/progress');
   return response.data;
 };
 
@@ -14,7 +12,7 @@ export const getTutorialProgress = async () => {
  * Complete a tutorial step
  */
 export const completeStep = async (stepId, actionData = {}) => {
-  const response = await axios.post(`${API_URL}/tutorial/complete-step`, {
+  const response = await axios.post('/tutorial/complete-step', {
     stepId,
     actionData,
   });
@@ -25,7 +23,7 @@ export const completeStep = async (stepId, actionData = {}) => {
  * Skip tutorial
  */
 export const skipTutorial = async () => {
-  const response = await axios.post(`${API_URL}/tutorial/skip`);
+  const response = await axios.post('/tutorial/skip');
   return response.data;
 };
 
@@ -33,7 +31,7 @@ export const skipTutorial = async () => {
  * Reset tutorial (for replay)
  */
 export const resetTutorial = async () => {
-  const response = await axios.post(`${API_URL}/tutorial/reset`);
+  const response = await axios.post('/tutorial/reset');
   return response.data;
 };
 
@@ -41,6 +39,6 @@ export const resetTutorial = async () => {
  * Get tutorial statistics (admin)
  */
 export const getTutorialStatistics = async () => {
-  const response = await axios.get(`${API_URL}/tutorial/statistics`);
+  const response = await axios.get('/tutorial/statistics');
   return response.data;
 };

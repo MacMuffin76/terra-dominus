@@ -65,7 +65,7 @@ export const getMaxCitiesLimit = async () => {
  */
 
 export const getUserCities = async () => {
-  const { data } = await axiosInstance.get('/cities/my-cities');
+  const { data } = await axiosInstance.get('/cities/');
   return data;
 };
 

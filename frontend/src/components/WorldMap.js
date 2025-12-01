@@ -56,8 +56,12 @@ const WorldMap = () => {
           getUserCities(),
           getAvailableCitySlots(),
           getMaxCitiesLimit(),
-          getActivePortals().catch(() => ({ data: [] })), // Portals optional
+          getActivePortals().catch((err) => {
+            logger.warn('Failed to load portals (non-critical)', err);
+            return { data: [] };
+          })
         ]);
+        
         return { world, userCities, slots, limitData, portalsData };
       },
       { 
@@ -91,7 +95,8 @@ const WorldMap = () => {
 
   useEffect(() => {
     loadWorldData();
-  }, [loadWorldData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   // Socket.IO events for portals
   usePortalEvents({

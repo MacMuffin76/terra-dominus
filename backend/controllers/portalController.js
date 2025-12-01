@@ -3,7 +3,8 @@
  * HTTP request handlers for Portal System
  */
 
-const logger = require('../utils/logger');
+const { getLogger } = require('../utils/logger');
+const logger = getLogger({ module: 'PortalController' });
 
 const portalController = ({ portalService, portalCombatService, portalSpawnerService }) => {
   /**
@@ -27,7 +28,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         count: portals.length
       });
     } catch (error) {
-      logger.error('Error listing portals', { error: error.message, filters: req.query });
+      logger.error({ err: error, filters: req.query }, 'Error listing portals');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch portals',
@@ -57,10 +58,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: portal
       });
     } catch (error) {
-      logger.error('Error fetching portal details', { 
-        portalId: req.params.id,
-        error: error.message 
-      });
+      logger.error({ err: error, portalId: req.params.id }, 'Error fetching portal details');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch portal details',
@@ -108,11 +106,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: result
       });
     } catch (error) {
-      logger.error('Error attacking portal', {
-        userId: req.user.id,
-        portalId: req.params.id,
-        error: error.message
-      });
+      logger.error({ err: error, userId: req.user.id, portalId: req.params.id }, 'Error attacking portal');
 
       let statusCode = 500;
       if (error.message.includes('not found') || error.message.includes('not active')) {
@@ -152,10 +146,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: estimation
       });
     } catch (error) {
-      logger.error('Error estimating battle', {
-        portalId: req.params.id,
-        error: error.message
-      });
+      logger.error({ err: error, portalId: req.params.id }, 'Error estimating battle');
 
       const statusCode = error.message.includes('not found') ? 404 : 500;
       res.status(statusCode).json({
@@ -179,10 +170,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: mastery
       });
     } catch (error) {
-      logger.error('Error fetching user mastery', {
-        userId: req.user.id,
-        error: error.message
-      });
+      logger.error({ err: error, userId: req.user.id }, 'Error fetching user mastery');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch mastery data',
@@ -211,10 +199,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: history
       });
     } catch (error) {
-      logger.error('Error fetching battle history', {
-        userId: req.user.id,
-        error: error.message
-      });
+      logger.error({ err: error, userId: req.user.id }, 'Error fetching battle history');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch battle history',
@@ -246,10 +231,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: leaderboard
       });
     } catch (error) {
-      logger.error('Error fetching leaderboard', {
-        tier: req.params.tier,
-        error: error.message
-      });
+      logger.error({ err: error, tier: req.params.tier }, 'Error fetching leaderboard');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch leaderboard',
@@ -271,7 +253,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: events
       });
     } catch (error) {
-      logger.error('Error fetching golden portal events', { error: error.message });
+      logger.error({ err: error }, 'Error fetching golden portal events');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch events',
@@ -304,10 +286,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: portal
       });
     } catch (error) {
-      logger.error('Error spawning portal', {
-        tier: req.body.tier,
-        error: error.message
-      });
+      logger.error({ err: error, tier: req.body.tier }, 'Error spawning portal');
       res.status(500).json({
         success: false,
         message: 'Failed to spawn portal',
@@ -329,7 +308,7 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         data: stats
       });
     } catch (error) {
-      logger.error('Error fetching spawning stats', { error: error.message });
+      logger.error({ err: error }, 'Error fetching spawning stats');
       res.status(500).json({
         success: false,
         message: 'Failed to fetch spawning statistics',
@@ -340,7 +319,9 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
 
   return {
     listPortals,
+    getActivePortals: listPortals, // Alias pour compatibilité avec les routes
     getPortalDetails,
+    getPortalById: getPortalDetails, // Alias pour compatibilité avec les routes
     attackPortal,
     estimateBattle,
     getUserMastery,
@@ -348,7 +329,60 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
     getLeaderboard,
     getGoldenPortalEvents,
     spawnPortal,
-    getSpawningStats
+    getSpawningStats,
+    // Stubs pour les méthodes manquées par les routes
+    getPortalsNearCoordinates: async (req, res) => {
+      try {
+        const { coordX, coordY } = req.params;
+        const radius = parseInt(req.query.radius) || 50;
+        
+        // Pour l'instant, retourner un tableau vide
+        // TODO: Implémenter la logique de recherche par coordonnées
+        res.status(200).json({
+          success: true,
+          data: [],
+          message: 'Portal proximity search not yet implemented'
+        });
+      } catch (error) {
+        logger.error({ err: error }, 'Error getting portals near coordinates');
+        res.status(500).json({ success: false, message: error.message });
+      }
+    },
+    getUserExpeditions: async (req, res) => {
+      try {
+        res.status(200).json({
+          success: true,
+          data: [],
+          message: 'User expeditions not yet implemented'
+        });
+      } catch (error) {
+        logger.error({ err: error }, 'Error getting user expeditions');
+        res.status(500).json({ success: false, message: error.message });
+      }
+    },
+    getPortalStatistics: async (req, res) => {
+      try {
+        res.status(200).json({
+          success: true,
+          data: { totalPortals: 0, activePortals: 0 },
+          message: 'Portal statistics not yet implemented'
+        });
+      } catch (error) {
+        logger.error({ err: error }, 'Error getting portal statistics');
+        res.status(500).json({ success: false, message: error.message });
+      }
+    },
+    challengePortal: async (req, res) => {
+      try {
+        res.status(501).json({
+          success: false,
+          message: 'Portal challenge not yet implemented'
+        });
+      } catch (error) {
+        logger.error({ err: error }, 'Error challenging portal');
+        res.status(500).json({ success: false, message: error.message });
+      }
+    }
   };
 };
 

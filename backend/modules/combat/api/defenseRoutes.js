@@ -8,6 +8,7 @@ const createDefenseRouter = (container) => {
   router.get('/defenses', protect, controller.getDefenses);
   router.get('/defense-buildings/:id', protect, controller.getDefenseDetails);
   router.post('/defense-buildings/:id/buy', protect, controller.buyDefenseUnit);
+  router.post('/defense-buildings/:id/upgrade', protect, controller.buyDefenseUnit);
 
   return router;
 };

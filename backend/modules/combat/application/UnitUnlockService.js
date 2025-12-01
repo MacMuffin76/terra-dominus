@@ -2,17 +2,20 @@ const { UNIT_TIERS, UNIT_DEFINITIONS } = require('../domain/unitDefinitions');
 const { runWithContext } = require('../../../utils/logger');
 
 /**
- * UnitUnlockService - Gestion des débloca des unités par niveau et recherche
+ * UnitUnlockService - Gestion des débloca des unités par bâtiments et recherches
  * 
- * Ce service gère:
- * - Vérification des prérequis d'unlock (niveau joueur, recherches)
+ * Nouveau système:
+ * - Vérification des niveaux de bâtiments (Training Center, Forge)
+ * - Vérification des recherches complétées
  * - Liste des unités disponibles pour un joueur
- * - Progression et notifications d'unlock
  */
 class UnitUnlockService {
-  constructor({ User, Research, sequelize }) {
+  constructor({ User, Research, Building, Facility, City, sequelize }) {
     this.User = User;
     this.Research = Research;
+    this.Building = Building;
+    this.Facility = Facility;
+    this.City = City;
     this.sequelize = sequelize;
   }
 
@@ -28,39 +31,62 @@ class UnitUnlockService {
         throw new Error('User not found');
       }
 
-      const userLevel = user.level || 1;
+      // Récupérer la ville du joueur
+      const city = await this.City.findOne({ where: { user_id: userId, is_capital: true } });
+      if (!city) {
+        throw new Error('City not found');
+      }
+
+      // Récupérer les bâtiments/facilities du joueur
+      const facilities = await this.Facility.findAll({ where: { city_id: city.id } });
+      const buildings = await this.Building.findAll({ where: { city_id: city.id } });
+
+      // Récupérer les recherches complétées (level > 0 signifie recherche active/complétée)
+      const completedResearch = await this.Research.findAll({
+        where: { 
+          user_id: userId,
+          level: { [this.sequelize.Sequelize.Op.gt]: 0 }
+        }
+      });
+
+      const researchIds = completedResearch.map(r => r.name);
+
+      // Récupérer niveaux des installations clés
+      const trainingCenter = facilities.find(f => f.name === 'Centre d\'Entraînement' || f.name === 'Terrain d\'Entrainement');
+      const forge = facilities.find(f => f.name === 'Forge Militaire');
+      
+      const trainingCenterLevel = trainingCenter?.level || 0;
+      const forgeLevel = forge?.level || 0;
+
       const unlocked = [];
       const locked = [];
       let nextUnlock = null;
 
       // Parcourir toutes les unités
       for (const unit of Object.values(UNIT_DEFINITIONS)) {
-        const tierInfo = Object.values(UNIT_TIERS).find(t => t.unlockLevel <= userLevel && 
-          (Object.values(UNIT_TIERS).find(t2 => t2.unlockLevel === unit.tier)?.unlockLevel || 999) >= t.unlockLevel);
-        
-        const requiredLevel = Object.values(UNIT_TIERS).find(t => 
-          t.unlockLevel === (Object.keys(UNIT_TIERS).find(k => UNIT_TIERS[k].unlockLevel === unit.tier) ? unit.tier : 999)
-        )?.unlockLevel || 1;
-
-        const isUnlocked = userLevel >= requiredLevel;
+        const checkResult = this._checkUnitRequirements(unit, {
+          trainingCenterLevel,
+          forgeLevel,
+          researchIds
+        });
 
         const unitData = {
           ...unit,
-          requiredLevel,
-          tierName: Object.values(UNIT_TIERS).find(t => t.unlockLevel === requiredLevel)?.name || 'Basic',
-          isUnlocked
+          isUnlocked: checkResult.isUnlocked,
+          missingRequirements: checkResult.missingRequirements,
+          tierName: Object.values(UNIT_TIERS)[unit.tier - 1]?.name || 'Unknown'
         };
 
-        if (isUnlocked) {
+        if (checkResult.isUnlocked) {
           unlocked.push(unitData);
         } else {
           locked.push(unitData);
           
-          // Trouver le prochain unlock
-          if (!nextUnlock || requiredLevel < nextUnlock.requiredLevel) {
+          // Trouver le prochain unlock (par tier)
+          if (!nextUnlock || unit.tier < nextUnlock.tier) {
             nextUnlock = {
               ...unitData,
-              levelsRemaining: requiredLevel - userLevel
+              requirementsText: checkResult.missingRequirements.join(', ')
             };
           }
         }
@@ -70,8 +96,11 @@ class UnitUnlockService {
         unlocked: unlocked.sort((a, b) => a.tier - b.tier || a.id.localeCompare(b.id)),
         locked: locked.sort((a, b) => a.tier - b.tier || a.id.localeCompare(b.id)),
         nextUnlock,
-        currentLevel: userLevel,
-        tierProgress: this._calculateTierProgress(userLevel)
+        buildings: {
+          trainingCenterLevel,
+          forgeLevel
+        },
+        tierProgress: this._calculateTierProgress(trainingCenterLevel, forgeLevel)
       };
     });
   }
@@ -79,34 +108,54 @@ class UnitUnlockService {
   /**
    * Vérifier si une unité est débloquée pour un joueur
    * @param {number} userId - ID du joueur
-   * @param {string} unitId - ID de l'unité (ex: 'cavalry', 'tanks')
-   * @returns {Promise<{isUnlocked: boolean, reason: string, requiredLevel: number}>}
+   * @param {string} unitId - ID de l'unité (ex: 'riflemen', 'heavy_tank')
+   * @returns {Promise<{isUnlocked: boolean, reason: string, missingRequirements: Array}>}
    */
   async checkUnitUnlock(userId, unitId) {
     return runWithContext(async () => {
-      const user = await this.User.findByPk(userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      const unit = UNIT_DEFINITIONS[unitId];
+      const unit = UNIT_DEFINITIONS[unitId.toUpperCase()];
       if (!unit) {
         throw new Error(`Unit ${unitId} not found`);
       }
 
-      const userLevel = user.level || 1;
-      const tierInfo = Object.values(UNIT_TIERS)[unit.tier - 1];
-      const requiredLevel = tierInfo?.unlockLevel || 1;
+      // Récupérer la ville du joueur
+      const city = await this.City.findOne({ where: { user_id: userId, is_capital: true } });
+      if (!city) {
+        throw new Error('City not found');
+      }
 
-      const isUnlocked = userLevel >= requiredLevel;
+      // Récupérer les bâtiments/facilities du joueur
+      const facilities = await this.Facility.findAll({ where: { city_id: city.id } });
+
+      // Récupérer les recherches complétées (level > 0 signifie recherche active/complétée)
+      const completedResearch = await this.Research.findAll({
+        where: { 
+          user_id: userId,
+          level: { [this.sequelize.Sequelize.Op.gt]: 0 }
+        }
+      });
+
+      const researchIds = completedResearch.map(r => r.name);
+
+      // Récupérer niveaux des installations clés
+      const trainingCenter = facilities.find(f => f.name === 'Centre d\'Entraînement' || f.name === 'Terrain d\'Entrainement');
+      const forge = facilities.find(f => f.name === 'Forge Militaire');
+      
+      const trainingCenterLevel = trainingCenter?.level || 0;
+      const forgeLevel = forge?.level || 0;
+
+      const checkResult = this._checkUnitRequirements(unit, {
+        trainingCenterLevel,
+        forgeLevel,
+        researchIds
+      });
 
       return {
-        isUnlocked,
-        reason: isUnlocked 
+        isUnlocked: checkResult.isUnlocked,
+        reason: checkResult.isUnlocked 
           ? 'Unit unlocked' 
-          : `Requires player level ${requiredLevel} (current: ${userLevel})`,
-        requiredLevel,
-        currentLevel: userLevel,
+          : checkResult.missingRequirements.join(', '),
+        missingRequirements: checkResult.missingRequirements,
         unit: {
           id: unit.id,
           name: unit.name,
@@ -117,124 +166,133 @@ class UnitUnlockService {
   }
 
   /**
-   * Obtenir les unités qui viennent d'être débloquées après un level up
-   * @param {number} userId - ID du joueur
-   * @param {number} oldLevel - Ancien niveau
-   * @param {number} newLevel - Nouveau niveau
-   * @returns {Promise<Array>} - Liste des unités nouvellement débloquées
+   * Vérifier les prérequis d'une unité
+   * @private
    */
-  async getNewlyUnlockedUnits(userId, oldLevel, newLevel) {
-    return runWithContext(async () => {
-      const newlyUnlocked = [];
+  _checkUnitRequirements(unit, playerData) {
+    const { trainingCenterLevel, forgeLevel, researchIds } = playerData;
+    const missingRequirements = [];
+    let isUnlocked = true;
 
-      // Vérifier chaque tier
-      for (const [tierKey, tierInfo] of Object.entries(UNIT_TIERS)) {
-        if (oldLevel < tierInfo.unlockLevel && newLevel >= tierInfo.unlockLevel) {
-          // Ce tier vient d'être débloqué !
-          const tierNumber = parseInt(tierKey.split('_')[1]);
-          const tierUnits = Object.values(UNIT_DEFINITIONS).filter(u => u.tier === tierNumber);
-          
-          newlyUnlocked.push({
-            tier: tierNumber,
-            tierName: tierInfo.name,
-            unlockLevel: tierInfo.unlockLevel,
-            units: tierUnits
-          });
+    // Vérifier Training Center
+    if (unit.requiredBuildings.trainingCenter) {
+      if (trainingCenterLevel < unit.requiredBuildings.trainingCenter) {
+        isUnlocked = false;
+        missingRequirements.push(
+          `Centre d'Entraînement Niv ${unit.requiredBuildings.trainingCenter} (actuellement: ${trainingCenterLevel})`
+        );
+      }
+    }
+
+    // Vérifier Forge
+    if (unit.requiredBuildings.forge) {
+      if (forgeLevel < unit.requiredBuildings.forge) {
+        isUnlocked = false;
+        missingRequirements.push(
+          `Forge Militaire Niv ${unit.requiredBuildings.forge} (actuellement: ${forgeLevel})`
+        );
+      }
+    }
+
+    // Vérifier recherches
+    if (unit.requiredResearch && unit.requiredResearch.length > 0) {
+      for (const researchId of unit.requiredResearch) {
+        if (!researchIds.includes(researchId)) {
+          isUnlocked = false;
+          missingRequirements.push(`Recherche: ${researchId}`);
         }
       }
+    }
 
-      return newlyUnlocked;
-    });
+    return {
+      isUnlocked,
+      missingRequirements
+    };
   }
 
   /**
    * Calculer la progression dans les tiers
-   * @param {number} userLevel - Niveau du joueur
+   * @param {number} trainingCenterLevel - Niveau Centre d'Entraînement
+   * @param {number} forgeLevel - Niveau Forge
    * @returns {Object} - Info de progression
    */
-  _calculateTierProgress(userLevel) {
-    const tiers = Object.values(UNIT_TIERS).sort((a, b) => a.unlockLevel - b.unlockLevel);
+  _calculateTierProgress(trainingCenterLevel, forgeLevel) {
+    const tiers = Object.values(UNIT_TIERS);
     
     let currentTier = null;
     let nextTier = null;
 
     for (let i = 0; i < tiers.length; i++) {
-      if (userLevel >= tiers[i].unlockLevel) {
-        currentTier = { ...tiers[i], number: i + 1 };
+      const tier = tiers[i];
+      const meetsRequirements = 
+        trainingCenterLevel >= (tier.requiredBuildings.trainingCenter || 0) &&
+        (!tier.requiredBuildings.forge || forgeLevel >= tier.requiredBuildings.forge);
+
+      if (meetsRequirements) {
+        currentTier = { ...tier, number: i + 1 };
       } else if (!nextTier) {
-        nextTier = { ...tiers[i], number: i + 1 };
+        nextTier = { ...tier, number: i + 1 };
         break;
       }
     }
 
-    // Si on n'a pas de nextTier, on est au max
     if (!nextTier && currentTier) {
       return {
         currentTier,
         nextTier: null,
         progress: 100,
-        levelsToNext: 0,
-        message: 'All tiers unlocked!'
+        message: 'Tous les tiers débloqués!'
       };
     }
 
-    const progress = nextTier ? 
-      ((userLevel - (currentTier?.unlockLevel || 0)) / (nextTier.unlockLevel - (currentTier?.unlockLevel || 0))) * 100 
-      : 0;
+    const missingForNext = [];
+    if (nextTier) {
+      if (trainingCenterLevel < (nextTier.requiredBuildings.trainingCenter || 0)) {
+        missingForNext.push(`Centre Niv ${nextTier.requiredBuildings.trainingCenter}`);
+      }
+      if (nextTier.requiredBuildings.forge && forgeLevel < nextTier.requiredBuildings.forge) {
+        missingForNext.push(`Forge Niv ${nextTier.requiredBuildings.forge}`);
+      }
+    }
 
     return {
-      currentTier: currentTier || { name: 'None', number: 0, unlockLevel: 0 },
+      currentTier: currentTier || { name: 'Aucun', number: 0 },
       nextTier,
-      progress: Math.round(progress),
-      levelsToNext: nextTier ? nextTier.unlockLevel - userLevel : 0,
+      missingForNext,
       message: nextTier ? 
-        `${nextTier.levelsToNext} levels until ${nextTier.name}` : 
-        'All tiers unlocked!'
+        `Prochain tier: ${nextTier.name} - ${missingForNext.join(', ')}` : 
+        'Tous les tiers débloqués!'
     };
   }
 
   /**
    * Obtenir un résumé des tiers pour l'UI
-   * @param {number} userLevel - Niveau du joueur
+   * @param {number} trainingCenterLevel
+   * @param {number} forgeLevel
    * @returns {Array} - Liste des tiers avec statut
    */
-  getTiersSummary(userLevel) {
+  getTiersSummary(trainingCenterLevel, forgeLevel) {
     return Object.entries(UNIT_TIERS).map(([key, tierInfo], index) => {
       const tierNumber = index + 1;
-      const isUnlocked = userLevel >= tierInfo.unlockLevel;
+      const isUnlocked = 
+        trainingCenterLevel >= (tierInfo.requiredBuildings.trainingCenter || 0) &&
+        (!tierInfo.requiredBuildings.forge || forgeLevel >= tierInfo.requiredBuildings.forge);
+      
       const unitsInTier = Object.values(UNIT_DEFINITIONS).filter(u => u.tier === tierNumber);
 
       return {
         tier: tierNumber,
         name: tierInfo.name,
-        unlockLevel: tierInfo.unlockLevel,
+        requiredBuildings: tierInfo.requiredBuildings,
         isUnlocked,
         unitCount: unitsInTier.length,
         units: unitsInTier.map(u => ({
           id: u.id,
           name: u.name,
-          icon: this._getUnitIcon(u.category)
-        })),
-        levelsRemaining: isUnlocked ? 0 : tierInfo.unlockLevel - userLevel
+          icon: u.icon || '⚔️'
+        }))
       };
     });
-  }
-
-  /**
-   * Helper pour obtenir l'icône d'une unité selon sa catégorie
-   */
-  _getUnitIcon(category) {
-    const icons = {
-      infantry: '🪖',
-      cavalry: '🐴',
-      ranged: '🏹',
-      artillery: '💣',
-      engineer: '🔧',
-      armor: '🛡️',
-      air: '✈️',
-      special: '🎖️'
-    };
-    return icons[category] || '⚔️';
   }
 }
 

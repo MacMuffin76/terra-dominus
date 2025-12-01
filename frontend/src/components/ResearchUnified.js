@@ -1,0 +1,311 @@
+// frontend/src/components/ResearchUnified.js
+// Page Recherche avec système de déblocage par bâtiments et prérequis
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlaskConical, Lock, Award, CheckCircle, Clock } from 'lucide-react';
+import Menu from './Menu';
+import ResourcesWidget from './ResourcesWidget';
+import { getAvailableResearch } from '../api/researchUnlocks';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { Alert, Loader } from './ui';
+import './Research.css';
+import './units/UnitTrainingPanel.css';
+import './UnifiedPages.css';
+
+/**
+ * Research Card Component
+ */
+const ResearchCard = ({ research, status, onSelect, isSelected }) => {
+  const { name, description, category, cost, effects, missingRequirements, icon } = research;
+
+  const statusConfig = {
+    completed: { 
+      icon: <CheckCircle size={24} />, 
+      label: 'Complétée', 
+      className: 'completed',
+      bgColor: '#1a472a'
+    },
+    inProgress: { 
+      icon: <Clock size={24} />, 
+      label: 'En cours', 
+      className: 'in-progress',
+      bgColor: '#3d2b1f'
+    },
+    available: { 
+      icon: <FlaskConical size={24} />, 
+      label: 'Disponible', 
+      className: 'available',
+      bgColor: '#1a3a5a'
+    },
+    locked: { 
+      icon: <Lock size={24} />, 
+      label: 'Verrouillée', 
+      className: 'locked',
+      bgColor: '#2a2a2a'
+    }
+  };
+
+  const config = statusConfig[status] || statusConfig.locked;
+
+  return (
+    <div
+      className={`research-card ${config.className} ${isSelected ? 'selected' : ''}`}
+      onClick={() => onSelect(research)}
+      style={{ 
+        cursor: status === 'locked' ? 'not-allowed' : 'pointer',
+        backgroundColor: config.bgColor,
+        borderColor: isSelected ? '#4a9eff' : 'transparent'
+      }}
+    >
+      <div className="card-header">
+        <div className="research-icon">{icon || config.icon}</div>
+        <div className="research-info">
+          <h3>{name}</h3>
+          <span className={`status-badge ${config.className}`}>{config.label}</span>
+        </div>
+      </div>
+
+      <p className="research-description">{description}</p>
+
+      {/* Catégorie */}
+      <div className="research-category">
+        <span className="category-badge">{category}</span>
+      </div>
+
+      {/* Coûts */}
+      {cost && status !== 'completed' && (
+        <div className="research-cost">
+          {cost.metal > 0 && <span>⚙️ {cost.metal}</span>}
+          {cost.energy > 0 && <span>⚡ {cost.energy}</span>}
+          {cost.crystal > 0 && <span>💎 {cost.crystal}</span>}
+          {cost.time && <span>⏱️ {cost.time}h</span>}
+        </div>
+      )}
+
+      {/* Effets */}
+      {effects && status !== 'locked' && (
+        <div className="research-effects">
+          <p className="effects-title">Effets:</p>
+          {effects.unlocks && effects.unlocks.length > 0 && (
+            <p className="effect-item">🔓 Débloque: {effects.unlocks.join(', ')}</p>
+          )}
+          {effects.resourceProductionBonus && (
+            <p className="effect-item">📈 Production: +{(effects.resourceProductionBonus * 100).toFixed(0)}%</p>
+          )}
+          {effects.buildingCostReduction && (
+            <p className="effect-item">💰 Coût bâtiments: -{(effects.buildingCostReduction * 100).toFixed(0)}%</p>
+          )}
+          {effects.infantryAttackBonus && (
+            <p className="effect-item">⚔️ Attaque infanterie: +{(effects.infantryAttackBonus * 100).toFixed(0)}%</p>
+          )}
+        </div>
+      )}
+
+      {/* Prérequis manquants */}
+      {status === 'locked' && missingRequirements && missingRequirements.length > 0 && (
+        <div className="requirements">
+          <p className="requirements-title">Prérequis:</p>
+          {missingRequirements.map((req, idx) => (
+            <p key={idx} className="requirement-item">🔒 {req}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Main Research Unified Component
+ */
+const ResearchUnified = () => {
+  const { error, catchError } = useAsyncError('ResearchUnified');
+  const [loading, setLoading] = useState(true);
+  const [researchData, setResearchData] = useState(null);
+  const [selectedResearch, setSelectedResearch] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  const loadResearch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getAvailableResearch();
+      setResearchData(data);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      await catchError(async () => { throw err; }, {
+        toast: true,
+        logError: true
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadResearch();
+  }, [loadResearch]);
+
+  const handleResearchSelect = useCallback((research) => {
+    setSelectedResearch(prev => prev?.id === research.id ? null : research);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="research-container">
+        <Menu />
+        <div className="research-content" id="main-content">
+          <ResourcesWidget />
+          <Loader label="Chargement des recherches..." />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="research-container">
+        <Menu />
+        <div className="research-content" id="main-content">
+          <ResourcesWidget />
+          <Alert
+            type="error"
+            title="Erreur"
+            message={error}
+            onAction={loadResearch}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const { available = [], inProgress = [], completed = [], locked = [], buildings = {}, categories = {} } = researchData || {};
+
+  // Créer un tableau avec toutes les recherches et leur statut
+  const allResearch = [
+    ...completed.map(r => ({ ...r, status: 'completed' })),
+    ...inProgress.map(r => ({ ...r, status: 'inProgress' })),
+    ...available.map(r => ({ ...r, status: 'available' })),
+    ...locked.map(r => ({ ...r, status: 'locked' }))
+  ];
+
+  // Filtrer par catégorie
+  let filteredResearch = filterCategory === 'all' 
+    ? allResearch 
+    : allResearch.filter(r => r.category === filterCategory);
+
+  // Filtrer par statut
+  if (filterStatus !== 'all') {
+    filteredResearch = filteredResearch.filter(r => r.status === filterStatus);
+  }
+
+  const researchLabLevel = buildings.researchLab || 0;
+
+  // Obtenir les catégories uniques
+  const uniqueCategories = [...new Set(allResearch.map(r => r.category))];
+
+  return (
+    <div className="research-container">
+      <Menu />
+      <div className="research-content" id="main-content">
+        <ResourcesWidget />
+
+        <div className="unit-training-header">
+          <div className="header-title">
+            <FlaskConical size={32} />
+            <h1>Recherches & Technologies</h1>
+          </div>
+          <div className="header-stats">
+            <div className="stat-badge">
+              <Award size={20} />
+              <span>Labo Niv {researchLabLevel}</span>
+            </div>
+            <div className="stat-badge">
+              <CheckCircle size={20} />
+              <span>{completed.length} Complétées</span>
+            </div>
+            <div className="stat-badge">
+              <Clock size={20} />
+              <span>{inProgress.length} En cours</span>
+            </div>
+            <div className="stat-badge">
+              <FlaskConical size={20} />
+              <span>{available.length} Disponibles</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Tabs - Status */}
+        <div className="tier-filters">
+          <button
+            className={`filter-tab ${filterStatus === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterStatus('all')}
+          >
+            Toutes ({allResearch.length})
+          </button>
+          <button
+            className={`filter-tab ${filterStatus === 'completed' ? 'active' : ''}`}
+            onClick={() => setFilterStatus('completed')}
+          >
+            <CheckCircle size={16} /> Complétées ({completed.length})
+          </button>
+          <button
+            className={`filter-tab ${filterStatus === 'inProgress' ? 'active' : ''}`}
+            onClick={() => setFilterStatus('inProgress')}
+          >
+            <Clock size={16} /> En cours ({inProgress.length})
+          </button>
+          <button
+            className={`filter-tab ${filterStatus === 'available' ? 'active' : ''}`}
+            onClick={() => setFilterStatus('available')}
+          >
+            <FlaskConical size={16} /> Disponibles ({available.length})
+          </button>
+        </div>
+
+        {/* Filter Tabs - Category */}
+        <div className="tier-filters" style={{ marginTop: '0.5rem' }}>
+          <button
+            className={`filter-tab ${filterCategory === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterCategory('all')}
+          >
+            Toutes Catégories
+          </button>
+          {uniqueCategories.map(category => {
+            const count = allResearch.filter(r => r.category === category).length;
+            return (
+              <button
+                key={category}
+                className={`filter-tab ${filterCategory === category ? 'active' : ''}`}
+                onClick={() => setFilterCategory(category)}
+              >
+                {category} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Research Grid */}
+        <div className="research-grid" style={{ marginTop: '1.5rem' }}>
+          {filteredResearch.map(research => (
+            <ResearchCard
+              key={research.id}
+              research={research}
+              status={research.status}
+              onSelect={handleResearchSelect}
+              isSelected={selectedResearch?.id === research.id}
+            />
+          ))}
+        </div>
+
+        {filteredResearch.length === 0 && (
+          <div className="empty-state">
+            <Lock size={48} />
+            <p>Aucune recherche dans cette catégorie</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ResearchUnified;

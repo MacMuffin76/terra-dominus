@@ -1,6 +1,6 @@
 /**
  * Unit Definitions & Balance
- * Comprehensive unit system with rock-paper-scissors counters
+ * Post-apocalyptic ground warfare - 8 units with counter system
  */
 
 // Counter system multipliers
@@ -15,36 +15,55 @@ const BALANCE_CONFIG = {
   }
 };
 
-// Unit Tiers (unlock progression)
+// Unit Tiers (unlock progression based on Training Center + Forge + Research)
 const UNIT_TIERS = {
-  TIER_1: { unlockLevel: 1, name: 'Basic Units' },
-  TIER_2: { unlockLevel: 5, name: 'Advanced Units' },
-  TIER_3: { unlockLevel: 10, name: 'Elite Units' },
-  TIER_4: { unlockLevel: 15, name: 'Experimental Units' }
+  TIER_1: { 
+    name: 'Survivants',
+    requiredBuildings: { trainingCenter: 1 }
+  },
+  TIER_2: { 
+    name: 'Forces Organisées',
+    requiredBuildings: { trainingCenter: 3 }
+  },
+  TIER_3: { 
+    name: 'Forces Mécanisées',
+    requiredBuildings: { trainingCenter: 5, forge: 3 }
+  },
+  TIER_4: { 
+    name: 'Forces d\'Élite',
+    requiredBuildings: { trainingCenter: 8, forge: 5 }
+  }
 };
 
-// Complete unit roster
+// Complete unit roster - 8 units for post-apocalyptic warfare
 const UNIT_DEFINITIONS = {
   // ============================================
-  // TIER 1: BASIC UNITS (Early Game 0-5)
+  // TIER 1: SURVIVANTS (Training Center Niv 1)
   // ============================================
   
   MILITIA: {
     id: 'militia',
-    name: 'Militia',
-    description: 'Untrained civilians with basic weapons. Cheap cannon fodder.',
+    name: 'Milice',
+    description: 'Civils armés de fortune. Chair à canon et exploration.',
     tier: 1,
     category: 'infantry',
+    icon: '👥',
     
     // Combat stats
     attack: 2,
-    defense: 3,
-    health: 10,
+    defense: 2,
+    health: 15,
     initiative: 5,
     
     // Movement & utility
-    speed: 1.0,           // Base movement speed
-    carryCapacity: 10,    // Loot capacity per unit
+    speed: 1.0,
+    carryCapacity: 10,
+    
+    // Requirements
+    requiredBuildings: {
+      trainingCenter: 1
+    },
+    requiredResearch: [],
     
     // Costs
     cost: {
@@ -57,27 +76,33 @@ const UNIT_DEFINITIONS = {
       metal: 0,
       fuel: 0
     },
-    trainTime: 30,        // seconds
+    trainTime: 30,
     
     // Counter system
-    counters: [],          // Good against (50% bonus)
-    weakTo: ['infantry', 'cavalry', 'tanks']  // Bad against (30% penalty)
+    counters: [],
+    weakTo: ['riflemen', 'scouts', 'marksmen', 'light_tank', 'anti_armor', 'heavy_tank']
   },
   
-  INFANTRY: {
-    id: 'infantry',
-    name: 'Infantry',
-    description: 'Standard foot soldiers with rifles. Versatile and cost-effective.',
+  RIFLEMEN: {
+    id: 'riflemen',
+    name: 'Fusiliers',
+    description: 'Infanterie standard polyvalente avec armes automatiques.',
     tier: 1,
     category: 'infantry',
+    icon: '🔫',
     
     attack: 5,
     defense: 4,
-    health: 20,
+    health: 25,
     initiative: 10,
     
     speed: 1.0,
     carryCapacity: 20,
+    
+    requiredBuildings: {
+      trainingCenter: 1
+    },
+    requiredResearch: ['military_training_1'],
     
     cost: {
       gold: 100,
@@ -85,150 +110,101 @@ const UNIT_DEFINITIONS = {
       fuel: 0
     },
     upkeepPerHour: {
-      gold: 1,
+      gold: 2,
       metal: 0,
       fuel: 0
     },
     trainTime: 60,
     
-    counters: ['militia'],
-    weakTo: ['cavalry', 'artillery', 'tanks']
+    counters: ['militia', 'engineer'],
+    weakTo: ['scouts', 'light_tank', 'heavy_tank']
   },
   
-  ARCHER: {
-    id: 'archer',
-    name: 'Archer',
-    description: 'Ranged attackers with bows. Good for defense and sieges.',
-    tier: 1,
-    category: 'ranged',
+  // ============================================
+  // TIER 2: FORCES ORGANISÉES (Training Center Niv 3)
+  // ============================================
+  
+  SCOUTS: {
+    id: 'scouts',
+    name: 'Éclaireurs',
+    description: 'Infanterie rapide spécialisée en reconnaissance et raids éclair.',
+    tier: 2,
+    category: 'infantry_fast',
+    icon: '🏃',
     
     attack: 6,
-    defense: 2,
-    health: 15,
-    initiative: 15,
+    defense: 3,
+    health: 20,
+    initiative: 18,
     
-    speed: 1.0,
-    carryCapacity: 15,
-    
-    cost: {
-      gold: 120,
-      metal: 40,
-      fuel: 0
-    },
-    upkeepPerHour: {
-      gold: 1,
-      metal: 0,
-      fuel: 0
-    },
-    trainTime: 75,
-    
-    counters: ['infantry', 'cavalry'],
-    weakTo: ['cavalry_charge', 'fortifications']
-  },
-  
-  // ============================================
-  // TIER 2: ADVANCED UNITS (Mid Game 5-10)
-  // ============================================
-  
-  CAVALRY: {
-    id: 'cavalry',
-    name: 'Cavalry',
-    description: 'Fast mounted units. Excellent for raids and flanking.',
-    tier: 2,
-    category: 'mounted',
-    
-    attack: 8,
-    defense: 5,
-    health: 30,
-    initiative: 25,
-    
-    speed: 2.0,           // 2x faster travel
+    speed: 1.5,
     carryCapacity: 30,
     
+    requiredBuildings: {
+      trainingCenter: 3
+    },
+    requiredResearch: ['guerrilla_tactics_1'],
+    
     cost: {
-      gold: 250,
-      metal: 100,
-      fuel: 50
+      gold: 150,
+      metal: 60,
+      fuel: 30
+    },
+    upkeepPerHour: {
+      gold: 3,
+      metal: 1,
+      fuel: 1
+    },
+    trainTime: 90,
+    
+    counters: ['riflemen', 'engineer', 'transport'],
+    weakTo: ['marksmen']
+  },
+  
+  TRANSPORT: {
+    id: 'transport',
+    name: 'Transport Blindé',
+    description: 'Véhicule de transport de troupes et ressources. Non-combattant.',
+    tier: 2,
+    category: 'support',
+    icon: '🚚',
+    
+    attack: 1,
+    defense: 6,
+    health: 50,
+    initiative: 3,
+    
+    speed: 1.0,
+    carryCapacity: 200,
+    
+    requiredBuildings: {
+      trainingCenter: 3
+    },
+    requiredResearch: ['motorization_1'],
+    
+    cost: {
+      gold: 200,
+      metal: 120,
+      fuel: 80
     },
     upkeepPerHour: {
       gold: 2,
       metal: 1,
-      fuel: 1
+      fuel: 2
     },
     trainTime: 120,
     
-    counters: ['infantry', 'archer', 'artillery'],
-    weakTo: ['spearmen', 'fortifications', 'tanks']
-  },
-  
-  SPEARMEN: {
-    id: 'spearmen',
-    name: 'Spearmen',
-    description: 'Anti-cavalry specialists with long pikes. Defensive formation.',
-    tier: 2,
-    category: 'infantry',
-    
-    attack: 6,
-    defense: 8,
-    health: 25,
-    initiative: 8,
-    
-    speed: 1.0,
-    carryCapacity: 15,
-    
-    cost: {
-      gold: 200,
-      metal: 80,
-      fuel: 0
-    },
-    upkeepPerHour: {
-      gold: 2,
-      metal: 0,
-      fuel: 0
-    },
-    trainTime: 90,
-    
-    counters: ['cavalry'],
-    weakTo: ['artillery', 'tanks', 'aircraft']
-  },
-  
-  ARTILLERY: {
-    id: 'artillery',
-    name: 'Artillery',
-    description: 'Heavy siege weapons. Devastating against fortifications.',
-    tier: 2,
-    category: 'siege',
-    
-    attack: 12,
-    defense: 2,
-    health: 15,
-    initiative: 3,
-    
-    speed: 0.5,           // Very slow
-    carryCapacity: 0,     // Can't carry loot
-    
-    cost: {
-      gold: 400,
-      metal: 300,
-      fuel: 100
-    },
-    upkeepPerHour: {
-      gold: 3,
-      metal: 2,
-      fuel: 2
-    },
-    trainTime: 180,
-    
-    counters: ['fortifications', 'infantry', 'spearmen'],
-    weakTo: ['cavalry', 'aircraft', 'tanks']
+    counters: [],
+    weakTo: ['scouts', 'anti_armor', 'light_tank', 'heavy_tank']
   },
   
   ENGINEER: {
     id: 'engineer',
-    name: 'Combat Engineer',
-    description: 'Support unit. Repairs walls and disables traps.',
+    name: 'Sapeurs',
+    description: 'Unité de soutien pour réparation et sabotage.',
     tier: 2,
     category: 'support',
+    icon: '🔧',
     
     attack: 3,
     defense: 4,
@@ -238,40 +214,170 @@ const UNIT_DEFINITIONS = {
     speed: 1.0,
     carryCapacity: 25,
     
+    requiredBuildings: {
+      trainingCenter: 3
+    },
+    requiredResearch: [],
+    
     cost: {
-      gold: 300,
+      gold: 180,
       metal: 150,
       fuel: 50
     },
     upkeepPerHour: {
-      gold: 2,
-      metal: 1,
-      fuel: 0
+      gold: 3,
+      metal: 2,
+      fuel: 1
     },
     trainTime: 150,
     
-    counters: ['fortifications', 'traps'],
-    weakTo: ['cavalry', 'infantry']
+    counters: [],
+    weakTo: ['riflemen', 'scouts']
   },
   
   // ============================================
-  // TIER 3: ELITE UNITS (Late Game 10-15)
+  // TIER 3: FORCES MÉCANISÉES (Training Center Niv 5 + Forge Niv 3)
   // ============================================
   
-  TANKS: {
-    id: 'tanks',
-    name: 'Tanks',
-    description: 'Armored behemoths. High attack and defense, expensive.',
+  MARKSMEN: {
+    id: 'marksmen',
+    name: 'Tireurs d\'Élite',
+    description: 'Infanterie spécialisée anti-infanterie avec armes de précision.',
+    tier: 3,
+    category: 'infantry_specialist',
+    icon: '🎯',
+    
+    attack: 10,
+    defense: 5,
+    health: 30,
+    initiative: 20,
+    
+    speed: 0.8,
+    carryCapacity: 15,
+    
+    requiredBuildings: {
+      trainingCenter: 5,
+      forge: 1
+    },
+    requiredResearch: ['automatic_weapons', 'military_training_1'],
+    
+    cost: {
+      gold: 250,
+      metal: 100,
+      fuel: 50
+    },
+    upkeepPerHour: {
+      gold: 4,
+      metal: 1,
+      fuel: 1
+    },
+    trainTime: 150,
+    
+    counters: ['scouts', 'riflemen', 'militia'],
+    weakTo: ['light_tank', 'heavy_tank']
+  },
+  
+  LIGHT_TANK: {
+    id: 'light_tank',
+    name: 'Chars Légers',
+    description: 'Blindés légers pour appui anti-infanterie et mobilité.',
     tier: 3,
     category: 'armored',
+    icon: '🛡️',
     
-    attack: 20,
-    defense: 18,
-    health: 100,
+    attack: 12,
+    defense: 14,
+    health: 80,
     initiative: 8,
     
-    speed: 1.5,
+    speed: 1.0,
     carryCapacity: 50,
+    
+    requiredBuildings: {
+      trainingCenter: 5,
+      forge: 3
+    },
+    requiredResearch: ['light_armor'],
+    
+    cost: {
+      gold: 400,
+      metal: 300,
+      fuel: 200
+    },
+    upkeepPerHour: {
+      gold: 5,
+      metal: 3,
+      fuel: 3
+    },
+    trainTime: 240,
+    
+    counters: ['riflemen', 'marksmen', 'scouts'],
+    weakTo: ['anti_armor', 'heavy_tank']
+  },
+  
+  // ============================================
+  // TIER 4: FORCES D'ÉLITE (Training Center Niv 8+)
+  // ============================================
+  
+  ANTI_ARMOR: {
+    id: 'anti_armor',
+    name: 'Anti-Blindage',
+    description: 'Infanterie lourde chasseuse de tanks avec lance-roquettes.',
+    tier: 4,
+    category: 'infantry_heavy',
+    icon: '💥',
+    
+    attack: 15,
+    defense: 8,
+    health: 35,
+    initiative: 12,
+    
+    speed: 0.7,
+    carryCapacity: 20,
+    
+    requiredBuildings: {
+      trainingCenter: 8,
+      forge: 5
+    },
+    requiredResearch: ['anti_armor_weapons'],
+    
+    cost: {
+      gold: 350,
+      metal: 250,
+      fuel: 150
+    },
+    upkeepPerHour: {
+      gold: 6,
+      metal: 3,
+      fuel: 2
+    },
+    trainTime: 180,
+    
+    counters: ['light_tank', 'heavy_tank', 'transport'],
+    weakTo: ['marksmen', 'riflemen']
+  },
+  
+  HEAVY_TANK: {
+    id: 'heavy_tank',
+    name: 'Tanks Lourds',
+    description: 'Blindés ultra-lourds. Unité de choc pour percer les lignes ennemies.',
+    tier: 4,
+    category: 'armored_heavy',
+    icon: '🚀',
+    
+    attack: 25,
+    defense: 22,
+    health: 150,
+    initiative: 5,
+    
+    speed: 0.6,
+    carryCapacity: 100,
+    
+    requiredBuildings: {
+      trainingCenter: 10,
+      forge: 8
+    },
+    requiredResearch: ['heavy_armor'],
     
     cost: {
       gold: 800,
@@ -279,208 +385,14 @@ const UNIT_DEFINITIONS = {
       fuel: 400
     },
     upkeepPerHour: {
-      gold: 5,
-      metal: 3,
-      fuel: 3
-    },
-    trainTime: 300,
-    
-    counters: ['infantry', 'cavalry', 'fortifications', 'artillery'],
-    weakTo: ['anti_tank', 'aircraft', 'mines']
-  },
-  
-  ANTI_TANK: {
-    id: 'anti_tank',
-    name: 'Anti-Tank Infantry',
-    description: 'Tank hunters with RPGs and explosives.',
-    tier: 3,
-    category: 'infantry',
-    
-    attack: 15,
-    defense: 10,
-    health: 30,
-    initiative: 15,
-    
-    speed: 1.0,
-    carryCapacity: 10,
-    
-    cost: {
-      gold: 600,
-      metal: 400,
-      fuel: 200
-    },
-    upkeepPerHour: {
-      gold: 4,
-      metal: 2,
-      fuel: 2
-    },
-    trainTime: 240,
-    
-    counters: ['tanks', 'armored'],
-    weakTo: ['infantry', 'aircraft', 'cavalry']
-  },
-  
-  AIRCRAFT: {
-    id: 'aircraft',
-    name: 'Fighter Aircraft',
-    description: 'Air superiority. Very fast, devastating attack, fragile.',
-    tier: 3,
-    category: 'air',
-    
-    attack: 25,
-    defense: 8,
-    health: 40,
-    initiative: 30,
-    
-    speed: 3.0,           // 3x faster travel
-    carryCapacity: 10,
-    
-    cost: {
-      gold: 1500,
-      metal: 1000,
-      fuel: 800
-    },
-    upkeepPerHour: {
-      gold: 8,
+      gold: 10,
       metal: 5,
       fuel: 5
     },
-    trainTime: 600,
+    trainTime: 360,
     
-    counters: ['tanks', 'artillery', 'fortifications', 'infantry'],
-    weakTo: ['anti_air', 'aircraft']
-  },
-  
-  ANTI_AIR: {
-    id: 'anti_air',
-    name: 'Anti-Air Battery',
-    description: 'Mobile SAM launchers. Shreds aircraft.',
-    tier: 3,
-    category: 'defense',
-    
-    attack: 18,
-    defense: 12,
-    health: 50,
-    initiative: 20,
-    
-    speed: 1.0,
-    carryCapacity: 5,
-    
-    cost: {
-      gold: 1200,
-      metal: 800,
-      fuel: 600
-    },
-    upkeepPerHour: {
-      gold: 6,
-      metal: 4,
-      fuel: 3
-    },
-    trainTime: 480,
-    
-    counters: ['aircraft'],
-    weakTo: ['tanks', 'infantry', 'artillery']
-  },
-  
-  // ============================================
-  // TIER 4: EXPERIMENTAL UNITS (End Game 15+)
-  // ============================================
-  
-  MECH: {
-    id: 'mech',
-    name: 'Battle Mech',
-    description: 'Experimental war machine. Extremely powerful but very expensive.',
-    tier: 4,
-    category: 'experimental',
-    
-    attack: 35,
-    defense: 30,
-    health: 200,
-    initiative: 15,
-    
-    speed: 1.2,
-    carryCapacity: 100,
-    
-    cost: {
-      gold: 3000,
-      metal: 2500,
-      fuel: 2000
-    },
-    upkeepPerHour: {
-      gold: 15,
-      metal: 10,
-      fuel: 10
-    },
-    trainTime: 1800,      // 30 minutes
-    
-    counters: ['tanks', 'infantry', 'cavalry', 'fortifications'],
-    weakTo: ['aircraft', 'emp', 'artillery']
-  },
-  
-  STEALTH_BOMBER: {
-    id: 'stealth_bomber',
-    name: 'Stealth Bomber',
-    description: 'Strategic bomber. Can bypass some defenses.',
-    tier: 4,
-    category: 'air',
-    
-    attack: 40,
-    defense: 5,
-    health: 60,
-    initiative: 25,
-    
-    speed: 3.5,
-    carryCapacity: 20,
-    
-    cost: {
-      gold: 5000,
-      metal: 3000,
-      fuel: 2500
-    },
-    upkeepPerHour: {
-      gold: 20,
-      metal: 12,
-      fuel: 15
-    },
-    trainTime: 3600,      // 1 hour
-    
-    counters: ['fortifications', 'tanks', 'artillery'],
-    weakTo: ['anti_air', 'aircraft']
-  },
-  
-  // ============================================
-  // SPECIAL UNITS
-  // ============================================
-  
-  SPY: {
-    id: 'spy',
-    name: 'Spy',
-    description: 'Espionage unit. Gathers intelligence, sabotages.',
-    tier: 2,
-    category: 'special',
-    
-    attack: 1,
-    defense: 1,
-    health: 5,
-    initiative: 50,       // Always acts first
-    
-    speed: 2.0,
-    carryCapacity: 0,
-    
-    cost: {
-      gold: 500,
-      metal: 100,
-      fuel: 50
-    },
-    upkeepPerHour: {
-      gold: 3,
-      metal: 0,
-      fuel: 1
-    },
-    trainTime: 300,
-    
-    counters: [],
-    weakTo: ['counter_intel']
+    counters: ['light_tank', 'riflemen'],
+    weakTo: ['anti_armor']
   }
 };
 

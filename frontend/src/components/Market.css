@@ -1,29 +1,30 @@
 /* Market.css - Terra UI Enhanced */
 
 .market-container {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: var(--bg-void);
-  color: var(--text-primary);
-  padding: var(--spacing-xl);
+  min-height: 100vh;
 }
 
 .market-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
+  width: calc(100% - 280px);
+  max-width: 1600px;
+  margin-left: 280px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl) var(--spacing-lg);
+  box-sizing: border-box;
 }
 
 .market-content h1 {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
+  color: var(--text-primary);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0;
-  margin-bottom: var(--spacing-2xl);
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-xl) 0;
   text-align: center;
-  color: var(--neon-primary);
-  animation: neon-pulse 2s ease-in-out infinite;
 }
 
 /* Tabs - Terra UI */
@@ -508,6 +509,16 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .market-content {
+    width: 100%;
+    margin-left: 0;
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .market-content h1 {
+    font-size: 1.5rem;
+  }
+
   .market-filters {
     flex-direction: column;
     align-items: stretch;

@@ -42,10 +42,14 @@ frontend/.env
 Thumbs.db
 desktop.ini
 
-# Archives personnelles
-archive_docs/
+# Archives personnelles (garder README_ARCHIVE.md)
+archive_docs/*.docx
+archive_docs/*.txt
+archive_docs/desktop.ini
 
 # Fichiers temporaires
-*.docx
 *.tmp
 *.bak
+
+# Scripts de développement (optionnel - décommenter si besoin)
+# backend/scripts/

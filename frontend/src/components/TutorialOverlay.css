@@ -10,20 +10,27 @@
   z-index: 9999;
   opacity: 0;
   transition: opacity 0.3s ease;
-  pointer-events: none;
+  pointer-events: none; /* Never block clicks */
 }
 
 .tutorial-backdrop.visible {
   opacity: 1;
-  pointer-events: all;
+  pointer-events: none; /* Keep pointer-events: none to allow clicks through */
 }
 
 .tutorial-highlight {
   border: 3px solid #00D9FF;
   border-radius: 8px;
-  box-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
+  /* Use massive box-shadow to create backdrop effect with a cutout */
+  box-shadow: 
+    0 0 0 9999px rgba(0, 0, 0, 0.7), /* Backdrop effect */
+    0 0 30px rgba(0, 217, 255, 0.6); /* Glow effect */
   animation: tutorial-pulse 2s infinite;
-  pointer-events: none;
+  pointer-events: none; /* Highlight border itself doesn't block clicks */
+}
+
+.tutorial-highlight-interactive {
+  /* No longer needed - highlight is always non-blocking */
 }
 
 @keyframes tutorial-pulse {

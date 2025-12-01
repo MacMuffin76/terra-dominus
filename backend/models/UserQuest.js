@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
   const UserQuest = sequelize.define(
     'UserQuest',
     {
-      user_quest_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -24,9 +24,9 @@ module.exports = (sequelize) => {
       },
       
       status: {
-        type: DataTypes.ENUM('active', 'completed', 'failed', 'abandoned'),
+        type: DataTypes.ENUM('available', 'in_progress', 'completed', 'claimed'),
         allowNull: false,
-        defaultValue: 'active',
+        defaultValue: 'available',
       },
       
       // Progress tracking (JSONB array)
@@ -50,10 +50,9 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
       
-      rewards_claimed: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
+      claimed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {
@@ -84,7 +83,7 @@ module.exports = (sequelize) => {
   };
 
   UserQuest.prototype.canClaimRewards = function () {
-    return this.status === 'completed' && !this.rewards_claimed;
+    return this.status === 'completed' && !this.claimed_at;
   };
 
   UserQuest.prototype.getProgressPercent = function () {
@@ -131,12 +130,13 @@ module.exports = (sequelize) => {
     if (!this.canClaimRewards()) {
       throw new Error('Cannot claim rewards - quest not completed or already claimed');
     }
-    this.rewards_claimed = true;
+    this.status = 'claimed';
+    this.claimed_at = new Date();
   };
 
   UserQuest.prototype.getSummary = function () {
     return {
-      user_quest_id: this.user_quest_id,
+      id: this.id,
       user_id: this.user_id,
       quest_id: this.quest_id,
       status: this.status,
@@ -147,7 +147,7 @@ module.exports = (sequelize) => {
       completed_at: this.completed_at,
       expires_at: this.expires_at,
       is_expired: this.isExpired(),
-      rewards_claimed: this.rewards_claimed,
+      claimed_at: this.claimed_at,
       can_claim: this.canClaimRewards(),
     };
   };

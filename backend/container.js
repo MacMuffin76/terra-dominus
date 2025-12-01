@@ -164,11 +164,54 @@ const createContainer = () => {
 
   container.register('unitUnlockService', () => {
     const UnitUnlockService = require('./modules/combat/application/UnitUnlockService');
-    const { User, Research } = require('./models');
+    const { User, Research, Building, Facility, City } = require('./models');
     const sequelize = require('./db');
     return new UnitUnlockService({
       User,
       Research,
+      Building,
+      Facility,
+      City,
+      sequelize
+    });
+  });
+
+  container.register('defenseUnlockService', () => {
+    const DefenseUnlockService = require('./modules/combat/application/DefenseUnlockService');
+    const { User, Research, Building, Facility, City } = require('./models');
+    const sequelize = require('./db');
+    return new DefenseUnlockService({
+      User,
+      Research,
+      Building,
+      Facility,
+      City,
+      sequelize
+    });
+  });
+
+  container.register('researchUnlockService', () => {
+    const ResearchUnlockService = require('./modules/research/application/ResearchUnlockService');
+    const { User, Research, Building, Facility, City } = require('./models');
+    const sequelize = require('./db');
+    return new ResearchUnlockService({
+      User,
+      Research,
+      Building,
+      Facility,
+      City,
+      sequelize
+    });
+  });
+
+  container.register('facilityService', () => {
+    const FacilityService = require('./modules/facilities/application/FacilityService');
+    const { User, Facility, City } = require('./models');
+    const sequelize = require('./db');
+    return new FacilityService({
+      User,
+      Facility,
+      City,
       sequelize
     });
   });
@@ -197,8 +240,8 @@ const createContainer = () => {
   container.register('cityRepository', () => {
     const { City } = require('./models');
     return {
-      findByUserId: async (userId) => await City.findAll({ where: { userId } }),
-      countByUserId: async (userId) => await City.count({ where: { userId } })
+      findByUserId: async (userId) => await City.findAll({ where: { user_id: userId } }),
+      countByUserId: async (userId) => await City.count({ where: { user_id: userId } })
     };
   });
 

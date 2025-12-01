@@ -1,7 +1,6 @@
 const { createConstructionWorker } = require('./workers/constructionWorker');
 const { createProductionWorker } = require('./workers/productionWorkers');
 const { createCombatWorker } = require('./workers/combatWorker');
-const { createResourceUpgradeWorker } = require('./workers/resourceUpgradeWorker');
 const { createColonizationWorker } = require('./workers/colonizationWorker');
 const { createAttackWorker } = require('./workers/attackWorker');
 const { createSpyWorker } = require('./workers/spyWorker');
@@ -9,6 +8,7 @@ const { createTradeWorker } = require('./workers/tradeWorker');
 const createPortalSpawningJob = require('./portalSpawningJob');
 const createQuestRotationJob = require('./questRotationJob');
 const { startUpkeepJob, stopUpkeepJob } = require('./upkeepJob');
+const { setupResourceProductionJob } = require('./resourceProductionJob');
 
 let portalJobs = null;
 let questJobs = null;
@@ -18,7 +18,6 @@ function startJobs(container) {
   createConstructionWorker(container);
   createProductionWorker(container);
   createCombatWorker(container);
-  createResourceUpgradeWorker(container);
   createColonizationWorker(container);
   createAttackWorker(container);
   createSpyWorker(container);
@@ -35,6 +34,9 @@ function startJobs(container) {
   // Upkeep job (hourly)
   startUpkeepJob(container);
   upkeepJobStarted = true;
+  
+  // Resource production job (every minute)
+  setupResourceProductionJob();
 }
 
 function stopJobs() {

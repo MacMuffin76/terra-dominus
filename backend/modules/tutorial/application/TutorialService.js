@@ -51,6 +51,9 @@ class TutorialService {
         progress = await this.initializeTutorial(userId);
       }
 
+      // Auto-complete steps that are already satisfied
+      await this.autoCompleteSteps(userId, progress);
+
       const currentStep = tutorialRules.getStepById(progress.current_step);
       const completionPercentage = tutorialRules.getCompletionPercentage(progress.completed_steps);
       const nextStep = tutorialRules.getNextStep(progress.current_step);
@@ -65,6 +68,78 @@ class TutorialService {
     } catch (error) {
       logger.error({ err: error, userId }, 'Failed to get tutorial progress');
       throw error;
+    }
+  }
+
+  /**
+   * Auto-complete tutorial steps that are already satisfied
+   */
+  async autoCompleteSteps(userId, progress) {
+    if (progress.completed || progress.skipped) {
+      return;
+    }
+
+    const Building = require('../../../models/Building');
+    const city = await City.findOne({
+      where: { user_id: userId, is_capital: true }
+    });
+
+    if (!city) return;
+
+    const allSteps = tutorialRules.getAllSteps();
+    let hasChanges = false;
+
+    for (const step of allSteps) {
+      // Skip already completed steps
+      if (progress.completed_steps.includes(step.id)) {
+        continue;
+      }
+
+      // Check if step conditions are met
+      if (step.action.type === 'complete_action') {
+        const { actionKey, actionData } = step.action;
+
+        if (actionKey === 'upgrade_building') {
+          const { buildingName, targetLevel } = actionData;
+          const building = await Building.findOne({
+            where: { city_id: city.id, name: buildingName }
+          });
+
+          if (building && building.level >= targetLevel) {
+            progress.completed_steps.push(step.id);
+            hasChanges = true;
+            logger.info({ userId, stepId: step.id, buildingName, level: building.level }, 
+              'Auto-completed tutorial step (building already upgraded)');
+          }
+        }
+
+        if (actionKey === 'train_units') {
+          const Unit = require('../../../models/Unit');
+          const { unitType, quantity } = actionData;
+          const unit = await Unit.findOne({
+            where: { city_id: city.id, name: unitType }
+          });
+
+          if (unit && unit.quantity >= quantity) {
+            progress.completed_steps.push(step.id);
+            hasChanges = true;
+            logger.info({ userId, stepId: step.id, unitType, quantity: unit.quantity }, 
+              'Auto-completed tutorial step (units already trained)');
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      // Update current step to next incomplete step
+      const nextIncompleteStep = allSteps.find(s => !progress.completed_steps.includes(s.id));
+      if (nextIncompleteStep) {
+        progress.current_step = nextIncompleteStep.id;
+      } else {
+        progress.completed = true;
+        progress.completed_at = new Date();
+      }
+      await progress.save();
     }
   }
 
