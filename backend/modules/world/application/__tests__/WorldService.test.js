@@ -14,7 +14,24 @@ jest.mock('../../../../utils/logger', () => ({
   }
 }));
 
+// Mock des modèles Sequelize
+jest.mock('../../../../models', () => ({
+  City: {
+    findAll: jest.fn(() => Promise.resolve([]))
+  },
+  Research: {
+    findAll: jest.fn(() => Promise.resolve([]))
+  }
+}));
+
+// Mock du cache
+jest.mock('../../../../utils/cache', () => ({
+  cacheWrapper: jest.fn((key, ttl, fn) => fn()), // Exécute directement la fonction sans cache
+  invalidateCache: jest.fn(() => Promise.resolve())
+}));
+
 const WorldService = require('../WorldService');
+const { City, Research } = require('../../../../models');
 
 describe('WorldService', () => {
   let worldService;
@@ -51,11 +68,22 @@ describe('WorldService', () => {
 
       expect(result.tiles).toEqual([]);
       expect(result.exploredCount).toBe(0);
-      expect(result.cities).toBeUndefined();
+      expect(result.cities).toEqual([]);
     });
 
     it('should mark tiles as visible within vision range', async () => {
       // Mock user city at (50, 50) with vision range 5
+      const mockCity = {
+        id: 1,
+        coord_x: 50,
+        coord_y: 50,
+        vision_range: 5,
+        user_id: 1
+      };
+      
+      City.findAll.mockResolvedValue([mockCity]);
+      Research.findAll.mockResolvedValue([]);
+      
       const mockGridTiles = [
         { id: 1, coord_x: 50, coord_y: 50, terrain_type: 'plains', has_city_slot: false },
         { id: 2, coord_x: 51, coord_y: 50, terrain_type: 'forest', has_city_slot: true },
@@ -65,9 +93,6 @@ describe('WorldService', () => {
       mockWorldRepository.getGridTilesInBounds.mockResolvedValue(mockGridTiles);
       mockWorldRepository.getExploredTilesForUser.mockResolvedValue([]);
 
-      // Test avec des villes mockées nécessiterait de mocker City.findAll
-      // Ici on teste la logique de filtrage
-
       const result = await worldService.getVisibleWorld(1, {
         minX: 45, minY: 45, maxX: 65, maxY: 65
       });
@@ -75,9 +100,22 @@ describe('WorldService', () => {
       expect(result).toHaveProperty('tiles');
       expect(result).toHaveProperty('exploredCount');
       expect(result).toHaveProperty('bounds');
+      expect(result.tiles.length).toBeGreaterThan(0);
     });
 
     it('should include previously explored tiles even if not currently visible', async () => {
+      // Mock user city at (50, 50) - won't see (80, 80) which is too far
+      const mockCity = {
+        id: 1,
+        coord_x: 50,
+        coord_y: 50,
+        vision_range: 5,
+        user_id: 1
+      };
+      
+      City.findAll.mockResolvedValue([mockCity]);
+      Research.findAll.mockResolvedValue([]);
+      
       const mockGridTiles = [
         { id: 1, coord_x: 50, coord_y: 50, terrain_type: 'plains', has_city_slot: false },
         { id: 2, coord_x: 80, coord_y: 80, terrain_type: 'forest', has_city_slot: false }
@@ -99,6 +137,18 @@ describe('WorldService', () => {
     });
 
     it('should save newly explored tiles', async () => {
+      // Mock user city at (50, 50)
+      const mockCity = {
+        id: 1,
+        coord_x: 50,
+        coord_y: 50,
+        vision_range: 5,
+        user_id: 1
+      };
+      
+      City.findAll.mockResolvedValue([mockCity]);
+      Research.findAll.mockResolvedValue([]);
+      
       const mockGridTiles = [
         { id: 1, coord_x: 50, coord_y: 50, terrain_type: 'plains', has_city_slot: false }
       ];

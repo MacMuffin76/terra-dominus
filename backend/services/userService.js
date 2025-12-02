@@ -90,11 +90,11 @@ async function initializeUserGameData(userId, transaction) {
 
   const buildingTypes = [
     "Mine d'or",
-    "Mine de metal",
+    'Mine de métal',
     'Extracteur',
-    'Centrale electrique',
+    'Centrale électrique',
     'Hangar',
-    'Reservoir',
+    'Réservoir',
   ];
 
   await Promise.all(

@@ -39,6 +39,17 @@ function App() {
     return () => window.removeEventListener(API_ERROR_EVENT_NAME, handleApiError);
   }, []);
 
+  // Auto-dismiss error après 5 secondes
+  useEffect(() => {
+    if (apiError || error) {
+      const timer = setTimeout(() => {
+        setApiError(null);
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [apiError, error, clearError]);
+
   const combinedError = apiError || error;
   const handleClose = () => {
     clearError();

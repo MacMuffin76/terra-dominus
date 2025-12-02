@@ -37,11 +37,11 @@ INSERT INTO public.battle_pass_seasons VALUES (1, 1, 'Conquête Galactique', 'La
 --
 
 INSERT INTO public.entities VALUES (1, 'building', 'Mine d''or');
-INSERT INTO public.entities VALUES (2, 'building', 'Mine de metal');
+INSERT INTO public.entities VALUES (2, 'building', 'Mine de métal');
 INSERT INTO public.entities VALUES (3, 'building', 'Extracteur');
-INSERT INTO public.entities VALUES (4, 'building', 'Centrale electrique');
+INSERT INTO public.entities VALUES (4, 'building', 'Centrale électrique');
 INSERT INTO public.entities VALUES (5, 'building', 'Hangar');
-INSERT INTO public.entities VALUES (6, 'building', 'Reservoir');
+INSERT INTO public.entities VALUES (6, 'building', 'Réservoir');
 INSERT INTO public.entities VALUES (9, 'facility', 'Terrain d''Entrainement');
 INSERT INTO public.entities VALUES (10, 'facility', 'Centre de Recherche');
 INSERT INTO public.entities VALUES (18, 'defense', 'Tourelle a laser');
