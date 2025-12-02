@@ -8,9 +8,27 @@ import './TierProgressBar.css';
  * Progress bar showing advancement toward next tier
  */
 const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
-  if (!tierProgress) return null;
+  if (!tierProgress) {
+    return null;
+  }
 
-  const { currentTier, nextTier, progress, levelsToNext } = tierProgress;
+  console.log('TierProgressBar full data:', JSON.stringify(tierProgress, null, 2));
+
+  let { currentTier, nextTier, progress, levelsToNext } = tierProgress;
+
+  // Si currentTier ou nextTier sont des objets, extraire le numéro
+  if (typeof currentTier === 'object' && currentTier !== null) {
+    currentTier = currentTier.number || currentTier.tier || 0;
+  }
+  if (typeof nextTier === 'object' && nextTier !== null) {
+    nextTier = nextTier.number || nextTier.tier || 0;
+  }
+
+  // Validation
+  if (currentTier === undefined || nextTier === undefined || progress === undefined || levelsToNext === undefined) {
+    console.warn('TierProgressBar: Invalid data after parsing', { currentTier, nextTier, progress, levelsToNext });
+    return null;
+  }
 
   const getTierColor = (tierNum) => {
     switch (tierNum) {
@@ -62,7 +80,7 @@ const TierProgressBar = ({ currentLevel, tierProgress, nextUnlock }) => {
           </div>
         </div>
         <div className="progress-label">
-          {Number(progress).toFixed(0)}% - {Number(levelsToNext)} niveau{levelsToNext > 1 ? 'x' : ''} jusqu'au prochain tier
+          {Math.round(Number(progress) || 0)}% - {Math.abs(Number(levelsToNext) || 0)} niveau{Math.abs(levelsToNext) > 1 ? 'x' : ''} jusqu'au prochain tier
         </div>
       </div>
     </div>

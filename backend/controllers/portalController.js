@@ -350,26 +350,68 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
     },
     getUserExpeditions: async (req, res) => {
       try {
+        const userId = req.user.id;
+        const { status } = req.query;
+        
+        const filters = {};
+        if (status) filters.status = status;
+
+        const expeditions = await portalService.getUserExpeditions(userId, filters);
+        
         res.status(200).json({
           success: true,
-          data: [],
-          message: 'User expeditions not yet implemented'
+          data: expeditions,
+          count: expeditions.length
         });
       } catch (error) {
-        logger.error({ err: error }, 'Error getting user expeditions');
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ err: error, userId: req.user.id }, 'Error getting user expeditions');
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to fetch expeditions',
+          error: error.message 
+        });
       }
     },
     getPortalStatistics: async (req, res) => {
       try {
+        const stats = await portalService.getPortalStatistics();
+        
         res.status(200).json({
           success: true,
-          data: { totalPortals: 0, activePortals: 0 },
-          message: 'Portal statistics not yet implemented'
+          data: stats
         });
       } catch (error) {
         logger.error({ err: error }, 'Error getting portal statistics');
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to fetch statistics',
+          error: error.message 
+        });
+      }
+    },
+    getPortalsNear: async (req, res) => {
+      try {
+        const { x, y } = req.params;
+        const { radius = 50 } = req.query;
+
+        const portals = await portalService.getPortalsNear(
+          parseInt(x),
+          parseInt(y),
+          parseInt(radius)
+        );
+
+        res.status(200).json({
+          success: true,
+          data: portals,
+          count: portals.length
+        });
+      } catch (error) {
+        logger.error({ err: error, x: req.params.x, y: req.params.y }, 'Error getting portals near coordinates');
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to fetch nearby portals',
+          error: error.message 
+        });
       }
     },
     challengePortal: async (req, res) => {

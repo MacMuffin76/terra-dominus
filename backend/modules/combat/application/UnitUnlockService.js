@@ -255,9 +255,39 @@ class UnitUnlockService {
       }
     }
 
+    // Calculer la progression et les niveaux manquants
+    let progress = 0;
+    let levelsToNext = 0;
+
+    if (nextTier) {
+      const requiredTrainingCenter = nextTier.requiredBuildings.trainingCenter || 0;
+      const requiredForge = nextTier.requiredBuildings.forge || 0;
+      
+      const trainingCenterGap = Math.max(0, requiredTrainingCenter - trainingCenterLevel);
+      const forgeGap = Math.max(0, requiredForge - forgeLevel);
+      
+      levelsToNext = trainingCenterGap + forgeGap;
+      
+      // Progression basée sur le bâtiment le plus critique
+      if (requiredTrainingCenter > 0 || requiredForge > 0) {
+        const maxRequired = Math.max(requiredTrainingCenter, requiredForge);
+        const currentMax = Math.max(trainingCenterLevel, forgeLevel);
+        const previousMax = currentTier ? Math.max(
+          currentTier.requiredBuildings.trainingCenter || 0,
+          currentTier.requiredBuildings.forge || 0
+        ) : 0;
+        
+        progress = maxRequired > previousMax 
+          ? ((currentMax - previousMax) / (maxRequired - previousMax)) * 100
+          : 0;
+      }
+    }
+
     return {
-      currentTier: currentTier || { name: 'Aucun', number: 0 },
-      nextTier,
+      currentTier: (currentTier?.number || 0),
+      nextTier: (nextTier?.number || 5),
+      progress: Math.min(100, Math.max(0, progress)),
+      levelsToNext: Math.max(0, levelsToNext),
       missingForNext,
       message: nextTier ? 
         `Prochain tier: ${nextTier.name} - ${missingForNext.join(', ')}` : 

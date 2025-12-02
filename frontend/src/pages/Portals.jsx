@@ -72,7 +72,17 @@ const Portals = () => {
         getGoldenPortalEvents().catch(() => [])
       ]);
 
-      setPortals(portalsData.data || portalsData || []);
+      const portalsArray = portalsData.data || portalsData || [];
+      
+      // Normalize tier to lowercase for consistency
+      const normalizedPortals = portalsArray.map(portal => ({
+        ...portal,
+        tier: portal.tier.toLowerCase()
+      }));
+
+      console.log('Loaded portals:', normalizedPortals.length, normalizedPortals);
+      
+      setPortals(normalizedPortals);
       setMastery(masteryData.data || masteryData || []);
       setHistory(historyData.data || historyData || []);
       setGoldenEvents(eventsData.data || eventsData || []);
@@ -87,9 +97,9 @@ const Portals = () => {
   const applyFilters = () => {
     let filtered = [...portals];
 
-    // Tier filter
+    // Tier filter (case-insensitive)
     if (tierFilter) {
-      filtered = filtered.filter(p => p.tier === tierFilter);
+      filtered = filtered.filter(p => p.tier.toLowerCase() === tierFilter.toLowerCase());
     }
 
     // Difficulty filter

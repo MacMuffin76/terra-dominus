@@ -1,60 +1,160 @@
 /* frontend/src/components/ResourcesWidget.css */
-.resources-widget {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto var(--spacing-lg) auto;
-  background: linear-gradient(135deg, rgba(0, 150, 136, 0.15), rgba(0, 188, 212, 0.15));
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  padding: 12px 24px;
-  border-radius: 12px;
-  box-shadow: 
-    0 0 20px rgba(0, 255, 255, 0.2),
-    0 8px 16px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+
+.terra-resources-widget {
   display: flex;
-  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--bg-panel);
+  border: 1px solid var(--neon-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+  margin: 0 auto var(--spacing-lg) auto;
+  max-width: 1200px;
+  width: 100%;
   animation: resourcesWidgetSlideIn 0.3s ease-out;
 }
 
 @keyframes resourcesWidgetSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
-.resource-item {
+.terra-resource-item {
   display: flex;
   align-items: center;
-  color: rgba(0, 255, 255, 0.95);
-  font-size: 15px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+  flex: 1 1 calc(25% - var(--spacing-lg));
+  max-width: 280px;
+  transition: all 0.3s ease;
+}
+
+.terra-resource-item:hover {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.terra-resource-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.terra-resource-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.terra-resource-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.terra-resource-name {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--neon-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.terra-resource-amount {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: var(--text-glow);
+}
+
+.terra-resource-production {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.terra-resource-production.positive {
+  color: var(--neon-success);
+}
+
+.terra-resource-production.negative {
+  color: var(--neon-danger);
+}
+
+.terra-resource-capacity {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.max-indicator {
+  font-size: 0.75rem;
+  color: var(--neon-danger);
+  font-weight: 700;
+  margin-left: 4px;
+  animation: pulse-warning 2s infinite;
+}
+
+.warning-text {
+  font-size: 0.75rem;
+  color: var(--neon-warning);
   font-weight: 600;
-  font-family: 'Orbitron', monospace;
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
-  padding: 4px 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  transition: all 0.2s ease;
+  margin-left: 4px;
 }
 
-.resource-item:hover {
-  background: rgba(0, 255, 255, 0.1);
-  border-color: rgba(0, 255, 255, 0.4);
-  transform: translateY(-1px);
+.terra-resource-item.full-warning {
+  border-color: var(--neon-warning);
+  background: linear-gradient(135deg, var(--bg-card), rgba(217, 119, 6, 0.05));
 }
 
-.resource-item img {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.3));
+.terra-resource-item.at-max {
+  border-color: var(--neon-danger);
+  background: linear-gradient(135deg, var(--bg-card), rgba(220, 38, 38, 0.1));
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+.terra-resource-item.at-max .terra-resource-amount {
+  color: var(--neon-danger);
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 767px) {
+  .terra-resources-widget {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .terra-resource-item {
+    width: 100%;
+    min-width: unset;
+  }
 }

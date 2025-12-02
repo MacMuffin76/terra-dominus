@@ -487,6 +487,9 @@ class ResourceService {
   }
 
   async getUserResources(userId) {
+    const { getLogger } = require('../../../utils/logger');
+    const logger = getLogger({ module: 'ResourceService' });
+    
     return this.transactionProvider(async (transaction) => {
       const city = await this.withCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
 
@@ -510,6 +513,17 @@ class ResourceService {
       });
 
       const now = new Date();
+      
+      // Log le temps écoulé depuis la dernière mise à jour
+      const oldestResource = resources.reduce((oldest, r) => {
+        const lastUpdate = r.last_update ? new Date(r.last_update) : now;
+        return !oldest || lastUpdate < oldest ? lastUpdate : oldest;
+      }, null);
+      
+      if (oldestResource) {
+        const offlineSeconds = Math.floor((now - oldestResource) / 1000);
+        logger.debug({ userId, offlineSeconds }, 'Calculating offline production');
+      }
       const results = [];
       const updates = [];
       const buildingUpdates = [];
@@ -601,14 +615,16 @@ class ResourceService {
           }
         );
 
+        const resourceType = resources.find((r) => r.id === update.id)?.type;
         results.push({
           id: update.id,
           city_id: city.id,
-          type: resources.find((r) => r.id === update.id)?.type,
+          type: resourceType,
           amount: update.amount,
           last_update: update.last_update,
           level: update.level ?? 0,
           production_rate: update.production_rate ?? 0,
+          storage_capacity: storageCapacities[resourceType] || 0,
         });
       }
 

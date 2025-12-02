@@ -17,7 +17,7 @@ const Units = () => {
     const fetchUnits = async () => {
       const data = await catchError(
         async () => {
-          const response = await axiosInstance.get('/api/units');
+          const response = await axiosInstance.get('/units');
           return response.data;
         },
         { toast: true, logError: true, fallbackMessage: 'Erreur lors du chargement des unités' }

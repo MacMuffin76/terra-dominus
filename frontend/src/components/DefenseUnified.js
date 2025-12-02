@@ -188,10 +188,10 @@ const DefenseUnified = () => {
         </div>
 
         {/* Tier Progress */}
-        {tierProgress && tierProgress.currentTier && (
+        {tierProgress && tierProgress.currentTier !== undefined && (
           <div className="tier-progress-banner">
             <div className="progress-info">
-              <h3>{tierProgress.currentTier.name || `Tier ${tierProgress.currentTier.tier}`}</h3>
+              <h3>Tier {tierProgress.currentTier}</h3>
               <p>{tierProgress.message}</p>
             </div>
           </div>

@@ -227,11 +227,27 @@ class DefenseUnlockService {
       }
     }
 
+    // Calculer la progression et les niveaux manquants
+    let progress = 0;
+    let levelsToNext = 0;
+
+    if (nextTier) {
+      const requiredLevel = nextTier.requiredLevel;
+      levelsToNext = Math.max(0, requiredLevel - defenseWorkshopLevel);
+      
+      // Progression basée sur le niveau actuel
+      const previousLevel = currentTier ? currentTier.requiredLevel : 0;
+      if (requiredLevel > previousLevel) {
+        progress = ((defenseWorkshopLevel - previousLevel) / (requiredLevel - previousLevel)) * 100;
+      }
+    }
+
     if (!nextTier && currentTier) {
       return {
-        currentTier,
-        nextTier: null,
+        currentTier: currentTier.tier,
+        nextTier: 5,
         progress: 100,
+        levelsToNext: 0,
         message: 'Tous les tiers débloqués!'
       };
     }
@@ -242,8 +258,10 @@ class DefenseUnlockService {
     }
 
     return {
-      currentTier: currentTier || { name: 'Aucun', tier: 0 },
-      nextTier,
+      currentTier: currentTier ? currentTier.tier : 0,
+      nextTier: nextTier ? nextTier.tier : 5,
+      progress: Math.min(100, Math.max(0, progress)),
+      levelsToNext: Math.max(0, levelsToNext),
       missingForNext,
       message: nextTier ? 
         `Prochain tier: ${nextTier.name} - ${missingForNext.join(', ')}` : 

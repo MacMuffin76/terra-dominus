@@ -22,6 +22,8 @@ const Market = () => {
   const [myOrders, setMyOrders] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [stats, setStats] = useState({});
+  const [statsCache, setStatsCache] = useState(null); // Cache des stats
+  const [statsLastFetch, setStatsLastFetch] = useState(null); // Timestamp du dernier fetch
   const [myCities, setMyCities] = useState([]);
   
   const [loading, setLoading] = useState(false);
@@ -38,11 +40,35 @@ const Market = () => {
   });
 
   useEffect(() => {
-    loadData();
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      if (isMounted) {
+        await loadData();
+      }
+    };
+    
+    fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [view, resourceFilter, orderTypeFilter]);
 
   useEffect(() => {
-    loadCities();
+    let isMounted = true;
+    
+    const fetchCities = async () => {
+      if (isMounted) {
+        await loadCities();
+      }
+    };
+    
+    fetchCities();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const loadCities = async () => {
@@ -69,16 +95,34 @@ const Market = () => {
         );
         setActiveOrders(orders);
 
-        // Charger stats pour chaque ressource
-        const resourceTypes = ['gold', 'metal', 'fuel', 'food'];
-        const statsPromises = resourceTypes.map(type => getMarketStats(type));
-        const statsResults = await Promise.all(statsPromises);
+        // Cache des stats : recharger seulement si > 30 secondes
+        const now = Date.now();
+        const CACHE_DURATION = 30000; // 30 secondes
         
-        const statsMap = {};
-        statsResults.forEach(stat => {
-          statsMap[stat.resourceType] = stat;
-        });
-        setStats(statsMap);
+        if (!statsLastFetch || (now - statsLastFetch) > CACHE_DURATION) {
+          // Charger stats pour chaque ressource
+          const resourceTypes = ['metal', 'fuel', 'food'];
+          const statsPromises = resourceTypes.map(type => 
+            getMarketStats(type).catch(err => {
+              console.error(`Error loading stats for ${type}:`, err);
+              return { resourceType: type, buyOrders: {}, sellOrders: {}, recentActivity: {} };
+            })
+          );
+          const statsResults = await Promise.all(statsPromises);
+          
+          const statsMap = {};
+          statsResults.forEach(stat => {
+            statsMap[stat.resourceType] = stat;
+          });
+          setStats(statsMap);
+          setStatsCache(statsMap);
+          setStatsLastFetch(now);
+        } else {
+          // Utiliser le cache
+          if (statsCache) {
+            setStats(statsCache);
+          }
+        }
 
       } else if (view === 'myOrders') {
         const orders = await getUserOrders();

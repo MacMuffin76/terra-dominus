@@ -9,6 +9,9 @@ const router = express.Router();
 function createPortalRouter({ portalController, authMiddleware, adminMiddleware }) {
   // Public routes (require authentication)
   router.get('/', authMiddleware.protect, portalController.listPortals);
+  router.get('/near/:x/:y', authMiddleware.protect, portalController.getPortalsNear);
+  router.get('/expeditions', authMiddleware.protect, portalController.getUserExpeditions);
+  router.get('/statistics', authMiddleware.protect, portalController.getPortalStatistics);
   router.get('/events', authMiddleware.protect, portalController.getGoldenPortalEvents);
   router.get('/mastery', authMiddleware.protect, portalController.getUserMastery);
   router.get('/history', authMiddleware.protect, portalController.getBattleHistory);

@@ -135,13 +135,13 @@
   background: linear-gradient(
     180deg,
     transparent 0%,
-    transparent 60%,
-    rgba(0, 0, 0, 0.8) 100%
+    transparent 50%,
+    rgba(0, 0, 0, 0.7) 100%
   );
   display: flex;
   align-items: flex-end;
   padding: var(--spacing-md);
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.3s ease;
 }
 
@@ -152,16 +152,19 @@
 .terra-building-level-badge {
   display: inline-flex;
   align-items: center;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--neon-success);
-  color: var(--bg-void);
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(0, 15, 25, 0.95);
+  color: var(--neon-success);
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+  border: 1px solid var(--neon-success);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4), inset 0 0 10px rgba(0, 255, 136, 0.1);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
 }
 
 .terra-building-info {

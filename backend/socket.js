@@ -1,10 +1,14 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const Redis = require('ioredis');
 const { getAllowedOrigins } = require('./utils/cors');
 const { getJwtSecret } = require('./config/jwtConfig');
+const { getLogger } = require('./utils/logger');
 
 let ioInstance = null;
 const JWT_SECRET = getJwtSecret();
+const logger = getLogger({ module: 'socket' });
 
 const parseAuthToken = (socket) => {
   const authHeader = socket.handshake.headers.authorization;
@@ -41,13 +45,33 @@ function socketAuthMiddleware(socket, next) {
   }
 }
 
-function initIO(server) {
+async function initIO(server) {
   const io = new Server(server, {
     cors: {
       origin: getAllowedOrigins(),
       credentials: true,
     },
   });
+
+  // Redis Adapter pour scaling multi-instances
+  if (process.env.REDIS_HOST && process.env.ENABLE_REDIS_ADAPTER === 'true') {
+    try {
+      const pubClient = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        password: process.env.REDIS_PASSWORD || undefined,
+      });
+      
+      const subClient = pubClient.duplicate();
+
+      io.adapter(createAdapter(pubClient, subClient));
+      logger.info('Redis Adapter enabled for Socket.IO clustering');
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to initialize Redis Adapter, falling back to single instance mode');
+    }
+  } else {
+    logger.info('Redis Adapter disabled (single instance mode)');
+  }
 
   io.use(socketAuthMiddleware);
 

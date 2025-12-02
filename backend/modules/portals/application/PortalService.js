@@ -362,6 +362,85 @@ class PortalService {
       throw error;
     }
   }
+
+  /**
+   * List active portals with optional filters
+   * @param {Object} filters - { tier, minDifficulty, maxDifficulty }
+   * @returns {Promise<Portal[]>}
+   */
+  async listActivePortals(filters = {}) {
+    try {
+      let portals = await this.portalRepository.getActivePortals();
+
+      // Apply filters
+      if (filters.tier) {
+        portals = portals.filter(p => p.tier === filters.tier);
+      }
+      if (filters.minDifficulty !== undefined) {
+        portals = portals.filter(p => p.difficulty >= filters.minDifficulty);
+      }
+      if (filters.maxDifficulty !== undefined) {
+        portals = portals.filter(p => p.difficulty <= filters.maxDifficulty);
+      }
+
+      return portals;
+    } catch (error) {
+      logger.error('Error listing active portals', { filters, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get portal by ID
+   * @param {number} portalId
+   * @returns {Promise<Portal|null>}
+   */
+  async getPortalById(portalId) {
+    try {
+      return await this.portalRepository.getPortalById(portalId);
+    } catch (error) {
+      logger.error('Error getting portal by ID', { portalId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get portals near coordinates
+   * @param {number} x
+   * @param {number} y
+   * @param {number} radius
+   * @returns {Promise<Portal[]>}
+   */
+  async getPortalsNear(x, y, radius = 50) {
+    try {
+      return await this.portalRepository.getPortalsNearCoordinates(x, y, radius);
+    } catch (error) {
+      logger.error('Error getting portals near coordinates', { x, y, radius, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's expeditions
+   * @param {number} userId
+   * @param {Object} filters - { status }
+   * @returns {Promise<PortalExpedition[]>}
+   */
+  async getUserExpeditions(userId, filters = {}) {
+    try {
+      let expeditions = await this.portalRepository.getUserExpeditions(userId);
+
+      // Apply filters
+      if (filters.status) {
+        expeditions = expeditions.filter(e => e.status === filters.status);
+      }
+
+      return expeditions;
+    } catch (error) {
+      logger.error('Error getting user expeditions', { userId, filters, error: error.message });
+      throw error;
+    }
+  }
 }
 
 module.exports = PortalService;

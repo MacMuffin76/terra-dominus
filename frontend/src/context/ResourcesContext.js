@@ -41,17 +41,10 @@ export const ResourcesProvider = ({ children }) => {
     }
   };
 
-  // ⏳ Polling toutes les 60 secondes
+  // Chargement initial uniquement (Socket.IO gère les mises à jour)
   useEffect(() => {
-    // premier chargement
     refetchResources();
-
-    // ensuite toutes les minutes
-    const interval = setInterval(() => {
-      refetchResources();
-    }, 60000); // 60 secondes
-
-    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

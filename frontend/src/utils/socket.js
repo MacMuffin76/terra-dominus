@@ -3,7 +3,11 @@
 import { io } from 'socket.io-client';
 import { safeStorage } from './safeStorage';
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || window.location.origin;
+// En développement, le backend tourne sur le port 5000
+// En production, on utilise le même domaine (reverse proxy)
+const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+const SOCKET_URL = isDevelopment ? 'http://localhost:5000' : window.location.origin;
+
 export const socket = io(SOCKET_URL, {
   path: "/socket.io",
   transports: ["websocket"],

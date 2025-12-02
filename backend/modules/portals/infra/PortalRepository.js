@@ -5,7 +5,8 @@
 
 const { Portal, PortalExpedition, City, User } = require('../../../models');
 const { Op } = require('sequelize');
-const logger = require('../../../utils/logger');
+const { getLogger } = require('../../../utils/logger');
+const logger = getLogger({ module: 'PortalRepository' });
 
 class PortalRepository {
   /**
@@ -18,11 +19,11 @@ class PortalRepository {
       return await Portal.findAll({
         where: {
           status: 'active',
-          expires_at: {
+          expiry_time: {
             [Op.gt]: now
           }
         },
-        order: [['spawned_at', 'DESC']]
+        order: [['spawn_time', 'DESC']]
       });
     } catch (error) {
       logger.error('Error fetching active portals', { error: error.message });
@@ -57,17 +58,17 @@ class PortalRepository {
       return await Portal.findAll({
         where: {
           status: 'active',
-          expires_at: {
+          expiry_time: {
             [Op.gt]: now
           },
-          coord_x: {
+          x_coordinate: {
             [Op.between]: [coordX - radius, coordX + radius]
           },
-          coord_y: {
+          y_coordinate: {
             [Op.between]: [coordY - radius, coordY + radius]
           }
         },
-        order: [['spawned_at', 'DESC']]
+        order: [['spawn_time', 'DESC']]
       });
     } catch (error) {
       logger.error('Error fetching portals near coordinates', { coordX, coordY, radius, error: error.message });
@@ -322,7 +323,7 @@ class PortalRepository {
       const portals = await Portal.findAll({
         where: {
           status: 'active',
-          expires_at: {
+          expiry_time: {
             [Op.gt]: now
           }
         },
@@ -337,6 +338,121 @@ class PortalRepository {
       return counts;
     } catch (error) {
       logger.error('Error counting portals by tier', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Count portals by tier and status
+   * @param {string} tier
+   * @param {string} status
+   * @returns {Promise<number>}
+   */
+  async countByTierAndStatus(tier, status) {
+    try {
+      return await Portal.count({
+        where: { tier, status }
+      });
+    } catch (error) {
+      logger.error('Error counting portals by tier and status', { tier, status, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Count portals by tier
+   * @param {string} tier
+   * @returns {Promise<number>}
+   */
+  async countByTier(tier) {
+    try {
+      return await Portal.count({
+        where: { tier }
+      });
+    } catch (error) {
+      logger.error('Error counting portals by tier', { tier, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Create portal (alias for createPortal)
+   * @param {Object} portalData
+   * @returns {Promise<Portal>}
+   */
+  async create(portalData) {
+    return this.createPortal(portalData);
+  }
+
+  /**
+   * Expire old portals
+   * @param {Date} now
+   * @returns {Promise<number>} Number of expired portals
+   */
+  async expirePortals(now) {
+    try {
+      const [affectedCount] = await Portal.update(
+        { status: 'expired' },
+        {
+          where: {
+            status: 'active',
+            expiry_time: {
+              [Op.lt]: now
+            }
+          }
+        }
+      );
+      return affectedCount;
+    } catch (error) {
+      logger.error('Error expiring portals', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete expired portals older than cutoff date
+   * @param {Date} cutoffDate
+   * @returns {Promise<number>} Number of deleted portals
+   */
+  async deleteExpiredBefore(cutoffDate) {
+    try {
+      const deletedCount = await Portal.destroy({
+        where: {
+          status: 'expired',
+          expiry_time: {
+            [Op.lt]: cutoffDate
+          }
+        }
+      });
+      return deletedCount;
+    } catch (error) {
+      logger.error('Error deleting expired portals', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Find nearby portals (within collision radius)
+   * @param {number} x
+   * @param {number} y
+   * @param {number} radius
+   * @returns {Promise<Portal[]>}
+   */
+  async findNearby(x, y, radius = 10) {
+    try {
+      return await Portal.findAll({
+        where: {
+          status: 'active',
+          x_coordinate: {
+            [Op.between]: [x - radius, x + radius]
+          },
+          y_coordinate: {
+            [Op.between]: [y - radius, y + radius]
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error finding nearby portals', { x, y, radius, error: error.message });
       throw error;
     }
   }

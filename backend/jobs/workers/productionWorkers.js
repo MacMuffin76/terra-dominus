@@ -8,10 +8,20 @@ const PRODUCTION_JOB_ID = 'production-tick';
 const DEFAULT_INTERVAL = Number(process.env.PRODUCTION_TICK_MS || 60000);
 
 async function ensureProductionTick(queue) {
+  const logger = getLogger({ module: 'productionWorker' });
   const existing = await queue.getRepeatableJobs();
-  const alreadyScheduled = existing.some((job) => job.id === PRODUCTION_JOB_ID);
+  const existingJob = existing.find((job) => job.id === PRODUCTION_JOB_ID);
 
-  if (!alreadyScheduled) {
+  // Si le job existe mais avec un intervalle différent, le supprimer
+  if (existingJob && existingJob.every !== DEFAULT_INTERVAL) {
+    logger.info({ oldInterval: existingJob.every, newInterval: DEFAULT_INTERVAL }, 'Interval changed, removing old production job');
+    await queue.removeRepeatableByKey(existingJob.key);
+  }
+
+  // Créer le job s'il n'existe pas ou a été supprimé
+  const stillExists = (await queue.getRepeatableJobs()).some((job) => job.id === PRODUCTION_JOB_ID);
+  if (!stillExists) {
+    logger.info({ interval: DEFAULT_INTERVAL }, 'Scheduling production tick');
     await queue.add('production-tick', serializeJobData({}), {
       jobId: PRODUCTION_JOB_ID,
       repeat: { every: DEFAULT_INTERVAL },
@@ -26,20 +36,55 @@ function createProductionWorker(container) {
     logger.error({ err }, 'Failed to schedule production tick');
   });
 
-  return createWorker(queueNames.PRODUCTION, async () =>
-    trackProductionTick(async () => {
+  return createWorker(queueNames.PRODUCTION, async () => {
+    try {
       const resourceService = container.resolve('resourceService');
       const io = getIO();
-      const users = await User.findAll({ attributes: ['id'] });
+      
+      if (!io) {
+        logger.warn('Socket.IO not available, skipping production tick');
+        return;
+      }
 
-      for (const user of users) {
-        const resources = await resourceService.getUserResources(user.id);
-        if (io) {
-          io.to(`user_${user.id}`).emit('resources', resources);
+      // Récupérer uniquement les utilisateurs connectés via leurs rooms Socket.IO
+      const allRooms = Array.from(io.sockets.adapter.rooms.keys());
+      const connectedRooms = allRooms
+        .filter(room => room.startsWith('user_'))
+        .map(room => parseInt(room.replace('user_', '')))
+        .filter(userId => !isNaN(userId));
+
+      logger.debug({ 
+        totalRooms: allRooms.length, 
+        userRooms: connectedRooms.length,
+        userIds: connectedRooms 
+      }, 'Checking connected users');
+
+      if (connectedRooms.length === 0) {
+        return; // Pas d'utilisateurs connectés, rien à faire
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const userId of connectedRooms) {
+        try {
+          const resources = await resourceService.getUserResources(userId);
+          io.to(`user_${userId}`).emit('resources', resources);
+          logger.debug({ userId, resourceCount: resources.length }, 'Resources emitted to user');
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          if (error.status !== 404) { // Ne log pas les erreurs "ville introuvable"
+            logger.error({ err: error, userId }, 'Failed to process user resources');
+          }
         }
       }
-    }),
-  );
+      
+      logger.info({ successCount, errorCount }, 'Production tick completed');
+    } catch (error) {
+      logger.error({ err: error }, 'Production tick failed');
+    }
+  });
 }
 
 module.exports = { createProductionWorker };

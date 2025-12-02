@@ -7,35 +7,35 @@ import axiosInstance from '../utils/axiosInstance';
 // ===== ATTAQUES =====
 
 export const launchAttack = async (attackData) => {
-  const response = await axiosInstance.post('/api/v1/combat/attack', attackData);
+  const response = await axiosInstance.post('/combat/attack', attackData);
   return response.data;
 };
 
 export const getUserAttacks = async (filters = {}) => {
   const params = new URLSearchParams(filters);
-  const response = await axiosInstance.get(`/api/v1/combat/attacks?${params}`);
+  const response = await axiosInstance.get(`/combat/attacks?${params}`);
   return response.data;
 };
 
 export const cancelAttack = async (attackId) => {
-  const response = await axiosInstance.post(`/api/v1/combat/attack/${attackId}/cancel`);
+  const response = await axiosInstance.post(`/combat/attack/${attackId}/cancel`);
   return response.data;
 };
 
 export const getCombatReport = async (attackId) => {
-  const response = await axiosInstance.get(`/api/v1/combat/report/${attackId}`);
+  const response = await axiosInstance.get(`/combat/report/${attackId}`);
   return response.data;
 };
 
 // ===== ESPIONNAGE =====
 
 export const launchSpyMission = async (missionData) => {
-  const response = await axiosInstance.post('/api/v1/combat/spy', missionData);
+  const response = await axiosInstance.post('/combat/spy', missionData);
   return response.data;
 };
 
 export const getUserSpyMissions = async (filters = {}) => {
   const params = new URLSearchParams(filters);
-  const response = await axiosInstance.get(`/api/v1/combat/spy-missions?${params}`);
+  const response = await axiosInstance.get(`/combat/spy-missions?${params}`);
   return response.data;
 };

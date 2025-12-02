@@ -9,6 +9,7 @@ import {
 } from '../api/trade';
 import { getUserCities } from '../api/world';
 import Menu from './Menu';
+import ResourcesWidget from './ResourcesWidget';
 import './Trade.css';
 
 const TradePanel = () => {
@@ -376,6 +377,7 @@ const TradePanel = () => {
       <Menu />
       <div className="trade-panel-container">
         <div className="trade-panel-content">
+          <ResourcesWidget />
           <div className="trade-panel-header">
             <h1>🚢 Commerce Inter-Villes</h1>
             <p className="subtitle">Gérez vos routes commerciales et convois de ressources</p>

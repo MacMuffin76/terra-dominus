@@ -8,7 +8,7 @@ const { createTradeWorker } = require('./workers/tradeWorker');
 const createPortalSpawningJob = require('./portalSpawningJob');
 const createQuestRotationJob = require('./questRotationJob');
 const { startUpkeepJob, stopUpkeepJob } = require('./upkeepJob');
-const { setupResourceProductionJob } = require('./resourceProductionJob');
+// const { setupResourceProductionJob } = require('./resourceProductionJob'); // Désactivé - productionWorker gère maintenant la production
 
 let portalJobs = null;
 let questJobs = null;
@@ -35,8 +35,8 @@ function startJobs(container) {
   startUpkeepJob(container);
   upkeepJobStarted = true;
   
-  // Resource production job (every minute)
-  setupResourceProductionJob();
+  // Note: Resource production is now handled by productionWorker via BullMQ
+  // configured with PRODUCTION_TICK_MS env variable (default: 1000ms)
 }
 
 function stopJobs() {

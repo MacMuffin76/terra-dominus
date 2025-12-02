@@ -83,6 +83,51 @@
   color: var(--neon-danger);
 }
 
+.terra-resource-capacity {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.max-indicator {
+  font-size: 0.75rem;
+  color: var(--neon-danger);
+  font-weight: 700;
+  margin-left: 4px;
+  animation: pulse-warning 2s infinite;
+}
+
+.warning-text {
+  font-size: 0.75rem;
+  color: var(--neon-warning);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.terra-resource-item.full-warning {
+  border-color: var(--neon-warning);
+  background: linear-gradient(135deg, var(--bg-card), rgba(217, 119, 6, 0.05));
+}
+
+.terra-resource-item.at-max {
+  border-color: var(--neon-danger);
+  background: linear-gradient(135deg, var(--bg-card), rgba(220, 38, 38, 0.1));
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+.terra-resource-item.at-max .terra-resource-amount {
+  color: var(--neon-danger);
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 767px) {
   .terra-resources-widget {
     flex-direction: column;

@@ -27,10 +27,12 @@ const resourceSlice = createSlice({
     resources: [],
     loading: false,
     error: null,
+    lastUpdate: null,
   },
   reducers: {
     updateResources(state, action) {
       state.resources = action.payload || [];
+      state.lastUpdate = Date.now(); // Force re-render
     },
   },
   extraReducers: (builder) => {

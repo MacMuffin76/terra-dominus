@@ -7,78 +7,78 @@ import axiosInstance from '../utils/axiosInstance';
 // ===== GESTION ALLIANCE =====
 
 export const createAlliance = async (data) => {
-  const response = await axiosInstance.post('/api/v1/alliances', data);
+  const response = await axiosInstance.post('/alliances', data);
   return response.data;
 };
 
 export const getAlliance = async (allianceId) => {
-  const response = await axiosInstance.get(`/api/v1/alliances/${allianceId}`);
+  const response = await axiosInstance.get(`/alliances/${allianceId}`);
   return response.data;
 };
 
 export const updateAlliance = async (allianceId, updates) => {
-  const response = await axiosInstance.put(`/api/v1/alliances/${allianceId}`, updates);
+  const response = await axiosInstance.put(`/alliances/${allianceId}`, updates);
   return response.data;
 };
 
 export const disbandAlliance = async (allianceId) => {
-  const response = await axiosInstance.delete(`/api/v1/alliances/${allianceId}`);
+  const response = await axiosInstance.delete(`/alliances/${allianceId}`);
   return response.data;
 };
 
 // ===== MEMBRES =====
 
 export const getMembers = async (allianceId) => {
-  const response = await axiosInstance.get(`/api/v1/alliances/${allianceId}/members`);
+  const response = await axiosInstance.get(`/alliances/${allianceId}/members`);
   return response.data;
 };
 
 export const promoteMember = async (allianceId, memberId, role) => {
-  const response = await axiosInstance.put(`/api/v1/alliances/${allianceId}/members/${memberId}/promote`, { role });
+  const response = await axiosInstance.put(`/alliances/${allianceId}/members/${memberId}/promote`, { role });
   return response.data;
 };
 
 export const kickMember = async (allianceId, memberId) => {
-  const response = await axiosInstance.delete(`/api/v1/alliances/${allianceId}/members/${memberId}`);
+  const response = await axiosInstance.delete(`/alliances/${allianceId}/members/${memberId}`);
   return response.data;
 };
 
 export const leaveAlliance = async (allianceId) => {
-  const response = await axiosInstance.post(`/api/v1/alliances/${allianceId}/leave`);
+  const response = await axiosInstance.post(`/alliances/${allianceId}/leave`);
   return response.data;
 };
 
 // ===== INVITATIONS =====
 
 export const sendInvitation = async (allianceId, inviteeId, message) => {
-  const response = await axiosInstance.post(`/api/v1/alliances/${allianceId}/invite`, { inviteeId, message });
+  const response = await axiosInstance.post(`/alliances/${allianceId}/invite`, { inviteeId, message });
   return response.data;
 };
 
 export const getMyInvitations = async () => {
-  const response = await axiosInstance.get('/api/v1/alliances/my/invitations');
+  const response = await axiosInstance.get('/alliances/my/invitations');
   return response.data;
 };
 
 export const respondToInvitation = async (invitationId, accept) => {
-  const response = await axiosInstance.post(`/api/v1/alliances/invitations/${invitationId}/respond`, { accept });
+  const response = await axiosInstance.post(`/alliances/invitations/${invitationId}/respond`, { accept });
   return response.data;
 };
 
 // ===== DEMANDES D'ADHÉSION =====
 
 export const requestToJoin = async (allianceId, message) => {
-  const response = await axiosInstance.post(`/api/v1/alliances/${allianceId}/join-request`, { message });
+  const response = await axiosInstance.post(`/alliances/${allianceId}/join-request`, { message });
   return response.data;
 };
 
 export const getPendingRequests = async (allianceId) => {
-  const response = await axiosInstance.get(`/api/v1/alliances/${allianceId}/join-requests`);
+  const response = await axiosInstance.get(`/alliances/${allianceId}/join-requests`);
   return response.data;
 };
 
 export const reviewJoinRequest = async (requestId, approve) => {
-  const response = await axiosInstance.post(`/api/v1/alliances/join-requests/${requestId}/review`, { approve });
+  const response = await axiosInstance.post(`/alliances/join-requests/${requestId}/review`, { approve });
   return response.data;
 };
 
@@ -86,7 +86,7 @@ export const reviewJoinRequest = async (requestId, approve) => {
 
 export const searchAlliances = async (filters = {}) => {
   const params = new URLSearchParams(filters);
-  const response = await axiosInstance.get(`/api/v1/alliances/search?${params}`);
+  const response = await axiosInstance.get(`/alliances/search?${params}`);
   return response.data;
 };
 

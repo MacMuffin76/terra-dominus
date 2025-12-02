@@ -12,8 +12,6 @@ const PORT = process.env.PORT || 5000;
 const container = createContainer();
 const app = createApp(container);
 const server = http.createServer(app);
-const io = initIO(server);
-startJobs(container);
 
 const resourceService = container.resolve('resourceService');
 const chatService = container.resolve('chatService');
@@ -27,7 +25,12 @@ const emitUserResources = async (socket, userId) => {
 // Chat socket handlers
 const registerChatHandlers = require('./modules/chat/socket/chatSocketHandlers');
 
-io.on('connection', (socket) => {
+// Initialize Socket.IO (async to support Redis Adapter)
+(async () => {
+  const io = await initIO(server);
+  startJobs(container);
+
+  io.on('connection', (socket) => {
   const userId = socket.user?.id;
 
   if (!userId) {
@@ -88,15 +91,19 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('error', (error) => {
-    runWithContext(context, () => {
-      socketLogger.error({ err: error }, 'WebSocket error');
+    socket.on('error', (error) => {
+      runWithContext(context, () => {
+        socketLogger.error({ err: error }, 'WebSocket error');
+      });
     });
   });
-});
 
-server.listen(PORT, () => {
-  logger.info({ port: PORT }, 'Server running');
+  server.listen(PORT, () => {
+    logger.info({ port: PORT }, 'Server running');
+  });
+})().catch((error) => {
+  logger.error({ err: error }, 'Failed to start server');
+  process.exit(1);
 });
 
 module.exports = server;
