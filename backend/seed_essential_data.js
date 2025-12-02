@@ -18,13 +18,14 @@ async function seedEssentialData() {
     
     // Load all models (this ensures they're registered with sequelize)
     const models = require('./models');
-    
-    // Ensure tables exist
-    await sequelize.sync({ alter: false });
-    logger.info('Database tables synchronized');
 
     // Get models
     const { Faction, BattlePassSeason } = models;
+    
+    // Sync only the specific tables we need (avoid foreign key issues from other models)
+    await Faction.sync({ alter: false });
+    await BattlePassSeason.sync({ alter: false });
+    logger.info('Factions and BattlePassSeason tables synchronized');
 
     // 1. Seed Factions (if they don't exist)
     const factionCount = await Faction.count();
