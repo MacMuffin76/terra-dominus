@@ -10,14 +10,21 @@
  */
 
 const sequelize = require('./db');
-const logger = require('./utils/logger');
+const { logger } = require('./utils/logger');
 
 async function seedEssentialData() {
   try {
     logger.info('Starting essential data seeding...');
+    
+    // Load all models (this ensures they're registered with sequelize)
+    const models = require('./models');
+    
+    // Ensure tables exist
+    await sequelize.sync({ alter: false });
+    logger.info('Database tables synchronized');
 
     // Get models
-    const { Faction, BattlePassSeason } = sequelize.models;
+    const { Faction, BattlePassSeason } = models;
 
     // 1. Seed Factions (if they don't exist)
     const factionCount = await Faction.count();
@@ -129,7 +136,8 @@ async function seedEssentialData() {
     process.exit(0);
 
   } catch (error) {
-    logger.error('Error seeding essential data:', error);
+    logger.error({ err: error }, 'Error seeding essential data');
+    console.error('Error details:', error);
     process.exit(1);
   }
 }
