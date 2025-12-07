@@ -1,8 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { Box, Typography, Paper } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Box, Typography } from '@mui/material';
+import { keyframes, useTheme } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) => ({
+const slideIn = keyframes`
+  0% { transform: translateX(-20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+`;
+
+const createStyles = (theme) => ({
   logContainer: {
     maxHeight: '300px',
     overflowY: 'auto',
@@ -35,11 +40,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   logEntryNew: {
-    animation: '$slideIn 0.5s ease-out',
-  },
-  '@keyframes slideIn': {
-    '0%': { transform: 'translateX(-20px)', opacity: 0 },
-    '100%': { transform: 'translateX(0)', opacity: 1 },
+        animation: `${slideIn} 0.5s ease-out`,
   },
   logRound: {
     color: '#666',
@@ -76,7 +77,7 @@ const useStyles = makeStyles((theme) => ({
     color: '#4CAF50',
     fontWeight: 'bold',
   },
-}));
+});
 
 const ABILITY_ICONS = {
   shield_regeneration: '🛡️',
@@ -89,7 +90,8 @@ const ABILITY_ICONS = {
 };
 
 const BossBattleLog = ({ battleLog }) => {
-  const classes = useStyles();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const logEndRef = useRef(null);
 
   useEffect(() => {
@@ -103,13 +105,13 @@ const BossBattleLog = ({ battleLog }) => {
     switch (event) {
       case 'phase_transition':
         return (
-          <Box key={`${round}-${event}`} className={`${classes.logEntry} ${classes.logPhaseTransition}`}>
-            <Typography className={classes.logEvent}>
-              <span className={classes.logRound}>Round {round}</span>
+                    <Box key={`${round}-${event}`} sx={[styles.logEntry, styles.logPhaseTransition]}>
+            <Typography sx={styles.logEvent}>
+              <span style={styles.logRound}>Round {round}</span>
               <span>🔄 PHASE {phase} ACTIVATED</span>
             </Typography>
             {message && (
-              <Typography variant="body2" style={{ marginLeft: '60px', fontStyle: 'italic' }}>
+              <Typography variant="body2" sx={{ marginLeft: '60px', fontStyle: 'italic' }}>
                 {message}
               </Typography>
             )}
@@ -118,11 +120,11 @@ const BossBattleLog = ({ battleLog }) => {
 
       case 'player_attack':
         return (
-          <Box key={`${round}-${event}`} className={`${classes.logEntry} ${classes.logEntryNew}`}>
-            <Typography className={classes.logEvent}>
-              <span className={classes.logRound}>Round {round}</span>
-              <span className={classes.logPlayerAttack}>⚔️ Player Attack:</span>
-              <span className={classes.logDamage}>-{damage?.toLocaleString()} HP</span>
+          <Box key={`${round}-${event}`} sx={[styles.logEntry, styles.logEntryNew]}>
+            <Typography sx={styles.logEvent}>
+              <span style={styles.logRound}>Round {round}</span>
+              <span style={styles.logPlayerAttack}>⚔️ Player Attack:</span>
+              <span style={styles.logDamage}>-{damage?.toLocaleString()} HP</span>
               <span style={{ color: '#666' }}>→ Boss HP: {boss_hp?.toLocaleString()}</span>
             </Typography>
           </Box>
@@ -130,11 +132,11 @@ const BossBattleLog = ({ battleLog }) => {
 
       case 'boss_attack':
         return (
-          <Box key={`${round}-${event}-boss`} className={`${classes.logEntry} ${classes.logEntryNew}`}>
-            <Typography className={classes.logEvent}>
-              <span className={classes.logRound}>Round {round}</span>
-              <span className={classes.logBossAttack}>🐉 Boss Counter:</span>
-              <span className={classes.logDamage}>{damage} unit losses</span>
+           <Box key={`${round}-${event}-boss`} sx={[styles.logEntry, styles.logEntryNew]}>
+            <Typography sx={styles.logEvent}>
+              <span style={styles.logRound}>Round {round}</span>
+              <span style={styles.logBossAttack}>🐉 Boss Counter:</span>
+              <span style={styles.logDamage}>{damage} unit losses</span>
               <span style={{ color: '#666' }}>→ Units: {units_remaining}</span>
             </Typography>
           </Box>
@@ -144,23 +146,23 @@ const BossBattleLog = ({ battleLog }) => {
         const abilityIcon = ABILITY_ICONS[ability] || '✨';
         const abilityName = ability?.replace(/_/g, ' ').toUpperCase() || 'SPECIAL ABILITY';
         return (
-          <Box key={`${round}-${event}-${ability}`} className={`${classes.logEntry} ${classes.logEntryNew}`}>
-            <Typography className={`${classes.logEvent} ${classes.logBossAbility}`}>
-              <span className={classes.logRound}>Round {round}</span>
+          <Box key={`${round}-${event}-${ability}`} sx={[styles.logEntry, styles.logEntryNew]}>
+            <Typography sx={{ ...styles.logEvent, ...styles.logBossAbility }}>
+              <span style={styles.logRound}>Round {round}</span>
               <span>{abilityIcon} {abilityName}</span>
             </Typography>
             {message && (
-              <Typography variant="body2" style={{ marginLeft: '60px', color: '#FFD700' }}>
+              <Typography variant="body2" sx={{ marginLeft: '60px', color: '#FFD700' }}>
                 {message}
               </Typography>
             )}
             {amount && (
-              <Typography variant="body2" style={{ marginLeft: '60px' }} className={classes.logHeal}>
+              <Typography variant="body2" sx={{ marginLeft: '60px', ...styles.logHeal }}>
                 +{amount?.toLocaleString()} HP restored
               </Typography>
             )}
             {animation && (
-              <Typography variant="caption" style={{ marginLeft: '60px', color: '#666', fontStyle: 'italic' }}>
+              <Typography variant="caption" sx={{ marginLeft: '60px', color: '#666', fontStyle: 'italic' }}>
                 Effect: {animation}
               </Typography>
             )}
@@ -169,9 +171,9 @@ const BossBattleLog = ({ battleLog }) => {
 
       default:
         return (
-          <Box key={`${round}-${event}-${Math.random()}`} className={classes.logEntry}>
-            <Typography variant="body2" style={{ color: '#aaa' }}>
-              <span className={classes.logRound}>Round {round}</span>
+          <Box key={`${round}-${event}-${Math.random()}`} sx={styles.logEntry}>
+            <Typography variant="body2" sx={{ color: '#aaa' }}>
+              <span style={styles.logRound}>Round {round}</span>
               {message || JSON.stringify(log)}
             </Typography>
           </Box>
@@ -181,8 +183,8 @@ const BossBattleLog = ({ battleLog }) => {
 
   if (!battleLog || battleLog.length === 0) {
     return (
-      <Box className={classes.logContainer}>
-        <Typography variant="body2" style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+      <Box sx={styles.logContainer}>
+        <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', padding: '20px' }}>
           Battle log will appear here...
         </Typography>
       </Box>
@@ -190,8 +192,8 @@ const BossBattleLog = ({ battleLog }) => {
   }
 
   return (
-    <Box className={classes.logContainer}>
-      <Typography variant="h6" style={{ marginBottom: '12px', color: '#FFD700' }}>
+    <Box sx={styles.logContainer}>
+      <Typography variant="h6" sx={{ marginBottom: '12px', color: '#FFD700' }}>
         📜 Battle Log
       </Typography>
       {battleLog.map((log) => formatLogEntry(log))}

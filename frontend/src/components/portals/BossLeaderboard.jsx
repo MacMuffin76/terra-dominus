@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
+  Avatar,
   Box,
-  Typography,
+  Chip,
+  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -9,16 +12,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Avatar,
-  Chip,
-  CircularProgress,
-} from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
-import { makeStyles } from '@material-ui/core/styles';
-import { EmojiEvents as TrophyIcon, CheckCircle as CheckIcon } from '@material-ui/icons';
+  Typography,
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { CheckCircle as CheckIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import { getBossLeaderboard } from '../../api/portals';
 
-const useStyles = makeStyles((theme) => ({
+const createStyles = (theme) => ({
   container: {
     padding: theme.spacing(3),
     background: 'linear-gradient(135deg, #1a1f36 0%, #0f1419 100%)',
@@ -94,10 +94,11 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(4),
     color: '#aaa',
   },
-}));
+});
 
 const BossLeaderboard = ({ bossId, limit = 10 }) => {
-  const classes = useStyles();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -124,9 +125,9 @@ const BossLeaderboard = ({ bossId, limit = 10 }) => {
 
   if (loading) {
     return (
-      <Box className={classes.container}>
-        <Box className={classes.loading}>
-          <CircularProgress style={{ color: '#FFD700' }} />
+      <Box sx={styles.container}>
+        <Box sx={styles.loading}>
+          <CircularProgress sx={{ color: '#FFD700' }} />
         </Box>
       </Box>
     );
@@ -134,43 +135,43 @@ const BossLeaderboard = ({ bossId, limit = 10 }) => {
 
   if (error) {
     return (
-      <Box className={classes.container}>
+      <Box sx={styles.container}>
         <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
 
   return (
-    <Box className={classes.container}>
-      <Box className={classes.title}>
+    <Box sx={styles.container}>
+      <Box sx={styles.title}>
         <TrophyIcon style={{ marginRight: '8px', fontSize: '2rem' }} />
-        <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Leaderboard
         </Typography>
       </Box>
 
       {leaderboard.length === 0 ? (
-        <Box className={classes.emptyState}>
+        <Box sx={styles.emptyState}>
           <Typography variant="h6">No attempts yet</Typography>
           <Typography variant="body2">Be the first to attack this boss!</Typography>
         </Box>
       ) : (
-        <TableContainer component={Paper} className={classes.tableContainer}>
+        <TableContainer component={Paper} sx={styles.tableContainer}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell className={classes.headerCell}>Rank</TableCell>
-                <TableCell className={classes.headerCell}>Player</TableCell>
-                <TableCell className={classes.headerCell} align="right">
+                <TableCell sx={styles.headerCell}>Rank</TableCell>
+                <TableCell sx={styles.headerCell}>Player</TableCell>
+                <TableCell sx={styles.headerCell} align="right">
                   Damage
                 </TableCell>
-                <TableCell className={classes.headerCell} align="center">
+                <TableCell sx={styles.headerCell} align="center">
                   Phases
                 </TableCell>
-                <TableCell className={classes.headerCell} align="center">
+                <TableCell sx={styles.headerCell} align="center">
                   Result
                 </TableCell>
-                <TableCell className={classes.headerCell} align="right">
+                <TableCell sx={styles.headerCell} align="right">
                   Date
                 </TableCell>
               </TableRow>
@@ -179,16 +180,16 @@ const BossLeaderboard = ({ bossId, limit = 10 }) => {
               {leaderboard.map((entry) => {
                 const rankClass =
                   entry.rank === 1
-                    ? classes.rank1
+                    ? styles.rank1
                     : entry.rank === 2
-                    ? classes.rank2
+                    ? styles.rank2
                     : entry.rank === 3
-                    ? classes.rank3
-                    : '';
+                    ? styles.rank3
+                    : {};
 
                 return (
                   <TableRow key={entry.rank} hover>
-                    <TableCell className={`${classes.rankCell} ${rankClass}`}>
+                    <TableCell sx={{ ...styles.rankCell, ...rankClass }}>
                       #{entry.rank}
                       {entry.rank <= 3 && (
                         <TrophyIcon
@@ -201,20 +202,20 @@ const BossLeaderboard = ({ bossId, limit = 10 }) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Box className={classes.userCell}>
-                        <Avatar className={classes.avatar}>
+                      <Box sx={styles.userCell}>
+                        <Avatar sx={styles.avatar}>
                           {entry.user?.username?.charAt(0).toUpperCase() || '?'}
                         </Avatar>
                         <Typography>{entry.user?.username || 'Unknown'}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell align="right" className={classes.damageCell}>
+                    <TableCell align="right" sx={styles.damageCell}>
                       {entry.damage_dealt.toLocaleString()}
                     </TableCell>
                     <TableCell align="center">
                       <Chip
                         label={`${entry.phases_reached}/4`}
-                        className={classes.phaseChip}
+                        sx={styles.phaseChip}
                         size="small"
                       />
                     </TableCell>
@@ -222,7 +223,7 @@ const BossLeaderboard = ({ bossId, limit = 10 }) => {
                       {entry.result === 'victory' ? (
                         <Chip
                           label="Victory"
-                          className={classes.victoryChip}
+                          sx={styles.victoryChip}
                           size="small"
                           icon={<CheckIcon />}
                         />

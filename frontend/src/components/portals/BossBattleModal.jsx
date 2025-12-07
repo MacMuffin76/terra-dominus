@@ -1,29 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
+  Alert,
   Box,
-  LinearProgress,
+  Button,
   Chip,
-  Grid,
-  Divider,
   CircularProgress,
-} from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
-import { makeStyles } from '@material-ui/core/styles';
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  Typography,
+} from '@mui/material';
+import { keyframes, useTheme } from '@mui/material/styles';
 import {
-  Warning as WarningIcon,
-  Security as ShieldIcon,
-  FlashOn as FlashOnIcon,
   Close as CloseIcon,
-} from '@material-ui/icons';
-import { getBossDetails, attackBoss, estimateBossBattle } from '../../api/portals';
+FlashOn as FlashOnIcon,
+  Security as ShieldIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
+import { getBossDetails, attackBoss } from '../../api/portals';
+const shimmer = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+`;
 
-const useStyles = makeStyles((theme) => ({
+const pulse = keyframes`
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.9); }
+`;
+
+const pulseFast = keyframes`
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.7); }
+  50% { box-shadow: 0 0 35px rgba(255, 0, 0, 1); }
+`;
+
+const shake = keyframes`
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+`;
+
+const phaseGlow = keyframes`
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 165, 0, 0.5); }
+`;
+
+const abilityPulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 68, 68, 0.8); }
+`;
+
+const createStyles = (theme) => ({
   dialog: {
     '& .MuiDialog-paper': {
       minWidth: '700px',
@@ -74,33 +103,16 @@ const useStyles = makeStyles((theme) => ({
       right: 0,
       bottom: 0,
       background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-      animation: '$shimmer 2s infinite',
+      animation: `${shimmer} 2s infinite`,
     },
   },
   hpFillLow: {
     background: 'linear-gradient(90deg, #ff0000 0%, #8b0000 100%) !important',
-    animation: '$pulse 1s infinite',
+    animation: `${pulse} 1s infinite`,
   },
   hpFillCritical: {
     background: 'linear-gradient(90deg, #ff0000 0%, #ff4400 100%) !important',
-    animation: '$pulseFast 0.5s infinite, $shake 0.1s infinite',
-  },
-  '@keyframes shimmer': {
-    '0%': { transform: 'translateX(-100%)' },
-    '100%': { transform: 'translateX(100%)' },
-  },
-  '@keyframes pulse': {
-    '0%, 100%': { boxShadow: '0 0 10px rgba(255, 0, 0, 0.5)' },
-    '50%': { boxShadow: '0 0 25px rgba(255, 0, 0, 0.9)' },
-  },
-  '@keyframes pulseFast': {
-    '0%, 100%': { boxShadow: '0 0 15px rgba(255, 0, 0, 0.7)' },
-    '50%': { boxShadow: '0 0 35px rgba(255, 0, 0, 1)' },
-  },
-  '@keyframes shake': {
-    '0%, 100%': { transform: 'translateX(0)' },
-    '25%': { transform: 'translateX(-2px)' },
-    '75%': { transform: 'translateX(2px)' },
+    animation: `${pulseFast} 0.5s infinite, ${shake} 0.1s infinite`,
   },
   hpText: {
     position: 'absolute',
@@ -127,16 +139,12 @@ const useStyles = makeStyles((theme) => ({
     background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
     color: '#000',
     boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
-    animation: '$phaseGlow 2s infinite',
+    animation: `${phaseGlow} 2s infinite`,
   },
   phaseInactive: {
     background: '#2a2f45',
     color: '#666',
     transition: 'all 0.3s ease',
-  },
-  '@keyframes phaseGlow': {
-    '0%, 100%': { boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)' },
-    '50%': { boxShadow: '0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 165, 0, 0.5)' },
   },
   abilitiesContainer: {
     marginTop: theme.spacing(3),
@@ -157,14 +165,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   abilityActive: {
-    animation: '$abilityPulse 1s infinite',
+    animation: `${abilityPulse} 1s infinite`,
     background: 'rgba(255, 68, 68, 0.2) !important',
     border: '1px solid rgba(255, 68, 68, 0.5) !important',
     color: '#ff4444 !important',
-  },
-  '@keyframes abilityPulse': {
-    '0%, 100%': { transform: 'scale(1)' },
-    '50%': { transform: 'scale(1.1)', boxShadow: '0 0 20px rgba(255, 68, 68, 0.8)' },
   },
   statsGrid: {
     marginTop: theme.spacing(2),
@@ -214,7 +218,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     minHeight: '400px',
   },
-}));
+});
 
 const BOSS_TYPE_NAMES = {
   elite_guardian: 'Elite Guardian',
@@ -231,7 +235,8 @@ const PHASE_MESSAGES = {
 };
 
 const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
-  const classes = useStyles();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [loading, setLoading] = useState(true);
   const [boss, setBoss] = useState(null);
   const [stats, setStats] = useState(null);
@@ -269,9 +274,9 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
 
   if (loading) {
     return (
-      <Dialog open={open} onClose={onClose} className={classes.dialog}>
-        <DialogContent className={classes.loading}>
-          <CircularProgress style={{ color: '#FFD700' }} size={60} />
+      <Dialog open={open} onClose={onClose} sx={styles.dialog}>
+        <DialogContent sx={styles.loading}>
+          <CircularProgress sx={{ color: '#FFD700' }} size={60} />
         </DialogContent>
       </Dialog>
     );
@@ -279,15 +284,15 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
 
   if (error || !boss) {
     return (
-      <Dialog open={open} onClose={onClose} className={classes.dialog}>
-        <DialogTitle className={classes.title}>
+      <Dialog open={open} onClose={onClose} sx={styles.dialog}>
+        <DialogTitle sx={styles.title}>
           <Typography variant="h5">Error</Typography>
           <CloseIcon style={{ cursor: 'pointer' }} onClick={onClose} />
         </DialogTitle>
         <DialogContent>
           <Alert severity="error">{error || 'Boss not found'}</Alert>
         </DialogContent>
-        <DialogActions className={classes.actionButtons}>
+        <DialogActions sx={styles.actionButtons}>
           <Button onClick={onClose} variant="contained">
             Close
           </Button>
@@ -300,17 +305,16 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
   const currentPhase = boss.phase;
   
   // Determine HP bar state for animations
-  const hpBarClass = hpPercent <= 10 
-    ? classes.hpFillCritical 
-    : hpPercent <= 25 
-    ? classes.hpFillLow 
-    : '';
+  const hpBarStyles = [
+    hpPercent <= 10 ? styles.hpFillCritical : null,
+    hpPercent > 10 && hpPercent <= 25 ? styles.hpFillLow : null,
+  ].filter(Boolean);
 
   return (
-    <Dialog open={open} onClose={onClose} className={classes.dialog} maxWidth="md" fullWidth>
-      <DialogTitle className={classes.title}>
+    <Dialog open={open} onClose={onClose} sx={styles.dialog} maxWidth="md" fullWidth>
+      <DialogTitle sx={styles.title}>
         <Box>
-          <Typography className={classes.bossType}>
+          <Typography sx={styles.bossType}>
             🐉 {BOSS_TYPE_NAMES[boss.boss_type] || boss.boss_type}
           </Typography>
           <Typography variant="body2">Boss Battle - Tier {boss.tier?.toUpperCase()} | Phase {currentPhase}/4</Typography>
@@ -320,18 +324,18 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
 
       <DialogContent>
         {/* HP Bar with Dynamic Animations */}
-        <Box className={classes.hpContainer}>
-          <Box style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <Typography variant="body2" style={{ color: '#aaa' }}>
+        <Box sx={styles.hpContainer}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <Typography variant="body2" sx={{ color: '#aaa' }}>
               Boss Health
             </Typography>
-            <Typography variant="body2" style={{ color: hpPercent <= 25 ? '#ff4444' : '#FFD700', fontWeight: 'bold' }}>
+            <Typography variant="body2" sx={{ color: hpPercent <= 25 ? '#ff4444' : '#FFD700', fontWeight: 'bold' }}>
               {hpPercent <= 25 ? '⚠️ CRITICAL' : hpPercent <= 50 ? '⚠️ LOW HP' : '✅ HEALTHY'}
             </Typography>
           </Box>
-          <Box className={classes.hpBar}>
-            <Box className={`${classes.hpFill} ${hpBarClass}`} style={{ width: `${hpPercent}%` }} />
-            <Typography className={classes.hpText}>
+          <Box sx={styles.hpBar}>
+            <Box sx={[styles.hpFill, ...hpBarStyles, { width: `${hpPercent}%` }]} />
+            <Typography sx={styles.hpText}>
               {boss.hp.current.toLocaleString()} / {boss.hp.max.toLocaleString()} HP
               ({boss.hp.percent}%)
             </Typography>
@@ -339,14 +343,12 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
         </Box>
 
         {/* Phase Indicators */}
-        <Box className={classes.phaseIndicator}>
+        <Box sx={styles.phaseIndicator}>
           {[1, 2, 3, 4].map((phase) => (
             <Chip
               key={phase}
               label={`Phase ${phase}`}
-              className={`${classes.phaseChip} ${
-                phase === currentPhase ? classes.phaseActive : classes.phaseInactive
-              }`}
+              sx={[styles.phaseChip, phase === currentPhase ? styles.phaseActive : styles.phaseInactive]}
             />
           ))}
         </Box>
@@ -354,14 +356,14 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
         <Typography
           variant="body1"
           align="center"
-          style={{ marginTop: '16px', color: '#FFD700', fontWeight: 'bold' }}
+          sx={{ marginTop: '16px', color: '#FFD700', fontWeight: 'bold' }}
         >
           {PHASE_MESSAGES[currentPhase]}
         </Typography>
 
         {/* Boss Abilities */}
-        <Box className={classes.abilitiesContainer}>
-          <Typography variant="h6" style={{ marginBottom: '12px' }}>
+        <Box sx={styles.abilitiesContainer}>
+          <Typography variant="h6" sx={{ marginBottom: '12px' }}>
             Active Abilities
           </Typography>
           <Box>
@@ -379,7 +381,7 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
                     )
                   }
                   label={ability.replace(/_/g, ' ').toUpperCase()}
-                  className={classes.abilityChip}
+                  sx={styles.abilityChip}
                 />
               ))
             ) : (
@@ -390,59 +392,59 @@ const BossBattleModal = ({ open, onClose, bossId, onAttackSuccess }) => {
           </Box>
         </Box>
 
-        <Divider style={{ margin: '24px 0', background: 'rgba(255, 255, 255, 0.1)' }} />
+        <Divider sx={{ margin: '24px 0', background: 'rgba(255, 255, 255, 0.1)' }} />
 
         {/* Stats */}
-        <Grid container spacing={2} className={classes.statsGrid}>
+        <Grid container spacing={2} sx={styles.statsGrid}>
           <Grid item xs={3}>
-            <Box className={classes.statBox}>
-              <Typography className={classes.statLabel}>Defense</Typography>
-              <Typography className={classes.statValue}>{boss.defense || 100}</Typography>
+            <Box sx={styles.statBox}>
+              <Typography sx={styles.statLabel}>Defense</Typography>
+              <Typography sx={styles.statValue}>{boss.defense || 100}</Typography>
             </Box>
           </Grid>
           <Grid item xs={3}>
-            <Box className={classes.statBox}>
-              <Typography className={classes.statLabel}>Phase</Typography>
-              <Typography className={classes.statValue}>{currentPhase}/4</Typography>
+            <Box sx={styles.statBox}>
+              <Typography sx={styles.statLabel}>Phase</Typography>
+              <Typography sx={styles.statValue}>{currentPhase}/4</Typography>
             </Box>
           </Grid>
           <Grid item xs={3}>
-            <Box className={classes.statBox}>
-              <Typography className={classes.statLabel}>Attempts</Typography>
-              <Typography className={classes.statValue}>
+            <Box sx={styles.statBox}>
+              <Typography sx={styles.statLabel}>Attempts</Typography>
+              <Typography sx={styles.statValue}>
                 {stats?.total_attempts || 0}
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={3}>
-            <Box className={classes.statBox}>
-              <Typography className={classes.statLabel}>Victories</Typography>
-              <Typography className={classes.statValue}>{stats?.victories || 0}</Typography>
+            <Box sx={styles.statBox}>
+              <Typography sx={styles.statLabel}>Victories</Typography>
+              <Typography sx={styles.statValue}>{stats?.victories || 0}</Typography>
             </Box>
           </Grid>
         </Grid>
 
         {/* Warning */}
         {boss.defeated ? (
-          <Alert severity="info" className={classes.warningAlert}>
+          <Alert severity="info" sx={styles.warningAlert}>
             This boss has already been defeated.
           </Alert>
         ) : currentPhase >= 3 ? (
-          <Alert severity="warning" className={classes.warningAlert} icon={<WarningIcon />}>
+          <Alert severity="warning" sx={styles.warningAlert} icon={<WarningIcon />}>
             Boss is in {currentPhase === 3 ? 'Aggressive' : 'Berserk'} phase! Prepare for intense
             combat and special abilities!
           </Alert>
         ) : null}
       </DialogContent>
 
-      <DialogActions className={classes.actionButtons}>
+      <DialogActions sx={styles.actionButtons}>
         <Button onClick={onClose} variant="outlined" style={{ color: '#fff' }}>
           Cancel
         </Button>
         <Button
           onClick={handleAttack}
           disabled={boss.defeated || attacking}
-          className={classes.attackButton}
+          sx={styles.attackButton}
           startIcon={<FlashOnIcon />}
         >
           {attacking ? 'Attacking...' : 'Attack Boss'}

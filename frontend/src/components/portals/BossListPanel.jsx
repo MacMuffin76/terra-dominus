@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
   Button,
+  Card,
+  CardActions,
+  CardContent,
   Chip,
-  LinearProgress,
   CircularProgress,
   FormControl,
+  Grid,
   InputLabel,
-  Select,
+  LinearProgress,
   MenuItem,
-} from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
-import { makeStyles } from '@material-ui/core/styles';
-import { FlashOn as FlashOnIcon, EmojiEvents as TrophyIcon } from '@material-ui/icons';
+  Select,
+  Typography,
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { EmojiEvents as TrophyIcon, FlashOn as FlashOnIcon } from '@mui/icons-material';
 import { getActiveBosses } from '../../api/portals';
 import BossBattleModal from './BossBattleModal';
 import BossAttackModal from './BossAttackModal';
 import BossBattleResultModal from './BossBattleResultModal';
 
-const useStyles = makeStyles((theme) => ({
+const createStyles = (theme) => ({
   container: {
     padding: theme.spacing(3),
   },
@@ -151,7 +151,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(8),
     color: '#aaa',
   },
-}));
+});
 
 const BOSS_TYPE_NAMES = {
   elite_guardian: { name: 'Elite Guardian', icon: '🛡️' },
@@ -161,7 +161,8 @@ const BOSS_TYPE_NAMES = {
 };
 
 const BossListPanel = () => {
-  const classes = useStyles();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [bosses, setBosses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -210,22 +211,45 @@ const BossListPanel = () => {
 
   if (loading) {
     return (
-      <Box className={classes.loading}>
-        <CircularProgress style={{ color: '#FFD700' }} size={60} />
+      <Box sx={styles.loading}>
+        <CircularProgress sx={{ color: '#FFD700' }} size={60} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={styles.container}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  if (bosses.length === 0) {
+    return (
+      <Box sx={styles.emptyState}>
+        <TrophyIcon style={{ fontSize: '3rem', color: '#FFD700' }} />
+        <Typography variant="h5">No active bosses found</Typography>
+        <Typography variant="body2">Check back later for new challenges!</Typography>
       </Box>
     );
   }
 
   return (
-    <Box className={classes.container}>
+    <Box sx={styles.container}>
       {/* Filters */}
-      <Box className={classes.filterBar}>
-        <Typography variant="h5" style={{ color: '#FFD700', fontWeight: 'bold', flexGrow: 1 }}>
+      <Box sx={styles.filterBar}>
+        <Typography variant="h5" sx={{ color: '#FFD700', fontWeight: 'bold', flexGrow: 1 }}>
           🐉 Boss Battles
         </Typography>
-        <FormControl variant="outlined" className={classes.filterControl}>
+        <FormControl variant="outlined" sx={styles.filterControl}>
           <InputLabel>Tier</InputLabel>
-          <Select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} label="Tier">
+          <Select
+            value={tierFilter}
+            onChange={(e) => setTierFilter(e.target.value)}
+            label="Tier"
+            sx={styles.filterControl}
+          >
             <MenuItem value="all">All Tiers</MenuItem>
             <MenuItem value="common">Common</MenuItem>
             <MenuItem value="rare">Rare</MenuItem>
@@ -234,9 +258,14 @@ const BossListPanel = () => {
             <MenuItem value="mythic">Mythic</MenuItem>
           </Select>
         </FormControl>
-        <FormControl variant="outlined" className={classes.filterControl}>
+        <FormControl variant="outlined" sx={styles.filterControl}>
           <InputLabel>Boss Type</InputLabel>
-          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} label="Boss Type">
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            label="Boss Type"
+            sx={styles.filterControl}
+          >
             <MenuItem value="all">All Types</MenuItem>
             <MenuItem value="elite_guardian">Elite Guardian</MenuItem>
             <MenuItem value="ancient_titan">Ancient Titan</MenuItem>
@@ -253,113 +282,80 @@ const BossListPanel = () => {
         </Button>
       </Box>
 
-      {/* Error */}
-      {error && (
-        <Alert severity="error" style={{ marginBottom: '16px' }}>
-          {error}
-        </Alert>
-      )}
-
       {/* Boss Grid */}
-      {bosses.length === 0 ? (
-        <Box className={classes.emptyState}>
-          <Typography variant="h4" gutterBottom>
-            🏜️
-          </Typography>
-          <Typography variant="h6">No Bosses Found</Typography>
-          <Typography variant="body2">
-            Try adjusting your filters or check back later for new bosses.
-          </Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={3}>
-          {bosses.map((boss) => {
-            const bossTypeInfo = BOSS_TYPE_NAMES[boss.boss_type] || { name: boss.boss_type, icon: '❓' };
-            const hpPercent = boss.hp?.percent || 0;
-
-            return (
-              <Grid item xs={12} md={6} lg={4} key={boss.boss_id}>
-                <Card
-                  className={`${classes.bossCard} ${
-                    boss.defeated ? classes.bossCardDefeated : ''
-                  }`}
-                >
-                  {boss.defeated && <Box className={classes.defeatedBadge}>DEFEATED</Box>}
-                  <Box className={classes.bossTypeHeader}>
-                    {bossTypeInfo.icon} {bossTypeInfo.name}
-                  </Box>
-                  <CardContent>
-                    {/* HP Bar */}
-                    <Box mb={2}>
-                      <Typography variant="body2" style={{ marginBottom: '8px', color: '#aaa' }}>
-                        Boss Health
-                      </Typography>
-                      <Box className={classes.hpBar}>
-                        <Box className={classes.hpFill} style={{ width: `${hpPercent}%` }} />
-                        <Typography className={classes.hpText}>{hpPercent}%</Typography>
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        style={{ display: 'block', marginTop: '4px', color: '#666' }}
-                      >
-                        {boss.hp?.current?.toLocaleString()} / {boss.hp?.max?.toLocaleString()}
-                      </Typography>
+      <Grid container spacing={3}>
+        {bosses.map((boss) => {
+          const bossTypeInfo = BOSS_TYPE_NAMES[boss.boss_type] || { name: boss.boss_type, icon: '❓' };
+          const hpPercent = boss.hp?.percent || 0;
+          return (
+            <Grid item xs={12} md={6} lg={4} key={boss.boss_id}>
+              <Card sx={[styles.bossCard, boss.defeated ? styles.bossCardDefeated : null]}>
+                {boss.defeated && <Box sx={styles.defeatedBadge}>DEFEATED</Box>}
+                <Box sx={styles.bossTypeHeader}>
+                  {bossTypeInfo.icon} {bossTypeInfo.name}
+                </Box>
+                <CardContent>
+                  {/* HP Bar */}
+                  <Box mb={2}>
+                    <Typography variant="body2" sx={{ marginBottom: '8px', color: '#aaa' }}>
+                      Boss Health
+                    </Typography>
+                    <Box sx={styles.hpBar}>
+                      <Box sx={[styles.hpFill, { width: `${hpPercent}%` }]} />
+                      <Typography sx={styles.hpText}>{hpPercent}%</Typography>
+            
                     </Box>
-
+<Typography
+                      variant="caption"
+                      sx={{ display: 'block', marginTop: '4px', color: '#666' }}
+                    >
+                      {boss.hp?.current?.toLocaleString()} / {boss.hp?.max?.toLocaleString()}
+                    </Typography>
+                  </Box>
                     {/* Phase & Abilities */}
-                    <Box mb={2}>
+                  <Box mb={2}>
+                    <Chip label={`Phase ${boss.phase}`} sx={styles.phaseChip} size="small" />
+                    {boss.abilities && boss.abilities.length > 0 && (
                       <Chip
-                        label={`Phase ${boss.phase}`}
-                        className={classes.phaseChip}
+                        label={`${boss.abilities.length} Abilities`}
+                        sx={{
+                          background: 'rgba(255, 152, 0, 0.2)',
+                          color: '#FFA500',
+                          fontWeight: 'bold',
+                        }}
                         size="small"
                       />
-                      {boss.abilities && boss.abilities.length > 0 && (
-                        <Chip
-                          label={`${boss.abilities.length} Abilities`}
-                          style={{
-                            background: 'rgba(255, 152, 0, 0.2)',
-                            color: '#FFA500',
-                            fontWeight: 'bold',
-                          }}
-                          size="small"
-                        />
                       )}
                     </Box>
 
                     {/* Stats */}
-                    <Box>
-                      <Typography variant="body2" style={{ color: '#aaa' }}>
-                        Defense: <strong style={{ color: '#fff' }}>{boss.defense || 100}</strong>
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                  <CardActions style={{ justifyContent: 'space-between', padding: '16px' }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#aaa' }}>
+                      Defense: <strong style={{ color: '#fff' }}>{boss.defense || 100}</strong>
+                    </Typography>
+                  </Box>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'space-between', padding: '16px' }}>
+                  <Button size="small" variant="outlined" sx={styles.viewButton} onClick={() => handleViewBoss(boss)}>
+                    View Details
+                  </Button>
+                  {!boss.defeated && (
                     <Button
                       size="small"
-                      variant="outlined"
-                      className={classes.viewButton}
-                      onClick={() => handleViewBoss(boss)}
+                      variant="contained"
+                      sx={styles.actionButton}
+                      startIcon={<FlashOnIcon />}
+                      onClick={() => setAttackingBoss(boss)}
                     >
-                      View Details
+                      Attack
                     </Button>
-                    {!boss.defeated && (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        className={classes.actionButton}
-                        startIcon={<FlashOnIcon />}
-                        onClick={() => setAttackingBoss(boss)}
-                      >
-                        Attack
-                      </Button>
                     )}
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
+                </CardActions>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
 
       {/* Modals */}
       {selectedBoss && (

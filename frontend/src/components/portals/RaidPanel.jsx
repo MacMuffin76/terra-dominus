@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
+  Avatar,
   Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
   Button,
+  Card,
+  CardActions,
   Chip,
-  LinearProgress,
   CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  TextField,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  LinearProgress,
   List,
   ListItem,
-  ListItemText,
   ListItemAvatar,
-  Avatar,
-  Divider,
-} from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
-import { makeStyles } from '@material-ui/core/styles';
-import {
-  Group as GroupIcon,
-  Add as AddIcon,
-  PlayArrow as StartIcon,
-  Check as CheckIcon,
-} from '@material-ui/icons';
+ListItemText,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { Add as AddIcon, Check as CheckIcon, Group as GroupIcon, PlayArrow as StartIcon } from '@mui/icons-material';
 import {
   getAllianceRaids,
   getRaidDetails,
@@ -40,7 +34,7 @@ import {
   getActiveBosses,
 } from '../../api/portals';
 
-const useStyles = makeStyles((theme) => ({
+const createStyles = (theme) => ({
   container: {
     padding: theme.spacing(3),
   },
@@ -157,10 +151,11 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(8),
     color: '#aaa',
   },
-}));
+});
 
 const RaidPanel = ({ allianceId }) => {
-  const classes = useStyles();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [raids, setRaids] = useState([]);
   const [bosses, setBosses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,21 +251,21 @@ const RaidPanel = ({ allianceId }) => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'forming':
-        return classes.forming;
+        return styles.forming;
       case 'in_progress':
-        return classes.inProgress;
+        return styles.inProgress;
       case 'victory':
-        return classes.victory;
+        return styles.victory;
       case 'defeat':
-        return classes.defeat;
+        return styles.defeat;
       default:
-        return '';
+        return {};
     }
   };
 
   if (!allianceId) {
     return (
-      <Box className={classes.emptyState}>
+      <Box sx={styles.emptyState}>
         <Typography variant="h6">No Alliance</Typography>
         <Typography variant="body2">You must be in an alliance to participate in raids.</Typography>
       </Box>
@@ -279,16 +274,16 @@ const RaidPanel = ({ allianceId }) => {
 
   if (loading) {
     return (
-      <Box className={classes.loading}>
-        <CircularProgress style={{ color: '#FFD700' }} size={60} />
+      <Box sx={styles.loading}>
+        <CircularProgress sx={{ color: '#FFD700' }} size={60} />
       </Box>
     );
   }
 
   return (
-    <Box className={classes.container}>
+    <Box sx={styles.container}>
       {/* Header */}
-      <Box className={classes.header}>
+      <Box sx={styles.header}>
         <Typography variant="h5" style={{ color: '#FFD700', fontWeight: 'bold' }}>
           <GroupIcon style={{ verticalAlign: 'middle', marginRight: '8px' }} />
           Alliance Raids
@@ -305,14 +300,14 @@ const RaidPanel = ({ allianceId }) => {
 
       {/* Error */}
       {error && (
-        <Alert severity="error" style={{ marginBottom: '16px' }}>
+        <Alert severity="error" sx={{ marginBottom: '16px' }}>
           {error}
         </Alert>
       )}
 
       {/* Raids Grid */}
       {raids.length === 0 ? (
-        <Box className={classes.emptyState}>
+        <Box sx={styles.emptyState}>
           <Typography variant="h6">No Active Raids</Typography>
           <Typography variant="body2">Create a raid to get started!</Typography>
         </Box>
@@ -324,11 +319,11 @@ const RaidPanel = ({ allianceId }) => {
 
             return (
               <Grid item xs={12} md={6} key={raid.raid_id}>
-                <Card className={classes.raidCard}>
+                <Card sx={styles.raidCard}>
                   <CardContent>
                     <Chip
                       label={raid.status.replace('_', ' ').toUpperCase()}
-                      className={`${classes.statusChip} ${getStatusClass(raid.status)}`}
+                      sx={{ ...styles.statusChip, ...getStatusClass(raid.status) }}
                       size="small"
                     />
                     <Typography variant="h6" gutterBottom>
@@ -341,16 +336,16 @@ const RaidPanel = ({ allianceId }) => {
                     {/* Participants */}
                     <Box>
                       <Typography variant="body2" style={{ marginBottom: '4px' }}>
-                        Participants: {participantCount} / {raid.max_participants}
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={participantPercent}
-                        className={classes.progressBar}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                        }}
-                      />
+                      Participants: {participantCount} / {raid.max_participants}
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={participantPercent}
+                      sx={{
+                        ...styles.progressBar,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                      }}
+                    />
                       {raid.min_participants > participantCount && (
                         <Typography
                           variant="caption"
@@ -380,7 +375,7 @@ const RaidPanel = ({ allianceId }) => {
                           <Button
                             size="small"
                             variant="contained"
-                            className={classes.joinButton}
+                            sx={styles.joinButton}
                             startIcon={<AddIcon />}
                             onClick={() => handleJoinRaid(raid.raid_id)}
                           >
@@ -391,7 +386,7 @@ const RaidPanel = ({ allianceId }) => {
                           <Button
                             size="small"
                             variant="contained"
-                            className={classes.startButton}
+                            sx={styles.startButton}
                             startIcon={<StartIcon />}
                             onClick={() => handleStartRaid(raid.raid_id)}
                           >
@@ -412,11 +407,11 @@ const RaidPanel = ({ allianceId }) => {
       <Dialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
-        className={classes.dialog}
+        sx={styles.dialog}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle className={classes.dialogTitle}>
+        <DialogTitle sx={styles.dialogTitle}>
           <Typography variant="h6">Create Alliance Raid</Typography>
         </DialogTitle>
         <DialogContent style={{ paddingTop: '20px' }}>
@@ -427,7 +422,7 @@ const RaidPanel = ({ allianceId }) => {
             value={newRaidData.boss_id}
             onChange={(e) => setNewRaidData({ ...newRaidData, boss_id: e.target.value })}
             variant="outlined"
-            className={classes.textField}
+            sx={styles.textField}
             margin="normal"
             SelectProps={{ native: true }}
           >
@@ -451,7 +446,7 @@ const RaidPanel = ({ allianceId }) => {
                   setNewRaidData({ ...newRaidData, min_participants: parseInt(e.target.value) })
                 }
                 variant="outlined"
-                className={classes.textField}
+                sx={styles.textField}
                 margin="normal"
                 InputProps={{ inputProps: { min: 2, max: 20 } }}
               />
@@ -466,7 +461,7 @@ const RaidPanel = ({ allianceId }) => {
                   setNewRaidData({ ...newRaidData, max_participants: parseInt(e.target.value) })
                 }
                 variant="outlined"
-                className={classes.textField}
+                sx={styles.textField}
                 margin="normal"
                 InputProps={{ inputProps: { min: 2, max: 20 } }}
               />
@@ -480,7 +475,7 @@ const RaidPanel = ({ allianceId }) => {
           <Button
             onClick={handleCreateRaid}
             variant="contained"
-            className={classes.createButton}
+            sx={styles.createButton}
             disabled={!newRaidData.boss_id}
           >
             Create
@@ -492,11 +487,11 @@ const RaidPanel = ({ allianceId }) => {
       <Dialog
         open={!!selectedRaid}
         onClose={() => setSelectedRaid(null)}
-        className={classes.dialog}
+        sx={styles.dialog}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle className={classes.dialogTitle}>
+        <DialogTitle sx={styles.dialogTitle}>
           <Typography variant="h6">Raid Details</Typography>
         </DialogTitle>
         <DialogContent>
@@ -513,7 +508,7 @@ const RaidPanel = ({ allianceId }) => {
                 {participants.map((p) => (
                   <ListItem key={p.participant_id}>
                     <ListItemAvatar>
-                      <Avatar className={classes.participantAvatar}>
+                      <Avatar sx={styles.participantAvatar}>
                         {p.user?.username?.charAt(0).toUpperCase()}
                       </Avatar>
                     </ListItemAvatar>
@@ -527,7 +522,7 @@ const RaidPanel = ({ allianceId }) => {
                           <LinearProgress
                             variant="determinate"
                             value={p.contribution_percent || 0}
-                            className={classes.contributionBar}
+                            sx={styles.contributionBar}
                           />
                         </Box>
                       }
