@@ -38,6 +38,7 @@ const createDefenseBuildingRouter = require('../modules/combat/api/defenseBuildi
 const createResearchUnlockRouter = require('../modules/research/api/researchUnlockRoutes');
 const createFacilityUnlockRouter = require('../modules/facilities/api/facilityUnlockRoutes');
 const createUnitTrainingRouter = require('../modules/combat/api/trainingRoutes');
+const analyticsRouter = require('../routes/analyticsRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
@@ -112,6 +113,7 @@ const createApiRouter = (container) => {
   router.use('/', createDashboardRouter(container));
   router.use('/', createUnitRouter(container));
   router.use('/admin', createBlueprintAdminRouter(container));
+  router.use('/analytics', analyticsRouter);
 
   return router;
 };
