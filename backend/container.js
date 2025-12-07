@@ -76,6 +76,10 @@ const createContainer = () => {
     const BattleReportRepository = require('./modules/combat/infra/BattleReportRepository');
     return new BattleReportRepository();
   });
+  container.register('battleReportService', (c) => {
+    const BattleReportService = require('./modules/combat/application/BattleReportService');
+    return new BattleReportService({ battleReportRepository: c.resolve('battleReportRepository') });
+  });
   container.register('combatSimulationService', (c) => {
     const CombatSimulationService = require('./modules/combat/application/CombatSimulationService');
     return new CombatSimulationService({ battleReportRepository: c.resolve('battleReportRepository') });

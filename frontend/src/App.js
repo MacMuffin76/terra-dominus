@@ -31,6 +31,8 @@ const Home = React.lazy(() => import('./pages/Home'));
 const DesignSystemTest = React.lazy(() => import('./pages/DesignSystemTest'));
 const Portals = React.lazy(() => import('./pages/Portals'));
 const Shop = React.lazy(() => import('./pages/Shop'));
+const BattleReports = React.lazy(() => import('./pages/BattleReports'));
+const NotificationSettings = React.lazy(() => import('./pages/NotificationSettings'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -38,6 +40,24 @@ function App() {
 
   useEffect(() => {
     ensureConsentInitialized();
+  }, []);
+
+  useEffect(() => {
+    let retries = 0;
+    const registerSW = async () => {
+      try {
+        if ('serviceWorker' in navigator) {
+          await navigator.serviceWorker.register('/service-worker.js');
+        }
+      } catch (err) {
+        retries += 1;
+        if (retries < 3) {
+          setTimeout(registerSW, retries * 1000);
+        }
+      }
+    };
+
+    registerSW();
   }, []);
 
 
@@ -184,6 +204,22 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <WorldMap />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/battle-reports"
+                element={(
+                  <PrivateRoute>
+                    <BattleReports />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/notifications"
+                element={(
+                  <PrivateRoute>
+                    <NotificationSettings />
                   </PrivateRoute>
                 )}
               />

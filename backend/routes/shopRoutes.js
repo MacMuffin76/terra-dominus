@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const ShopService = require('../services/shopService');
 const { getLogger } = require('../utils/logger');
 const { getAnalyticsService } = require('../services/analyticsService');
+const NotificationService = require('../utils/notificationService');
 const models = require('../models');
 
 const router = Router();
@@ -68,6 +69,15 @@ router.post('/purchase', protect, asyncHandler(async (req, res) => {
       },
       consent: { status: req.get('x-analytics-consent') },
     });
+    NotificationService.sendToUser(
+      req.user.id,
+      NotificationService.TYPES.RESOURCE_LOW,
+      {
+        title: '🛍️ Achat confirmé',
+        message: `Achat de ${qty}x ${itemId} enregistré`,
+        link: '/shop',
+      },
+    );
   } catch (error) {
     logger.warn({ err: error, userId: req.user.id }, 'Purchase failed');
     analyticsService.trackEvent({

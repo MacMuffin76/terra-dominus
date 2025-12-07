@@ -35,8 +35,10 @@ const createUpkeepRouter = require('../routes/upkeepRoutes');
 const createUnitUnlockRouter = require('../routes/unitUnlockRoutes');
 const createDefenseUnlockRouter = require('../modules/combat/api/defenseUnlockRoutes');
 const createDefenseBuildingRouter = require('../modules/combat/api/defenseBuildingRoutes');
+const notificationPreferenceRoutes = require('../routes/notificationPreferenceRoutes');
 const createResearchUnlockRouter = require('../modules/research/api/researchUnlockRoutes');
 const createFacilityUnlockRouter = require('../modules/facilities/api/facilityUnlockRoutes');
+const createBattleReportRouter = require('../modules/combat/api/battleReportRoutes');
 const createUnitTrainingRouter = require('../modules/combat/api/trainingRoutes');
 const analyticsRouter = require('../routes/analyticsRoutes');
 
@@ -57,6 +59,9 @@ const createApiRouter = (container) => {
   router.use('/world', createWorldRouter(container));
   router.use('/colonization', createColonizationRouter(container));
   router.use('/combat', createCombatRouter(container));
+  router.use('/combat/battle-reports', createBattleReportRouter({
+    battleReportService: container.resolve('battleReportService'),
+  }));
   router.use('/pvp', require('../routes/pvpBalancingRoutes')(
     container.resolve('pvpBalancingController'),
     require('../middleware/authMiddleware')
@@ -103,6 +108,7 @@ const createApiRouter = (container) => {
   }));
   router.use('/crafting', createCraftingRouter(container.resolve('craftingController')));
   router.use('/factions', createFactionRouter(container.resolve('factionController')));
+  router.use('/notifications/preferences', notificationPreferenceRoutes);
   router.use('/upkeep', createUpkeepRouter(container));
   router.use('/units/unlock', createUnitUnlockRouter(container));
   router.use('/units', createUnitTrainingRouter(container));

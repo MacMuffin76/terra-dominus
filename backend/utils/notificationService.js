@@ -1,5 +1,6 @@
 const { getIO } = require('../socket');
 const { logger } = require('./logger');
+const notificationPreferencesService = require('../services/notificationPreferencesService');
 
 /**
  * Service de notifications en temps réel via Socket.IO
@@ -47,7 +48,13 @@ class NotificationService {
    * @param {string} [data.link] - Lien vers une page (ex: '/achievements')
    * @param {string} [priority='medium'] - Priorité de la notification
    */
-  static sendToUser(userId, type, data, priority = NotificationService.PRIORITIES.MEDIUM) {
+  static async sendToUser(userId, type, data, priority = NotificationService.PRIORITIES.MEDIUM) {
+    try {
+      const prefs = await notificationPreferencesService.getPreferences(userId);
+      if (!prefs.inAppEnabled) {
+        logger.info('Notification skipped due to user preferences', { userId, type });
+        return;
+      }
     try {
       const io = getIO();
       if (!io) {

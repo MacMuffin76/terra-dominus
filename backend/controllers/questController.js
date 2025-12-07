@@ -3,6 +3,7 @@ const createQuestController = ({ questService }) => {
   const logger = require('../utils/logger');
   const { runWithContext } = require('../utils/logger');
   const { getAnalyticsService } = require('../services/analyticsService');
+  const NotificationService = require('../utils/notificationService');
   const analyticsService = getAnalyticsService();
 
   /**
@@ -152,6 +153,16 @@ const createQuestController = ({ questService }) => {
           message: 'Rewards claimed successfully',
           ...result
         });
+        
+        NotificationService.sendToUser(
+          userId,
+          NotificationService.TYPES.QUEST_COMPLETED,
+          {
+            title: '🎯 Quête terminée',
+            message: `Récompenses collectées pour la quête #${questId}`,
+            link: '/quests',
+          },
+        );
 
         analyticsService.trackEvent({
           userId,

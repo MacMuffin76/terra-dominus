@@ -71,6 +71,7 @@ const QuestStreak = require('./QuestStreak')(sequelize);
 // Import des modèles achievements
 const Achievement = require('./Achievement');
 const UserAchievement = require('./UserAchievement');
+const UserNotificationPreference = require('./UserNotificationPreference');
 
 // Boutique / paiements
 const ShopItem = require('./ShopItem');
@@ -189,6 +190,7 @@ const models = {
   QuestStreak,
   Achievement,
   UserAchievement,
+  UserNotificationPreference,
   BattlePassSeason,
   BattlePassReward,
   UserBattlePass,
