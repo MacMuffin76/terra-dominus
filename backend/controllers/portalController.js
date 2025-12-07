@@ -5,6 +5,9 @@
 
 const { getLogger } = require('../utils/logger');
 const logger = getLogger({ module: 'PortalController' });
+const { getAnalyticsService } = require('../services/analyticsService');
+
+const analyticsService = getAnalyticsService();
 
 const portalController = ({ portalService, portalCombatService, portalSpawnerService }) => {
   /**
@@ -99,6 +102,17 @@ const portalController = ({ portalService, portalCombatService, portalSpawnerSer
         units,
         tactic
       );
+
+      analyticsService.trackEvent({
+        userId,
+        eventName: 'portal_entered',
+        properties: {
+          portalId: parseInt(id),
+          tactic,
+          units: Object.keys(units || {}).length,
+        },
+        consent: { status: req.get('x-analytics-consent') },
+      });
 
       res.status(200).json({
         success: true,

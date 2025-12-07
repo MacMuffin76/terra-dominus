@@ -3,6 +3,7 @@ import Menu from '../components/Menu';
 import { getActivePortals } from '../api/portals';
 import PortalModal from '../components/PortalModal';
 import '../components/Portals.css';
+import { trackEvent } from '../utils/analytics';
 
 /**
  * Page Portails PvE
@@ -111,7 +112,10 @@ const Portals = () => {
               <div
                 key={portal.id}
                 className="portal-card"
-                onClick={() => setSelectedPortal(portal)}
+                onClick={() => {
+                  setSelectedPortal(portal);
+                  trackEvent('portal_entered', { portalId: portal.id, difficulty: portal.difficulty });
+                }}
                 style={{
                   borderColor: getDifficultyColor(portal.difficulty),
                 }}

@@ -1,5 +1,8 @@
 // backend/modules/market/api/marketController.js
 const { logger } = require('../../../utils/logger');
+const { getAnalyticsService } = require('../../../services/analyticsService');
+
+const analyticsService = getAnalyticsService();
 
 module.exports = ({ marketService }) => {
   // Créer un ordre
@@ -58,6 +61,16 @@ module.exports = ({ marketService }) => {
 
       logger.info({ userId, orderId, quantity }, 'Transaction exécutée');
       res.status(201).json(transaction);
+      analyticsService.trackEvent({
+        userId,
+        eventName: 'market_trade',
+        properties: {
+          orderId: parseInt(orderId),
+          quantity,
+          cityId,
+        },
+        consent: { status: req.get('x-analytics-consent') },
+      });
     } catch (error) {
       logger.error({ err: error }, 'Erreur transaction');
       res.status(400).json({ message: error.message });

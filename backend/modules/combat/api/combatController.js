@@ -1,4 +1,7 @@
 const { logger } = require('../../../utils/logger');
+const { getAnalyticsService } = require('../../../services/analyticsService');
+
+const analyticsService = getAnalyticsService();
 
 /**
  * CombatController - Gestion des combats et espionnage
@@ -90,6 +93,17 @@ const combatController = ({ combatService }) => {
       const result = await combatService.launchAttack(userId, req.body);
 
       logger.info(`Attaque lancée par user ${userId}`, { attackId: result.attackId });
+      analyticsService.trackEvent({
+        userId,
+        eventName: 'battle_started',
+        properties: {
+          attackId: result.attackId,
+          attackType: req.body.attackType,
+          fromCityId: req.body.fromCityId,
+          toCityId: req.body.toCityId,
+        },
+        consent: { status: req.get('x-analytics-consent') },
+      });
       res.status(201).json(result);
     } catch (error) {
       logger.error('Erreur lancement attaque', { error: error.message });
@@ -183,6 +197,16 @@ const combatController = ({ combatService }) => {
       }
 
       res.json(report);
+
+      analyticsService.trackEvent({
+        userId: req.user.id,
+        eventName: 'battle_finished',
+        properties: {
+          attackId,
+          outcome: report?.outcome || report?.result || report?.status,
+        },
+        consent: { status: req.get('x-analytics-consent') },
+      });
     } catch (error) {
       logger.error('Erreur récupération rapport', { error: error.message });
       res.status(500).json({ message: error.message });

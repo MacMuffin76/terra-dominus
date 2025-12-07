@@ -4,6 +4,8 @@
  * En production, peut être étendu pour envoyer les logs à un service externe (Sentry, LogRocket, etc.)
  */
 
+import { trackEvent as sendAnalyticsEvent } from './analytics';
+
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -145,9 +147,9 @@ class Logger {
    * @param {Object} properties - Propriétés de l'événement
    */
   event(eventName, properties = {}) {
-    const context = { 
-      event: eventName, 
-      ...properties, 
+    const context = {
+      event: eventName,
+      ...properties,
       module: this.module,
       timestamp: Date.now()
     };
@@ -156,10 +158,9 @@ class Logger {
       console.log(`[EVENT] ${eventName}`, context);
     }
     
-    // TODO: Envoyer à un service d'analytics (Google Analytics, Mixpanel, etc.)
-    // if (window.gtag) {
-    //   window.gtag('event', eventName, properties);
-    // }
+    sendAnalyticsEvent(eventName, context).catch(() => {
+      // best effort, ignore errors
+    });
   }
 }
 

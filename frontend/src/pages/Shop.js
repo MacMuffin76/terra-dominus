@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Card, CardActions, CardContent, CircularProgress, Grid, TextField, Typography, Snackbar, Link, FormControlLabel, Checkbox } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import { fetchShopItems, purchaseItem } from '../api/shop';
+import { trackEvent } from '../utils/analytics';
 
 const currencies = {
   EUR: '€',
@@ -56,6 +57,7 @@ const Shop = () => {
 
     try {
       setLoading(true);
+      trackEvent('purchase_attempt', { itemId: item.id, quantity: qty });
       const payload = {
         itemId: item.id,
         quantity: qty,
@@ -63,9 +65,10 @@ const Shop = () => {
         legalDocuments: legalConsent
       };
       const response = await purchaseItem(payload);
-      setToast({ open: true, severity: 'success', message: `Paiement initié (${response.paymentIntentId})` });
+      trackEvent('purchase_success', { itemId: item.id, quantity: qty, paymentIntentId: response.paymentIntentId });
     } catch (error) {
       setToast({ open: true, severity: 'error', message: error.message });
+      trackEvent('purchase_fail', { itemId: item.id, quantity: qty, reason: error.message });
     } finally {
       setLoading(false);
     }

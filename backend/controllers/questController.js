@@ -2,6 +2,8 @@
 const createQuestController = ({ questService }) => {
   const logger = require('../utils/logger');
   const { runWithContext } = require('../utils/logger');
+  const { getAnalyticsService } = require('../services/analyticsService');
+  const analyticsService = getAnalyticsService();
 
   /**
    * Get available quests
@@ -150,6 +152,17 @@ const createQuestController = ({ questService }) => {
           message: 'Rewards claimed successfully',
           ...result
         });
+
+        analyticsService.trackEvent({
+          userId,
+          eventName: 'quest_completed',
+          properties: {
+            questId,
+            rewards: result?.rewards?.map((reward) => reward?.type).filter(Boolean),
+          },
+          consent: { status: req.get('x-analytics-consent') },
+        });
+
 
       } catch (error) {
         logger.error('Failed to claim rewards:', error);

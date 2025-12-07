@@ -4,7 +4,9 @@
  */
 
 const { getLogger, runWithContext } = require('../utils/logger');
+const { getAnalyticsService } = require('../services/analyticsService');
 const logger = getLogger({ module: 'portal-boss-controller' });
+const analyticsService = getAnalyticsService();
 
 function createPortalBossController({
   portalBossCombatService,
@@ -197,6 +199,15 @@ function createPortalBossController({
           logger.info(
             `Boss battle: User ${userId} vs Boss ${bossId}, Result: ${result.result}, Phases: ${result.phases_reached}`
           );
+
+          if (result?.result === 'victory') {
+            analyticsService.trackEvent({
+              userId,
+              eventName: 'boss_defeated',
+              properties: { bossId, phases: result.phases_reached },
+              consent: { status: req.get('x-analytics-consent') },
+            });
+          }
 
           res.json({
             success: true,

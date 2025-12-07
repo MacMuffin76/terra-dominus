@@ -18,6 +18,7 @@ import ExploreIcon from '@mui/icons-material/Explore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
+import { trackSessionEnd } from '../utils/analytics';
 
 const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,6 +40,7 @@ const Menu = () => {
   };
 
   const handleLogout = () => {
+    trackSessionEnd('logout');
     dispatch(logout());
     navigate('/login');
   };

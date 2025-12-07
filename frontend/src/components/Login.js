@@ -4,6 +4,7 @@ import './Login.css';
 import { safeStorage } from '../utils/safeStorage';
 import { Button, Card, Input } from './ui';
 import useAuthForm from '../hooks/useAuthForm';
+import { trackSessionStart } from '../utils/analytics';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Login = () => {
     // et non simplement parce que isAuthenticated est true
     if (status === 'success' && isAuthenticated && token) {
       safeStorage.setItem('jwtToken', token);
+      trackSessionStart({ entrypoint: 'login' });
       navigate('/dashboard');
     }
   }, [status, isAuthenticated, navigate, token]);

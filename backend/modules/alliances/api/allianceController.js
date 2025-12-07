@@ -1,4 +1,7 @@
 const { logger } = require('../../../utils/logger');
+const { getAnalyticsService } = require('../../../services/analyticsService');
+
+const analyticsService = getAnalyticsService();
 
 module.exports = ({ allianceService }) => {
   // Créer une alliance
@@ -154,6 +157,14 @@ module.exports = ({ allianceService }) => {
       const invitation = await allianceService.respondToInvitation(invitationId, userId, accept);
 
       res.json(invitation);
+      if (accept) {
+        analyticsService.trackEvent({
+          userId,
+          eventName: 'alliance_joined',
+          properties: { allianceId: invitation?.allianceId || invitation?.alliance_id },
+          consent: { status: req.get('x-analytics-consent') },
+        });
+      }
     } catch (error) {
       logger.error({ err: error }, 'Erreur réponse invitation');
       res.status(400).json({ message: error.message });
@@ -214,6 +225,14 @@ module.exports = ({ allianceService }) => {
       const request = await allianceService.reviewJoinRequest(requestId, userId, approve);
 
       res.json(request);
+      if (approve) {
+        analyticsService.trackEvent({
+          userId,
+          eventName: 'alliance_joined',
+          properties: { allianceId: request?.allianceId || request?.alliance_id },
+          consent: { status: req.get('x-analytics-consent') },
+        });
+      }
     } catch (error) {
       logger.error({ err: error }, 'Erreur traitement demande');
       res.status(400).json({ message: error.message });

@@ -11,6 +11,7 @@ import './App.css';
 import useDashboardData from './hooks/useDashboardData';
 import { API_ERROR_EVENT_NAME } from './utils/apiErrorHandler';
 import Loader from './components/ui/Loader';
+import { ensureConsentInitialized } from './utils/analytics';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Resources = React.lazy(() => import('./components/Resources'));
@@ -34,6 +35,11 @@ const Shop = React.lazy(() => import('./pages/Shop'));
 function App() {
   const [apiError, setApiError] = useState(null);
   const { error, clearError } = useDashboardData();
+
+  useEffect(() => {
+    ensureConsentInitialized();
+  }, []);
+
 
   useEffect(() => {
     const handleApiError = (event) => setApiError(event.detail);

@@ -1,6 +1,8 @@
 const { getLogger } = require('../utils/logger');
+const { getAnalyticsService } = require('../services/analyticsService');
 
 const logger = getLogger({ module: 'TutorialController' });
+const analyticsService = getAnalyticsService();
 
 const createTutorialController = ({ tutorialService }) => {
   /**
@@ -32,6 +34,17 @@ const createTutorialController = ({ tutorialService }) => {
       }
 
       const result = await tutorialService.completeStep(userId, stepId, actionData);
+
+      (req.logger || logger).audit({ userId, stepId }, 'Tutorial step completed');
+      analyticsService.trackEvent({
+        userId,
+        eventName: 'tutorial_step_completed',
+        properties: {
+          stepId,
+          completion: result?.completionPercentage,
+        },
+        consent: { status: req.get('x-analytics-consent') },
+      });
       
       (req.logger || logger).audit({ userId, stepId }, 'Tutorial step completed');
       res.json(result);

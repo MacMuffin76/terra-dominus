@@ -3,12 +3,13 @@ const asyncHandler = require('express-async-handler');
 const { protect } = require('../middleware/authMiddleware');
 const ShopService = require('../services/shopService');
 const { getLogger } = require('../utils/logger');
+const { getAnalyticsService } = require('../services/analyticsService');
 const models = require('../models');
 
 const router = Router();
 const logger = getLogger({ module: 'ShopRoutes' });
+const analyticsService = getAnalyticsService();
 const shopService = new ShopService({
-  ShopItem: models.ShopItem,
   PaymentIntent: models.PaymentIntent,
   UserTransaction: models.UserTransaction,
   sequelize: models.sequelize
@@ -34,6 +35,12 @@ router.post('/purchase', protect, asyncHandler(async (req, res) => {
   }
 
   try {
+    analyticsService.trackEvent({
+      userId: req.user.id,
+      eventName: 'purchase_attempt',
+      properties: { itemId, quantity: qty, consentVersion },
+      consent: { status: req.get('x-analytics-consent') },
+    });
     const { paymentIntent, userTransaction } = await shopService.startPurchase({
       user: req.user,
       itemId,
@@ -49,10 +56,26 @@ router.post('/purchase', protect, asyncHandler(async (req, res) => {
       paymentIntentId: paymentIntent.id,
       status: paymentIntent.status,
       checkoutSessionId: paymentIntent.checkoutSessionId,
-      transactionId: userTransaction.id
+      transactionId: userTransaction.id 
+    });
+    analyticsService.trackEvent({
+      userId: req.user.id,
+      eventName: 'purchase_success',
+      properties: {
+        itemId,
+        quantity: qty,
+        transactionId: userTransaction.id,
+      },
+      consent: { status: req.get('x-analytics-consent') },
     });
   } catch (error) {
     logger.warn({ err: error, userId: req.user.id }, 'Purchase failed');
+    analyticsService.trackEvent({
+      userId: req.user.id,
+      eventName: 'purchase_fail',
+      properties: { itemId, quantity: qty, reason: error.message },
+      consent: { status: req.get('x-analytics-consent') },
+    });
     res.status(400).json({ message: error.message });
   }
 }));

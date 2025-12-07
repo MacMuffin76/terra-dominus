@@ -12,6 +12,7 @@ import {
   getUserTransactions,
   getMarketStats
 } from '../api/market';
+import { trackEvent } from '../utils/analytics';
 
 const Market = () => {
   const [view, setView] = useState('browse'); // browse, myOrders, transactions, create
@@ -191,6 +192,11 @@ const Market = () => {
     setLoading(true);
     try {
       await executeTransaction(orderId, parseInt(cityId), parseInt(quantity));
+      trackEvent('market_trade', {
+        orderId,
+        quantity: parseInt(quantity),
+        cityId: parseInt(cityId),
+      });
       alert('Transaction réussie !');
       loadData();
     } catch (err) {

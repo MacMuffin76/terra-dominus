@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getTutorialProgress, completeStep, skipTutorial } from '../api/tutorial';
 import safeStorage from '../utils/safeStorage';
+import { trackEvent } from '../utils/analytics';
 
 const useTutorial = () => {
   const [tutorialState, setTutorialState] = useState({
@@ -52,6 +53,11 @@ const useTutorial = () => {
         nextStep: result.nextStep,
         completionPercentage: (result.progress.completed_steps.length / 10) * 100,
         showTutorial: !result.tutorialCompleted,
+      });
+
+      trackEvent('tutorial_step_completed', {
+        stepId,
+        completion: (result.progress.completed_steps.length / 10) * 100,
       });
 
       return result;

@@ -28,6 +28,11 @@ const createContainer = () => {
   const container = new Container();
 
   container.register('resourceService', () => require('./services/resourceService'));
+
+  container.register('analyticsService', () => {
+    const { getAnalyticsService } = require('./services/analyticsService');
+    return getAnalyticsService();
+  });
   
   // Production calculator service
   container.register('productionCalculatorService', () => {

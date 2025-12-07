@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import questAPI from '../api/quests';
+import { trackEvent } from '../utils/analytics';
 
 export const useQuests = () => {
   const [activeQuests, setActiveQuests] = useState([]);
@@ -81,6 +82,11 @@ export const useQuests = () => {
         type: 'reward_claimed',
         quest: { title: 'Quest Complete!' },
         rewards: response.rewards,
+      });
+
+      trackEvent('quest_completed', {
+        questId,
+        rewards: response?.rewards?.length,
       });
 
       setTimeout(() => setNotification(null), 5000);
