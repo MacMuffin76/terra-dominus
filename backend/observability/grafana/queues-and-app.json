@@ -1,0 +1,74 @@
+{
+  "title": "Terra Dominus - App & Queues",
+  "uid": "terra-queues",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-3h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "BullMQ jobs par état",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (queue, state) (queue_jobs_total)",
+          "legendFormat": "{{queue}} {{state}}"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Sockets actives",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "socket_active_connections",
+          "legendFormat": "actives"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Durée tick production p95 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(production_tick_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP erreurs 5xx",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_errors_total[5m])) by (route)",
+          "legendFormat": "{{route}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "SLO API p95 < 300ms",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p95 ms"
+        }
+      ],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 250 },
+          { "color": "red", "value": 300 }
+        ]
+      }
+    }
+  ],
+  "templating": { "list": [] }
+}

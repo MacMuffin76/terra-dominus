@@ -14,6 +14,10 @@ const container = createContainer();
 const app = createApp(container);
 const server = http.createServer(app);
 
+// Timeouts défensifs pour éviter les requêtes pendantes
+server.headersTimeout = Number(process.env.HEADERS_TIMEOUT_MS || 15000);
+server.requestTimeout = Number(process.env.REQUEST_TIMEOUT_MS || 15000);
+
 const resourceService = container.resolve('resourceService');
 const chatService = container.resolve('chatService');
 const logger = getLogger({ module: 'server' });
