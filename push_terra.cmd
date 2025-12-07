@@ -136,4 +136,3 @@ if errorlevel 1 (
 )
 
 echo ✅ Termine !
-exit /b 0
