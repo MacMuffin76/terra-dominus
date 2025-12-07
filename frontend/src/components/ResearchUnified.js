@@ -2,11 +2,13 @@
 // Page Recherche avec système de déblocage par bâtiments et prérequis
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlaskConical, Lock, Award, CheckCircle, Clock } from 'lucide-react';
+import { FlaskConical, Lock, Award, CheckCircle, Clock, Play } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
-import { getAvailableResearch } from '../api/researchUnlocks';
+import { getAvailableResearch, startResearch } from '../api/researchUnlocks';
 import { useAsyncError } from '../hooks/useAsyncError';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
 import './Research.css';
 import './units/UnitTrainingPanel.css';
@@ -15,8 +17,13 @@ import './UnifiedPages.css';
 /**
  * Research Card Component
  */
-const ResearchCard = ({ research, status, onSelect, isSelected }) => {
-  const { name, description, category, cost, effects, missingRequirements, icon } = research;
+const ResearchCard = ({ research, status, onSelect, isSelected, onStart }) => {
+  const { name, description, category, cost, effects, missingRequirements, icon, id } = research;
+
+  const handleStartClick = (e) => {
+    e.stopPropagation();
+    onStart(research);
+  };
 
   const statusConfig = {
     completed: { 
@@ -101,13 +108,29 @@ const ResearchCard = ({ research, status, onSelect, isSelected }) => {
         </div>
       )}
 
-      {/* Prérequis manquants */}
+      {/* Action button - only for available research */}
+      {status === 'available' && isSelected && (
+        <button 
+          className="research-action-button"
+          onClick={handleStartClick}
+        >
+          <Play size={20} />
+          <span>Lancer la recherche</span>
+        </button>
+      )}
+
+      {/* Prérequis manquants - Version compacte */}
       {status === 'locked' && missingRequirements && missingRequirements.length > 0 && (
-        <div className="requirements">
-          <p className="requirements-title">Prérequis:</p>
-          {missingRequirements.map((req, idx) => (
-            <p key={idx} className="requirement-item">🔒 {req}</p>
-          ))}
+        <div className="requirements-compact">
+          <div className="requirements-title">
+            <Lock size={12} />
+            <span>Manquants:</span>
+          </div>
+          <div className="requirements-list-compact">
+            {missingRequirements.map((req, idx) => (
+              <span key={idx} className="requirement-chip">{req}</span>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -119,11 +142,13 @@ const ResearchCard = ({ research, status, onSelect, isSelected }) => {
  */
 const ResearchUnified = () => {
   const { error, catchError } = useAsyncError('ResearchUnified');
+  const { toasts, removeToast, success, error: errorToast, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [researchData, setResearchData] = useState(null);
   const [selectedResearch, setSelectedResearch] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [starting, setStarting] = useState(false);
 
   const loadResearch = useCallback(async () => {
     setLoading(true);
@@ -148,6 +173,37 @@ const ResearchUnified = () => {
   const handleResearchSelect = useCallback((research) => {
     setSelectedResearch(prev => prev?.id === research.id ? null : research);
   }, []);
+
+  const handleStartResearch = useCallback(async (research) => {
+    if (!research.id || starting) return;
+    setStarting(true);
+    try {
+      const result = await startResearch(research.id);
+      // Recharger les données en arrière-plan sans attendre
+      loadResearch().catch(() => {});
+      setSelectedResearch(null);
+      success(`${research.name} recherche lancée avec succès !`, 4000);
+      console.log('Research started:', result);
+    } catch (err) {
+      console.error('Error starting research:', err);
+      
+      // Extraire le message d'erreur
+      const errorMessage = err?.response?.data?.message || err?.message || 'Erreur lors du lancement de la recherche';
+      
+      // Si c'est une erreur de prérequis, afficher un warning plus doux
+      if (errorMessage.includes('requis') || errorMessage.includes('Niveau') || errorMessage.includes('Recherche:')) {
+        warning(errorMessage, 6000);
+      } else {
+        errorToast(errorMessage, 5000);
+      }
+      
+      // Recharger quand même pour voir si ça a fonctionné
+      loadResearch().catch(() => {});
+    } finally {
+      setStarting(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starting, loadResearch, success, errorToast, warning]);
 
   if (loading) {
     return (
@@ -181,12 +237,24 @@ const ResearchUnified = () => {
   const { available = [], inProgress = [], completed = [], locked = [], buildings = {}, categories = {} } = researchData || {};
 
   // Créer un tableau avec toutes les recherches et leur statut
+  // Tri intelligent : Tier (1→4), puis par statut (available → locked → completed)
+  const statusPriority = { available: 1, locked: 2, inProgress: 3, completed: 4 };
+  
   const allResearch = [
     ...completed.map(r => ({ ...r, status: 'completed' })),
     ...inProgress.map(r => ({ ...r, status: 'inProgress' })),
     ...available.map(r => ({ ...r, status: 'available' })),
     ...locked.map(r => ({ ...r, status: 'locked' }))
-  ];
+  ].sort((a, b) => {
+    // Tri par Tier d'abord (recherches simples en premier)
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    // Puis par statut (available avant locked)
+    if (statusPriority[a.status] !== statusPriority[b.status]) {
+      return statusPriority[a.status] - statusPriority[b.status];
+    }
+    // Puis alphabétique
+    return a.name.localeCompare(b.name);
+  });
 
   // Filtrer par catégorie
   let filteredResearch = filterCategory === 'all' 
@@ -206,6 +274,7 @@ const ResearchUnified = () => {
   return (
     <div className="research-container">
       <Menu />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="research-content" id="main-content">
         <ResourcesWidget />
 
@@ -292,6 +361,7 @@ const ResearchUnified = () => {
               research={research}
               status={research.status}
               onSelect={handleResearchSelect}
+              onStart={handleStartResearch}
               isSelected={selectedResearch?.id === research.id}
             />
           ))}

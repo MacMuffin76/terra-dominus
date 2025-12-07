@@ -5,34 +5,24 @@ const { getLogger } = require('../utils/logger');
 const blueprintRepository = new BlueprintRepository();
 const logger = getLogger({ module: 'TrainingController' });
 
-const DEFAULT_TRAINING_TYPES = [
-  'Drone d’assaut terrestre',
-  'Fantassin plasmique',
-  'Infiltrateur holo-camouflage',
-  'Tireur à antimatière',
-  'Artilleur à railgun',
-  'Exo-sentinelle',
-  'Commandos nano-armure',
-  'Légionnaire quantique',
-];
-
-const computeCostBreakdown = (blueprint, level) => {
-  if (!blueprint || (blueprint.max_level && level > blueprint.max_level)) {
+const computeCostBreakdown = (unitStat, level) => {
+  if (!unitStat) {
     return [];
   }
 
-  return Object.entries(blueprint.costs || {}).map(([resource, amount]) => ({
-    resource_type: resource,
-    amount: Number(amount || 0) * level,
-  }));
+  // Example: multiply base cost by level (assuming cost is stored in unitStat)
+  return [
+    { resource_type: 'gold', amount: (unitStat.base_cost_gold || 0) * level },
+    { resource_type: 'metal', amount: (unitStat.base_cost_metal || 0) * level },
+  ];
 };
 
-const computeDuration = (blueprint, level) => {
-  if (!blueprint || (blueprint.max_level && level > blueprint.max_level)) {
+const computeDuration = (unitStat, level) => {
+  if (!unitStat) {
     return null;
   }
 
-  return (blueprint.base_duration_seconds || 0) * level;
+  return (unitStat.base_training_time_seconds || 0) * level;
 };
 
 const sumCost = (costs) => costs.reduce((sum, cost) => sum + Number(cost.amount || 0), 0);
@@ -42,25 +32,27 @@ const ensureUserTrainings = async (userId) => {
     where: { user_id: userId },
   });
 
-  const blueprints = await blueprintRepository.listByCategory('unit');
-  const expectedTypes = blueprints.length ? blueprints.map((bp) => bp.type) : DEFAULT_TRAINING_TYPES;
+  // Fetch all unit stats from the unit_stats table
+  const unitStats = await require('../models/UnitStats').findAll();
+
+  const expectedTypes = unitStats.map((unit) => unit.unit_key);
 
   const missingTypes = expectedTypes.filter(
-    (name) => !trainings.some((training) => training.name === name)
+    (unitKey) => !trainings.some((training) => training.name === unitKey)
   );
 
   if (missingTypes.length > 0) {
     await Training.bulkCreate(
-      missingTypes.map((name) => {
-        const blueprint = blueprints.find((bp) => bp.type === name);
-        const costBreakdown = computeCostBreakdown(blueprint, 1);
+      missingTypes.map((unitKey) => {
+        const unitStat = unitStats.find((unit) => unit.unit_key === unitKey);
+        const costBreakdown = computeCostBreakdown(unitStat, 1);
 
         return {
           user_id: userId,
-          name,
+          name: unitKey,
           level: 0,
           nextlevelcost: sumCost(costBreakdown),
-          description: null,
+          description: unitStat ? unitStat.description : null,
         };
       })
     );
@@ -125,38 +117,76 @@ exports.getTrainingDetails = async (req, res) => {
   }
 };
 
-// Upgrade a specific training center
+const ActionQueue = require('../models/ActionQueue');
+const sequelize = require('../db');
+
+// Upgrade a specific training center with delay queue
 exports.upgradeTraining = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const training = await Training.findByPk(req.params.id);
+    const training = await Training.findByPk(req.params.id, { transaction });
     if (!training) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Training center not found' });
     }
 
     const blueprint = await blueprintRepository.findByCategoryAndType('unit', training.name);
     if (blueprint?.max_level && training.level >= blueprint.max_level) {
+      await transaction.rollback();
       return res.status(400).json({ message: 'Max level reached for this training' });
     }
 
-    const nextLevel = Number(training.level || 0) + 1;
-    const followingCost = computeCostBreakdown(blueprint, nextLevel + 1);
+    const city = await require('../utils/cityUtils').getUserMainCity(req.user.id);
+    if (!city) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'User city not found' });
+    }
 
-    // Simple logique d'upgrade : level + 1
-    training.level = nextLevel;
-    training.nextlevelcost = sumCost(followingCost);
-    await training.save();
-
-    (req.logger || logger).audit({ userId: req.user.id, trainingId: training.id }, 'Training upgraded');
-    res.json({
-      ...training.toJSON(),
-      nextLevelCost: training.nextlevelcost,
-      costBreakdown: followingCost,
-      nextLevelDuration: computeDuration(blueprint, nextLevel + 1),
-      maxLevel: blueprint?.max_level ?? null,
+    // Count pending queued or in_progress actions for this city and entity
+    const pendingCount = await ActionQueue.count({
+      where: {
+        cityId: city.id,
+        entityId: training.id,
+        type: 'training',
+        status: ['queued', 'in_progress'],
+      },
+      transaction,
     });
+
+    const nextLevel = (Number(training.level) || 0) + pendingCount + 1;
+    const durationSeconds = blueprint ? (blueprint.base_duration_seconds || 0) * nextLevel : 0;
+
+    // Find last queued action to set startTime
+    const lastTask = await ActionQueue.findOne({
+      where: { cityId: city.id, type: 'training' },
+      order: [['slot', 'DESC']],
+      transaction,
+    });
+
+    const startTime = lastTask && lastTask.finishTime ? new Date(lastTask.finishTime) : new Date();
+    const finishTime = new Date(startTime.getTime() + durationSeconds * 1000);
+
+    const queueItem = await ActionQueue.create({
+      cityId: city.id,
+      entityId: training.id,
+      type: 'training',
+      status: lastTask ? 'queued' : 'in_progress',
+      startTime,
+      finishTime,
+      slot: lastTask ? lastTask.slot + 1 : 1,
+    }, { transaction });
+
+    await transaction.commit();
+
+    // Emit event to notify client (optional, implement socket.io emit if needed)
+    // const io = require('../socket').getIO();
+    // io.to(`user_${req.user.id}`).emit('action_queue:update', { type: 'training', queue: queueItem });
+
+    res.json({ message: 'Training upgrade queued', queueItem });
   } catch (error) {
-    (req.logger || logger).error({ err: error }, 'Error upgrading training');
-    res.status(500).json({ message: 'Error upgrading training' });
+    await transaction.rollback();
+    (req.logger || logger).error({ err: error }, 'Error queuing training upgrade');
+    res.status(500).json({ message: 'Error queuing training upgrade' });
   }
 };
 

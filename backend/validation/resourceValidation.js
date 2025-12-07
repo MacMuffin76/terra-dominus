@@ -12,7 +12,7 @@ const saveUserResourcesSchema = {
       .items(
         Joi.object({
           type: Joi.string().required(),
-          amount: Joi.number().optional(),
+          amount: Joi.number().min(0).max(999999999).optional(),
         })
       )
       .required(),

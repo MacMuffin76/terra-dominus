@@ -37,9 +37,10 @@
 
 .facilities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--spacing-xl);
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--spacing-lg);
   width: 100%;
+  margin-bottom: var(--spacing-xl);
 }
 
 /* Animations */
@@ -59,10 +60,70 @@
   }
 }
 
+/* Action Button - Style identique aux cartes de recherche */
+.upgrade-action-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 2px solid #34d399;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.upgrade-action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #10b981;
+}
+
+.upgrade-action-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.upgrade-action-button:disabled {
+  background: rgba(107, 114, 128, 0.3);
+  border-color: #6b7280;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.upgrade-action-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(107, 114, 128, 0.3);
+  border-color: #6b7280;
+}
+
 /* Responsive */
+@media (max-width: 1400px) {
+  .facilities-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .facilities-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .facilities-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

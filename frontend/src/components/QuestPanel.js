@@ -8,10 +8,10 @@ import {
   claimQuestRewards,
   startQuest,
   getQuestStats
-} from '../api/quests';
+} from '../api/legacyQuests';
 import './QuestPanel.css';
 
-const QuestPanel = ({ onRewardsClaimed }) => {
+const QuestPanel = ({ onClose, onRewardsClaimed }) => {
   const [quests, setQuests] = useState([]);
   const [stats, setStats] = useState({
     available: 0,
@@ -29,6 +29,18 @@ const QuestPanel = ({ onRewardsClaimed }) => {
     loadQuests();
     loadStats();
   }, []);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   const loadQuests = async () => {
     try {
@@ -163,63 +175,72 @@ const QuestPanel = ({ onRewardsClaimed }) => {
   ).length < 2;
 
   return (
-    <div className="quest-panel">
-      <div className="quest-panel-header">
-        <h2 className="quest-panel-title">
-          <span className="title-icon">📋</span>
-          Quêtes
-        </h2>
-        
-        <div className="quest-stats-summary">
-          <div className="stat-item">
-            <span className="stat-value">{stats.in_progress}</span>
-            <span className="stat-label">En cours</span>
+    <div className="quest-panel-overlay" onClick={onClose}>
+      <div className="quest-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="quest-panel-header">
+          <h2 className="quest-panel-title">
+            <span className="title-icon">📋</span>
+            Quêtes
+          </h2>
+          
+          <button className="quest-panel-close" onClick={onClose} title="Fermer">
+            ✕
+          </button>
+        </div>
+
+        <div className="quest-header-content">
+          <div className="quest-stats-summary">
+            <div className="stat-item">
+              <span className="stat-value">{stats.in_progress}</span>
+              <span className="stat-label">En cours</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{stats.completed}</span>
+              <span className="stat-label">Complétées</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{stats.claimed}</span>
+              <span className="stat-label">Réclamées</span>
+            </div>
           </div>
-          <div className="stat-item">
-            <span className="stat-value">{stats.completed}</span>
-            <span className="stat-label">Complétées</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{stats.claimed}</span>
-            <span className="stat-label">Réclamées</span>
+
+          <div className="quest-actions-compact">
+            <button 
+              className="compact-button assign-daily-button"
+              onClick={handleAssignDaily}
+              disabled={!canAssignDaily || loading}
+              title="Nouvelles quêtes quotidiennes"
+            >
+              <span className="button-icon">🌅</span>
+              <span className="button-text">Quotidiennes</span>
+            </button>
+            <button 
+              className="compact-button assign-weekly-button"
+              onClick={handleAssignWeekly}
+              disabled={!canAssignWeekly || loading}
+              title="Nouvelles quêtes hebdomadaires"
+            >
+              <span className="button-icon">📅</span>
+              <span className="button-text">Hebdomadaires</span>
+            </button>
+            <button 
+              className="compact-button refresh-button"
+              onClick={loadQuests}
+              disabled={loading}
+              title="Actualiser"
+            >
+              <span className="button-icon">🔄</span>
+            </button>
           </div>
         </div>
-      </div>
 
-      {notification && (
-        <div className={`quest-notification quest-notification-${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
+        {notification && (
+          <div className={`quest-notification quest-notification-${notification.type}`}>
+            {notification.message}
+          </div>
+        )}
 
-      <div className="quest-actions-bar">
-        <button 
-          className="assign-button assign-daily-button"
-          onClick={handleAssignDaily}
-          disabled={!canAssignDaily || loading}
-        >
-          <span className="button-icon">🌅</span>
-          Nouvelles quêtes quotidiennes
-        </button>
-        <button 
-          className="assign-button assign-weekly-button"
-          onClick={handleAssignWeekly}
-          disabled={!canAssignWeekly || loading}
-        >
-          <span className="button-icon">📅</span>
-          Nouvelles quêtes hebdomadaires
-        </button>
-        <button 
-          className="refresh-button"
-          onClick={loadQuests}
-          disabled={loading}
-        >
-          <span className="button-icon">🔄</span>
-          Actualiser
-        </button>
-      </div>
-
-      <div className="quest-tabs">
+        <div className="quest-tabs">
         <button
           className={`quest-tab ${activeTab === 'all' ? 'active' : ''}`}
           onClick={() => setActiveTab('all')}
@@ -271,6 +292,7 @@ const QuestPanel = ({ onRewardsClaimed }) => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

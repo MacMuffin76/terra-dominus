@@ -28,7 +28,16 @@ const createContainer = () => {
   const container = new Container();
 
   container.register('resourceService', () => require('./services/resourceService'));
-   container.register('buildingService', () => {
+  
+  // Production calculator service
+  container.register('productionCalculatorService', () => {
+    const ProductionCalculatorService = require('./modules/resources/application/ProductionCalculatorService');
+    const { Building, Research, Facility, City } = require('./models');
+    const ResourceProduction = require('./models/ResourceProduction');
+    return new ProductionCalculatorService({ Building, Research, Facility, City, ResourceProduction });
+  });
+  
+  container.register('buildingService', () => {
     const BuildingService = require('./modules/buildings/application/BuildingService');
     const {
       BuildingRepository,
@@ -176,6 +185,34 @@ const createContainer = () => {
     });
   });
 
+  container.register('unitTrainingService', () => {
+    const UnitTrainingService = require('./modules/combat/application/UnitTrainingService');
+    const { User, Unit, City, Resource, Facility } = require('./models');
+    const sequelize = require('./db');
+    return new UnitTrainingService({
+      User,
+      Unit,
+      City,
+      Resource,
+      Facility,
+      sequelize
+    });
+  });
+
+  container.register('defenseBuildingService', () => {
+    const DefenseBuildingService = require('./modules/combat/application/DefenseBuildingService');
+    const { User, Defense, City, Resource, Facility } = require('./models');
+    const sequelize = require('./db');
+    return new DefenseBuildingService({
+      User,
+      Defense,
+      City,
+      Resource,
+      Facility,
+      sequelize
+    });
+  });
+
   container.register('defenseUnlockService', () => {
     const DefenseUnlockService = require('./modules/combat/application/DefenseUnlockService');
     const { User, Research, Building, Facility, City } = require('./models');
@@ -209,6 +246,18 @@ const createContainer = () => {
     const { User, Facility, City } = require('./models');
     const sequelize = require('./db');
     return new FacilityService({
+      User,
+      Facility,
+      City,
+      sequelize
+    });
+  });
+
+  container.register('facilityUnlockService', () => {
+    const FacilityUnlockService = require('./modules/facilities/application/FacilityUnlockService');
+    const { User, Facility, City } = require('./models');
+    const sequelize = require('./db');
+    return new FacilityUnlockService({
       User,
       Facility,
       City,

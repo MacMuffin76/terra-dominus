@@ -13,6 +13,9 @@ const dashboardSlice = createSlice({
     resources: [],
     buildings: [],
     units: [],
+    facilities: [],
+    researches: [],
+    defenses: [],
     messages: [],
     status: 'idle',
     error: null,
@@ -29,6 +32,9 @@ const dashboardSlice = createSlice({
         state.resources = action.payload.resources || [];
         state.buildings = action.payload.buildings || [];
         state.units = action.payload.units || [];
+        state.facilities = action.payload.facilities || [];
+        state.researches = action.payload.researches || [];
+        state.defenses = action.payload.defenses || [];
         state.messages = action.payload.messages || [];
         state.error = null;
       })

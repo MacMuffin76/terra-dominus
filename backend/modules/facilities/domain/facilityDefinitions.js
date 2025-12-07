@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Facility/Installation Definitions
  * Strategic buildings that unlock capabilities and provide bonuses
  */
@@ -18,11 +18,12 @@ const FACILITY_DEFINITIONS = {
   TRAINING_CENTER: {
     id: 'training_center',
     name: 'Centre d\'Entraînement',
-    description: 'Débloque les unités selon le niveau. Bâtiment militaire principal.',
+    description: 'Débloque les unités selon le niveau. Bâtiment militaire principal. Nécessite un Centre de Commandement.',
     category: FACILITY_CATEGORIES.MILITARY,
-    icon: '🎯',
+    icon: '',
     
     maxLevel: 15,
+    requiredCommandCenter: 1,
     
     baseCost: {
       gold: 500,
@@ -30,15 +31,11 @@ const FACILITY_DEFINITIONS = {
       fuel: 100
     },
     
-    // Cost multiplier per level (exponential growth)
     costMultiplier: 1.5,
-    
     baseBuildTime: 300,
     
-    // Unlocks per level
     levelUnlocks: {
-      1: ['militia'],
-      1: ['riflemen'],  // With research
+      1: ['militia', 'riflemen'],
       3: ['scouts', 'transport', 'engineer'],
       5: ['marksmen', 'light_tank'],
       8: ['anti_armor'],
@@ -46,7 +43,6 @@ const FACILITY_DEFINITIONS = {
     },
     
     bonusPerLevel: {
-      // +1% unit training speed per level
       trainingSpeedBonus: 0.01
     }
   },
@@ -54,11 +50,12 @@ const FACILITY_DEFINITIONS = {
   DEFENSE_WORKSHOP: {
     id: 'defense_workshop',
     name: 'Atelier de Défense',
-    description: 'Construit et améliore les fortifications et tourelles.',
+    description: 'Construit et améliore les fortifications et tourelles. Nécessite un Centre de Commandement.',
     category: FACILITY_CATEGORIES.MILITARY,
-    icon: '🛡️',
+    icon: '',
     
     maxLevel: 15,
+    requiredCommandCenter: 1,
     
     baseCost: {
       gold: 600,
@@ -78,7 +75,6 @@ const FACILITY_DEFINITIONS = {
     },
     
     bonusPerLevel: {
-      // +2% defense HP per level
       defenseHPBonus: 0.02
     }
   },
@@ -90,11 +86,12 @@ const FACILITY_DEFINITIONS = {
   RESEARCH_LAB: {
     id: 'research_lab',
     name: 'Laboratoire de Recherche',
-    description: 'Débloque les technologies. Essentiel pour la progression.',
+    description: 'Débloque les technologies. Essentiel pour la progression. Nécessite Centre de Commandement niveau 3.',
     category: FACILITY_CATEGORIES.TECHNOLOGY,
-    icon: '🔬',
+    icon: '',
     
     maxLevel: 15,
+    requiredCommandCenter: 3,
     
     baseCost: {
       gold: 800,
@@ -107,7 +104,6 @@ const FACILITY_DEFINITIONS = {
     baseBuildTime: 480,
     
     bonusPerLevel: {
-      // +3% research speed per level
       researchSpeedBonus: 0.03
     }
   },
@@ -115,11 +111,12 @@ const FACILITY_DEFINITIONS = {
   MILITARY_FORGE: {
     id: 'forge',
     name: 'Forge Militaire',
-    description: 'Amélioration d\'équipement. Requis pour unités blindées avancées.',
+    description: 'Amélioration d\'équipement. Requis pour unités blindées avancées. Nécessite Centre de Commandement niveau 5.',
     category: FACILITY_CATEGORIES.MILITARY,
-    icon: '🏭',
+    icon: '',
     
     maxLevel: 10,
+    requiredCommandCenter: 5,
     
     baseCost: {
       gold: 1000,
@@ -131,16 +128,14 @@ const FACILITY_DEFINITIONS = {
     baseBuildTime: 600,
     
     levelUnlocks: {
-      1: ['marksmen'],  // With research
+      1: ['marksmen'],
       3: ['light_tank'],
       5: ['anti_armor'],
       8: ['heavy_tank']
     },
     
     bonusPerLevel: {
-      // +2% armor for all armored units
       armorBonus: 0.02,
-      // +1% attack for armored units
       armoredAttackBonus: 0.01
     }
   },
@@ -152,9 +147,9 @@ const FACILITY_DEFINITIONS = {
   COMMAND_CENTER: {
     id: 'command_center',
     name: 'Centre de Commandement',
-    description: 'Augmente les capacités globales de votre base.',
+    description: 'Augmente les capacités globales de votre base. Débloque progressivement toutes les installations.',
     category: FACILITY_CATEGORIES.ECONOMY,
-    icon: '🏢',
+    icon: '',
     
     maxLevel: 10,
     
@@ -167,12 +162,22 @@ const FACILITY_DEFINITIONS = {
     costMultiplier: 2.0,
     baseBuildTime: 900,
     
+    levelUnlocks: {
+      1: ['training_center_3', 'defense_workshop_3'],
+      2: ['training_center_5', 'defense_workshop_5'],
+      3: ['research_lab_5'],
+      4: ['training_center_8', 'defense_workshop_8'],
+      5: ['research_lab_10', 'forge_5'],
+      6: ['training_center_10', 'trading_post_5'],
+      7: ['defense_workshop_10', 'forge_8'],
+      8: ['training_center_15', 'research_lab_15', 'trading_post_10'],
+      9: ['defense_workshop_15', 'forge_10'],
+      10: ['all_max']
+    },
+    
     bonusPerLevel: {
-      // +1 vision range per level
       visionBonus: 1,
-      // +1 simultaneous construction slot every 2 levels
       constructionSlots: 0.5,
-      // +2% global production
       globalProductionBonus: 0.02
     }
   },
@@ -180,11 +185,12 @@ const FACILITY_DEFINITIONS = {
   TRADING_POST: {
     id: 'trading_post',
     name: 'Comptoir Commercial',
-    description: 'Commerce avec d\'autres joueurs. Réduit les taxes commerciales.',
+    description: 'Commerce avec d\'autres joueurs. Réduit les taxes commerciales. Nécessite Centre de Commandement niveau 6.',
     category: FACILITY_CATEGORIES.ECONOMY,
-    icon: '🏪',
+    icon: '',
     
     maxLevel: 10,
+    requiredCommandCenter: 6,
     
     baseCost: {
       gold: 1500,
@@ -196,9 +202,7 @@ const FACILITY_DEFINITIONS = {
     baseBuildTime: 540,
     
     bonusPerLevel: {
-      // -2% trade tax per level
       tradeTaxReduction: 0.02,
-      // +10% trade capacity per level
       tradeCapacityBonus: 0.10
     }
   }
@@ -217,7 +221,7 @@ function calculateFacilityCost(facility, currentLevel) {
   const nextLevel = currentLevel + 1;
   
   if (nextLevel > facility.maxLevel) {
-    return null;  // Max level reached
+    return null;
   }
   
   const cost = {};

@@ -64,7 +64,7 @@ const useDashboardData = () => {
 
       await loadUser();
     },
-    [dispatch, loadUser, userId, storedToken, hasBootstrapped]
+    [dispatch, loadUser, userId, storedToken]
   );
 
   const socket = useMemo(() => {
@@ -88,6 +88,14 @@ const useDashboardData = () => {
 
   useEffect(() => {
     bootstrapDashboard();
+
+    // Optional: add a polling interval to refresh data every X seconds
+    // If you want to stop continuous loading, ensure no polling or repeated calls here
+    // const interval = setInterval(() => {
+    //   bootstrapDashboard(true);
+    // }, 60000); // every 60 seconds
+
+    // return () => clearInterval(interval);
   }, [bootstrapDashboard]);
 
   useEffect(() => {
@@ -147,6 +155,9 @@ const useDashboardData = () => {
     user: dashboard.user,
     buildings: dashboard.buildings,
     units: dashboard.units || [],
+    facilities: dashboard.facilities || [],
+    researches: dashboard.researches || [],
+    defenses: dashboard.defenses || [],
   };
 
   return {

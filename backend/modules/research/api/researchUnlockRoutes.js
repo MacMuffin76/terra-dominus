@@ -47,6 +47,20 @@ const createResearchUnlockRouter = (container) => {
     }
   });
 
+  /**
+   * POST /api/research/unlock/start/:researchId
+   * Démarrer ou upgrader une recherche
+   */
+  router.post('/start/:researchId', protect, async (req, res) => {
+    try {
+      const result = await researchUnlockService.startResearch(req.user.id, req.params.researchId);
+      res.json(result);
+    } catch (error) {
+      req.logger?.error({ err: error }, 'Error starting research');
+      res.status(500).json({ message: 'Error starting research', error: error.message });
+    }
+  });
+
   return router;
 };
 

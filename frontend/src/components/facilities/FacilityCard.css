@@ -203,6 +203,45 @@
   }
 }
 
+/* Locked State */
+.terra-facility-card.terra-facility-locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+.terra-facility-card.terra-facility-locked:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.terra-facility-card.terra-facility-locked .terra-facility-image {
+  filter: brightness(0.5) grayscale(0.8);
+}
+
+.terra-facility-lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  backdrop-filter: blur(4px);
+}
+
+.terra-facility-lock-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
 @media (max-width: 767px) {
   .terra-facility-image-wrapper {
     height: 180px;
@@ -214,5 +253,14 @@
 
   .terra-facility-name {
     font-size: 1rem;
+  }
+
+  .terra-facility-lock-overlay {
+    width: 60px;
+    height: 60px;
+  }
+
+  .terra-facility-lock-icon {
+    font-size: 1.5rem;
   }
 }

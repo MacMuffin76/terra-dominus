@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const createAuthRouter = require('../modules/auth/api/authRoutes');
 const createResourceRouter = require('../modules/resources/api/resourceRoutes');
+const createProductionRouter = require('../modules/resources/api/productionRoutes');
 const createBuildingRouter = require('../modules/buildings/api/buildingRoutes');
 const createFacilityRouter = require('../modules/buildings/api/facilityRoutes');
 const createResearchRouter = require('../modules/buildings/api/researchRoutes');
@@ -33,14 +34,19 @@ const createFactionRouter = require('../routes/factionRoutes');
 const createUpkeepRouter = require('../routes/upkeepRoutes');
 const createUnitUnlockRouter = require('../routes/unitUnlockRoutes');
 const createDefenseUnlockRouter = require('../modules/combat/api/defenseUnlockRoutes');
+const createDefenseBuildingRouter = require('../modules/combat/api/defenseBuildingRoutes');
 const createResearchUnlockRouter = require('../modules/research/api/researchUnlockRoutes');
 const createFacilityUnlockRouter = require('../modules/facilities/api/facilityUnlockRoutes');
+const createUnitTrainingRouter = require('../modules/combat/api/trainingRoutes');
 
 const createApiRouter = (container) => {
   const router = Router();
 
   router.use('/auth', createAuthRouter(container));
   router.use('/resources', createResourceRouter(container));
+  router.use('/production', createProductionRouter({ 
+    productionCalculatorService: container.resolve('productionCalculatorService') 
+  }));
   router.use('/buildings', createBuildingRouter(container));
   router.use('/facilities', createFacilityRouter(container));
   router.use('/research', createResearchRouter(container));
@@ -97,7 +103,9 @@ const createApiRouter = (container) => {
   router.use('/factions', createFactionRouter(container.resolve('factionController')));
   router.use('/upkeep', createUpkeepRouter(container));
   router.use('/units/unlock', createUnitUnlockRouter(container));
+  router.use('/units', createUnitTrainingRouter(container));
   router.use('/defense/unlock', createDefenseUnlockRouter(container));
+  router.use('/defenses', createDefenseBuildingRouter(container));
   router.use('/research/unlock', createResearchUnlockRouter(container));
   router.use('/facilities/unlock', createFacilityUnlockRouter(container));
   router.use('/', createDashboardRouter(container));

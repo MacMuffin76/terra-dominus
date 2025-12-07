@@ -117,35 +117,42 @@ exports.getDefenseDetails = async (req, res) => {
  * POST /api/defense/defense-buildings/:id/upgrade
  * Achat d’UNE unité de défense pour la ville principale (quantity += 1)
  */
+const ActionQueue = require('../models/ActionQueue');
+const sequelize = require('../db');
+
+// Buy a defense unit with delay queue
 exports.buyDefenseUnit = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const userId = req.user.id;
-    const city   = await getUserMainCity(userId);
-
+    const city = await getUserMainCity(userId);
     if (!city) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Aucune ville trouvée pour ce joueur' });
     }
 
-    const defId   = req.params.id;
+    const defId = req.params.id;
     const defense = await Defense.findOne({
       where: { id: defId, city_id: city.id },
+      transaction,
     });
-
     if (!defense) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Defense not found' });
     }
 
-    // 1️⃣ Déterminer les coûts
+    // Determine costs
     let costs = [];
     const entity = await Entity.findOne({
       where: { entity_type: 'defense', entity_name: defense.name },
+      transaction,
     });
 
     if (entity) {
       const rc = await ResourceCost.findAll({
         where: { entity_id: entity.entity_id, level: 1 },
+        transaction,
       });
-
       if (rc.length) {
         costs = rc.map((c) => ({
           resource_type: c.resource_type,
@@ -154,15 +161,13 @@ exports.buyDefenseUnit = async (req, res) => {
       }
     }
 
-    // Fallback : si rien dans resource_costs, utiliser defense.cost en métal
     if (!costs.length) {
       if (!defense.cost || defense.cost <= 0) {
-        // Aucun coût → on crédite directement la défense
         defense.quantity += 1;
-        await defense.save();
+        await defense.save({ transaction });
+        await transaction.commit();
         return res.json(defense);
       }
-
       costs = [
         {
           resource_type: 'metal',
@@ -171,51 +176,79 @@ exports.buyDefenseUnit = async (req, res) => {
       ];
     }
 
-    // 2️⃣ Vérifier les ressources de la ville
+    // Check city resources
     const cityResources = {};
     for (const cost of costs) {
       const type = cost.resource_type;
-
       if (!cityResources[type]) {
         cityResources[type] = await Resource.findOne({
           where: { city_id: city.id, type },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
         });
       }
-
       const resRow = cityResources[type];
       const needed = Number(cost.amount);
-
       if (!resRow || resRow.amount < needed) {
-        return res
-          .status(400)
-          .json({ message: `Pas assez de ${type}` });
+        await transaction.rollback();
+        return res.status(400).json({ message: `Pas assez de ${type}` });
       }
     }
 
-    // 3️⃣ Déduire les ressources
+    // Deduct resources
     for (const cost of costs) {
-      const type   = cost.resource_type;
+      const type = cost.resource_type;
       const needed = Number(cost.amount);
-
       const resRow = cityResources[type];
       resRow.amount -= needed;
-      await resRow.save();
+      await resRow.save({ transaction });
     }
 
-    // 4️⃣ Ajouter l’unité de défense
-    defense.quantity += 1;
-    await defense.save();
-
-    (req.logger || logger).audit({ userId, defenseId: defense.id, cityId: city.id }, 'Defense unit purchased');
-    return res.json({
-      id:          defense.id,
-      name:        defense.name,
-      description: defense.description,
-      quantity:    defense.quantity,
-      cost:        defense.cost,
+    // Count pending queued or in_progress defense actions
+    const pendingCount = await ActionQueue.count({
+      where: {
+        cityId: city.id,
+        entityId: defense.id,
+        type: 'defense',
+        status: ['queued', 'in_progress'],
+      },
+      transaction,
     });
+
+    // Calculate duration (example: fixed 60 seconds per unit, can be adjusted)
+    const durationSeconds = 60;
+
+    // Find last queued action to set startTime
+    const lastTask = await ActionQueue.findOne({
+      where: { cityId: city.id, type: 'defense' },
+      order: [['slot', 'DESC']],
+      transaction,
+    });
+
+    const startTime = lastTask && lastTask.finishTime ? new Date(lastTask.finishTime) : new Date();
+    const finishTime = new Date(startTime.getTime() + durationSeconds * 1000);
+
+    // Create queue item
+    const queueItem = await ActionQueue.create({
+      cityId: city.id,
+      entityId: defense.id,
+      type: 'defense',
+      status: lastTask ? 'queued' : 'in_progress',
+      startTime,
+      finishTime,
+      slot: lastTask ? lastTask.slot + 1 : 1,
+    }, { transaction });
+
+    await transaction.commit();
+
+    // Emit event to notify client (optional)
+    // const io = require('../socket').getIO();
+    // io.to(`user_${userId}`).emit('action_queue:update', { type: 'defense', queue: queueItem });
+
+    res.json({ message: 'Defense unit purchase queued', queueItem });
   } catch (err) {
-    (req.logger || logger).error({ err }, 'Error buying defense unit');
-    res.status(500).json({ message: 'Error buying defense' });
+    await transaction.rollback();
+    (req.logger || logger).error({ err }, 'Error queuing defense unit purchase');
+    res.status(500).json({ message: 'Error queuing defense unit purchase' });
   }
 };

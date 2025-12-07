@@ -25,11 +25,10 @@ class ResearchUnlockService {
    * @returns {Promise<{available: Array, inProgress: Array, completed: Array, locked: Array}>}
    */
   async getAvailableResearch(userId) {
-    return runWithContext(async () => {
-      const user = await this.User.findByPk(userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
+    const user = await this.User.findByPk(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
       // Récupérer la ville du joueur
       const city = await this.City.findOne({ where: { user_id: userId, is_capital: true } });
@@ -40,18 +39,29 @@ class ResearchUnlockService {
       // Récupérer les bâtiments/facilities du joueur
       const facilities = await this.Facility.findAll({ where: { city_id: city.id } });
 
-      // Récupérer les recherches complétées et en cours
+      // Récupérer les recherches complétées
       const userResearch = await this.Research.findAll({
         where: { user_id: userId }
       });
 
-      const completedIds = userResearch
-        .filter(r => r.completed === true)
-        .map(r => r.tech_id || r.id);
+      // Mapper les recherches complétées par nom vers leur ID de définition
+      const completedResearchMap = {};
+      userResearch.forEach(r => {
+        if (r.level > 0) {
+          completedResearchMap[r.name] = r.level;
+        }
+      });
+
+      // Trouver les IDs de définition correspondants
+      const completedIds = [];
+      Object.values(RESEARCH_DEFINITIONS).forEach(def => {
+        if (completedResearchMap[def.name]) {
+          completedIds.push(def.id);
+        }
+      });
       
-      const inProgressIds = userResearch
-        .filter(r => r.completed === false && r.in_progress === true)
-        .map(r => r.tech_id || r.id);
+      // Pour l'instant, pas de système "in progress", on considère tout comme instantané
+      const inProgressIds = [];
 
       // Récupérer niveaux des installations clés
       const researchLab = facilities.find(f => 
@@ -65,12 +75,22 @@ class ResearchUnlockService {
       );
       const forge = facilities.find(f => f.name === 'Forge Militaire');
       const commandCenter = facilities.find(f => f.name === 'Centre de Commandement');
+      const defenseWorkshop = facilities.find(f => 
+        f.name === 'Atelier de Défense' ||
+        f.name === 'Defense Workshop'
+      );
+      const powerPlant = facilities.find(f => 
+        f.name === 'Centrale Énergétique' ||
+        f.name === 'Power Plant'
+      );
 
       const buildingLevels = {
         researchLab: researchLab?.level || 0,
         trainingCenter: trainingCenter?.level || 0,
         forge: forge?.level || 0,
-        commandCenter: commandCenter?.level || 0
+        commandCenter: commandCenter?.level || 0,
+        defenseWorkshop: defenseWorkshop?.level || 0,
+        powerPlant: powerPlant?.level || 0
       };
 
       const available = [];
@@ -104,15 +124,14 @@ class ResearchUnlockService {
         }
       }
 
-      return {
-        available: available.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
-        inProgress,
-        completed: completed.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
-        locked: locked.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
-        buildings: buildingLevels,
-        categories: RESEARCH_CATEGORIES
-      };
-    });
+    return {
+      available: available.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
+      inProgress,
+      completed: completed.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
+      locked: locked.sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id)),
+      buildings: buildingLevels,
+      categories: RESEARCH_CATEGORIES
+    };
   }
 
   /**
@@ -122,11 +141,10 @@ class ResearchUnlockService {
    * @returns {Promise<{isAvailable: boolean, reason: string}>}
    */
   async checkResearchAvailability(userId, researchId) {
-    return runWithContext(async () => {
-      const research = RESEARCH_DEFINITIONS[researchId.toUpperCase()];
-      if (!research) {
-        throw new Error(`Research ${researchId} not found`);
-      }
+    const research = RESEARCH_DEFINITIONS[researchId.toUpperCase()];
+    if (!research) {
+      throw new Error(`Research ${researchId} not found`);
+    }
 
       const city = await this.City.findOne({ where: { user_id: userId, is_capital: true } });
       if (!city) {
@@ -136,12 +154,21 @@ class ResearchUnlockService {
       const facilities = await this.Facility.findAll({ where: { city_id: city.id } });
       const completedResearch = await this.Research.findAll({
         where: { 
-          user_id: userId,
-          completed: true
+          user_id: userId
         }
       });
 
-      const completedIds = completedResearch.map(r => r.tech_id || r.id);
+      // Mapper les recherches complétées par nom vers leur ID de définition
+      const completedIds = [];
+      completedResearch.forEach(r => {
+        if (r.level > 0) {
+          // Trouver l'ID de définition correspondant au nom
+          const def = Object.values(RESEARCH_DEFINITIONS).find(d => d.name === r.name);
+          if (def) {
+            completedIds.push(def.id);
+          }
+        }
+      });
 
       const researchLab = facilities.find(f => 
         f.name === 'Laboratoire de Recherche' || 
@@ -154,12 +181,22 @@ class ResearchUnlockService {
       );
       const forge = facilities.find(f => f.name === 'Forge Militaire');
       const commandCenter = facilities.find(f => f.name === 'Centre de Commandement');
+      const defenseWorkshop = facilities.find(f => 
+        f.name === 'Atelier de Défense' ||
+        f.name === 'Defense Workshop'
+      );
+      const powerPlant = facilities.find(f => 
+        f.name === 'Centrale Énergétique' ||
+        f.name === 'Power Plant'
+      );
 
       const buildingLevels = {
         researchLab: researchLab?.level || 0,
         trainingCenter: trainingCenter?.level || 0,
         forge: forge?.level || 0,
-        commandCenter: commandCenter?.level || 0
+        commandCenter: commandCenter?.level || 0,
+        defenseWorkshop: defenseWorkshop?.level || 0,
+        powerPlant: powerPlant?.level || 0
       };
 
       const checkResult = this._checkResearchRequirements(research, {
@@ -167,14 +204,13 @@ class ResearchUnlockService {
         completedIds
       });
 
-      return {
-        isAvailable: checkResult.isAvailable,
-        reason: checkResult.isAvailable 
-          ? 'Research available' 
-          : checkResult.missingRequirements.join(', '),
-        missingRequirements: checkResult.missingRequirements
-      };
-    });
+    return {
+      isAvailable: checkResult.isAvailable,
+      reason: checkResult.isAvailable 
+        ? 'Research available' 
+        : checkResult.missingRequirements.join(', '),
+      missingRequirements: checkResult.missingRequirements
+    };
   }
 
   /**
@@ -224,11 +260,12 @@ class ResearchUnlockService {
    */
   _getBuildingDisplayName(buildingKey) {
     const names = {
-      researchLab: 'Laboratoire',
+      researchLab: 'Laboratoire de Recherche',
       trainingCenter: 'Centre d\'Entraînement',
       forge: 'Forge Militaire',
       commandCenter: 'Centre de Commandement',
-      defenseWorkshop: 'Atelier de Défense'
+      defenseWorkshop: 'Atelier de Défense',
+      powerPlant: 'Centrale Énergétique'
     };
     return names[buildingKey] || buildingKey;
   }
@@ -248,6 +285,87 @@ class ResearchUnlockService {
       inProgress: allData.inProgress.filter(categoryFilter),
       completed: allData.completed.filter(categoryFilter),
       locked: allData.locked.filter(categoryFilter)
+    };
+  }
+
+  /**
+   * Démarrer ou continuer une recherche
+   * @param {number} userId
+   * @param {string} researchId - Research ID from RESEARCH_DEFINITIONS (e.g., 'MILITARY_TRAINING_1' or 'military_training_1')
+   * @returns {Promise<Object>}
+   */
+  async startResearch(userId, researchId) {
+    // Normaliser l'ID en cherchant dans les définitions
+    const normalizedId = researchId.toUpperCase();
+    const researchDef = RESEARCH_DEFINITIONS[normalizedId];
+    
+    if (!researchDef) {
+      throw new Error(`Research definition not found: ${researchId}`);
+    }
+
+    // Utiliser l'ID de la définition (en minuscules)
+    const techId = researchDef.id;
+
+    // Vérifier la disponibilité
+    const availabilityCheck = await this.checkResearchAvailability(userId, techId);
+    if (!availabilityCheck.isAvailable) {
+      throw new Error(`Research not available: ${availabilityCheck.reason}`);
+    }
+
+      // Vérifier si la recherche existe déjà dans la table researches
+      let research = await this.Research.findOne({
+        where: {
+          user_id: userId,
+          name: researchDef.name
+        }
+      });
+
+      if (!research) {
+        // Calculer le coût du niveau 1
+        const costBreakdown = Object.entries(researchDef.cost || {});
+        const totalCost = costBreakdown.reduce((sum, [, amount]) => sum + Number(amount || 0), 0);
+
+        // Créer une nouvelle entrée de recherche
+        research = await this.Research.create({
+          user_id: userId,
+          name: researchDef.name,
+          level: 1,
+          nextlevelcost: totalCost * 2, // Coût du niveau suivant
+          description: researchDef.description || ''
+        });
+      } else {
+        // Upgrader le niveau
+        research.level = (research.level || 0) + 1;
+        
+        // Recalculer le coût du prochain niveau
+        const costBreakdown = Object.entries(researchDef.cost || {});
+        const baseCost = costBreakdown.reduce((sum, [, amount]) => sum + Number(amount || 0), 0);
+        research.nextlevelcost = baseCost * (research.level + 1);
+        
+        await research.save();
+      }
+
+      // Mettre à jour les leaderboards
+      const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
+      leaderboardIntegration.updateResearchScore(userId).catch(() => {});
+      leaderboardIntegration.updateTotalPower(userId).catch(() => {});
+
+      // Grant Battle Pass XP
+      const battlePassService = require('../../../modules/battlepass/application/BattlePassService');
+      battlePassService.addXP(userId, 50).catch(() => {});
+
+      // Check achievements
+      const achievementChecker = require('../../../utils/achievementChecker');
+      achievementChecker.checkResearchAchievements(userId).catch(() => {});
+
+    return {
+      message: 'Research started successfully',
+      research: {
+        id: research.id,
+        name: research.name,
+        level: research.level,
+        nextlevelcost: research.nextlevelcost
+      }
     };
   }
 }

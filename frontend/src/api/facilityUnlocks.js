@@ -29,3 +29,13 @@ export const getTotalBonuses = async () => {
   const { data } = await axiosInstance.get('/facilities/unlock/bonuses');
   return data;
 };
+
+/**
+ * Upgrade a facility to the next level
+ * @param {string} facilityKey - Facility definition key (e.g., 'TRAINING_CENTER')
+ * @returns {Promise<{message: string, facility: Object}>}
+ */
+export const upgradeFacility = async (facilityKey) => {
+  const { data } = await axiosInstance.post(`/facilities/unlock/upgrade/${facilityKey}`);
+  return data;
+};

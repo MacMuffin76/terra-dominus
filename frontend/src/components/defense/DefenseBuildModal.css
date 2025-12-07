@@ -1,0 +1,254 @@
+.defense-build-modal-content {
+  padding: 0;
+}
+
+.defense-build-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.defense-build-icon {
+  font-size: 3rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.defense-build-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #ff4444;
+  font-size: 1.2rem;
+}
+
+.defense-build-description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Quantity section */
+.defense-quantity-section {
+  margin-bottom: 1.5rem;
+}
+
+.defense-quantity-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #ff4444;
+  font-weight: 600;
+}
+
+.defense-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.defense-quantity-controls input {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.defense-quantity-controls input:focus {
+  outline: none;
+  border-color: #ff4444;
+}
+
+.defense-quantity-controls .quantity-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  border-radius: 8px;
+  color: #ff4444;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.defense-quantity-controls .quantity-btn:hover:not(:disabled) {
+  background: rgba(255, 68, 68, 0.3);
+  border-color: #ff4444;
+}
+
+.defense-quantity-controls .quantity-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.defense-quick-amounts {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.defense-quick-amounts button {
+  flex: 1;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.defense-quick-amounts button:hover:not(:disabled) {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+}
+
+.defense-quick-amounts button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Cost section */
+.defense-cost-section,
+.defense-upkeep-section,
+.defense-stats-section {
+  margin-bottom: 1.5rem;
+}
+
+.defense-cost-section h5,
+.defense-upkeep-section h5,
+.defense-stats-section h5 {
+  margin: 0 0 0.75rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.defense-costs,
+.defense-upkeep {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cost-item,
+.upkeep-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.resource-icon {
+  font-size: 1.5rem;
+}
+
+/* Stats section */
+.defense-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 8px;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: #ff4444;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Footer */
+.defense-build-modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.defense-build-modal-footer .btn-primary,
+.defense-build-modal-footer .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+
+.defense-build-modal-footer .btn-primary {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+}
+
+.defense-build-modal-footer .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff5555, #dd0000);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+.defense-build-modal-footer .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.defense-build-modal-footer .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.defense-build-modal-footer .btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.defense-build-modal-footer .btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .defense-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .defense-costs,
+  .defense-upkeep {
+    flex-direction: column;
+  }
+
+  .cost-item,
+  .upkeep-item {
+    width: 100%;
+  }
+}

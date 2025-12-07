@@ -62,51 +62,69 @@ class BuildingService {
   }
 
   async startUpgrade(userId, buildingId) {
-    return this.transactionProvider(async (transaction) => {
-      const city = await this.withCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
-      const building = await this.buildingRepository.findById(buildingId, { transaction, lock: transaction.LOCK.UPDATE });
+    const maxRetries = 3;
+    let attempt = 0;
 
-      if (!building || building.cityId !== city.id) {
-        const error = new Error('Building not found');
-        error.status = 404;
-        throw error;
+    while (attempt < maxRetries) {
+      try {
+        return await this.transactionProvider(async (transaction) => {
+          const city = await this.withCity(userId, { transaction, lock: transaction.LOCK.UPDATE });
+          const building = await this.buildingRepository.findById(buildingId, { transaction, lock: transaction.LOCK.UPDATE });
+
+          if (!building || building.cityId !== city.id) {
+            const error = new Error('Building not found');
+            error.status = 404;
+            throw error;
+          }
+
+          const entity = await this.entityRepository.findBuildingEntityByName(building.name, { transaction });
+          if (!entity) {
+            const error = new Error('Entity not found for building');
+            error.status = 404;
+            throw error;
+          }
+
+          const pending = await this.constructionOrderRepository.countPending(city.id, entity.entity_id, transaction);
+          const nextLevel = building.getNextLevel(pending);
+          const costs = await this.resourceCostRepository.findByEntityAndLevel(entity.entity_id, nextLevel, { transaction });
+          const pool = await this.resourceRepository.getCityPool(city.id, { transaction, lock: transaction.LOCK.UPDATE });
+
+          const newPool = pool.spend(costs);
+          await newPool.persist(this.resourceRepository, transaction);
+
+          const duration = building.getUpgradeDuration(nextLevel);
+          const lastOrder = await this.constructionOrderRepository.getLastForCity(city.id, transaction);
+          const order = ConstructionOrder.schedule({
+            cityId: city.id,
+            entityId: entity.entity_id,
+            type: 'building',
+            durationSeconds: duration,
+            lastOrderSlot: lastOrder?.slot,
+            lastFinishTime: lastOrder?.finishTime,
+          });
+
+          const created = await this.constructionOrderRepository.create(order, transaction);
+          await this.constructionOrderRepository.syncQueue(city.id, transaction);
+
+          transaction.afterCommit(() => {
+            this.queueEventPublisher.emit(city.id, userId).catch(() => {});
+          });
+
+          return created;
+        });
+      } catch (err) {
+        if (err.status === 409) {
+          attempt++;
+          if (attempt >= maxRetries) {
+            throw err;
+          }
+          // Optionally add a small delay before retrying
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } else {
+          throw err;
+        }
       }
-
-      const entity = await this.entityRepository.findBuildingEntityByName(building.name, { transaction });
-      if (!entity) {
-        const error = new Error('Entity not found for building');
-        error.status = 404;
-        throw error;
-      }
-
-      const pending = await this.constructionOrderRepository.countPending(city.id, entity.entity_id, transaction);
-      const nextLevel = building.getNextLevel(pending);
-      const costs = await this.resourceCostRepository.findByEntityAndLevel(entity.entity_id, nextLevel, { transaction });
-      const pool = await this.resourceRepository.getCityPool(city.id, { transaction, lock: transaction.LOCK.UPDATE });
-
-      const newPool = pool.spend(costs);
-      await newPool.persist(this.resourceRepository, transaction);
-
-      const duration = building.getUpgradeDuration(nextLevel);
-      const lastOrder = await this.constructionOrderRepository.getLastForCity(city.id, transaction);
-      const order = ConstructionOrder.schedule({
-        cityId: city.id,
-        entityId: entity.entity_id,
-        type: 'building',
-        durationSeconds: duration,
-        lastOrderSlot: lastOrder?.slot,
-        lastFinishTime: lastOrder?.finishTime,
-      });
-
-      const created = await this.constructionOrderRepository.create(order, transaction);
-      await this.constructionOrderRepository.syncQueue(city.id, transaction);
-
-      transaction.afterCommit(() => {
-        this.queueEventPublisher.emit(city.id, userId).catch(() => {});
-      });
-
-      return created;
-    });
+    }
   }
 
   async listConstructionQueue(userId) {

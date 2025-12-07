@@ -2,10 +2,18 @@
 
 import React from 'react';
 import { useResources } from '../context/ResourcesContext';
+import { useResourceProduction } from '../context/ResourceProductionContext';
 import './ResourcesWidget.css';
 
 const ResourcesWidget = () => {
-  const { resources } = useResources();
+  // Utiliser les ressources avec production en temps réel si disponible
+  const { resources: liveResources, isLoading } = useResourceProduction();
+  const { resources: fallbackResources } = useResources();
+  
+  // Priorité aux ressources en temps réel, sinon fallback sur Redux
+  const resources = liveResources || fallbackResources;
+
+  console.log('ResourcesWidget render with resources:', resources);
 
   const formatFileName = (name) =>
     name

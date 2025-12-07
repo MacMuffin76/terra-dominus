@@ -5,10 +5,10 @@ import { useLocation } from 'react-router-dom';
 import Menu from './Menu';
 import './Dashboard.css';
 import useDashboardData from '../hooks/useDashboardData';
+import useResourceProduction from '../hooks/useResourceProduction';
 import { useTutorialContext } from '../context/TutorialContext';
 import { Alert, Loader, Skeleton } from './ui';
-import ResourcesWidget from './dashboard/ResourcesWidget';
-import UpkeepWidget from './dashboard/UpkeepWidget';
+import ResourcesWidget from './ResourcesWidget';
 import StatCard from './dashboard/StatCard';
 import ProgressCard from './dashboard/ProgressCard';
 import NotificationPanel from './dashboard/NotificationPanel';
@@ -18,21 +18,22 @@ import QuestPanel from './QuestPanel';
 import AchievementPanel from './AchievementPanel';
 import BattlePassPanel from './BattlePassPanel';
 import LeaderboardPanel from './LeaderboardPanel';
-import { QuestLogModal, QuestTracker, QuestNotification } from './Quests';
+// import { QuestLogModal, QuestTracker, QuestNotification } from './Quests';
 import PowerDisplay from './PowerDisplay';
-import useQuests from '../hooks/useQuests';
+// import useQuests from '../hooks/useQuests';
 
 const Dashboard = () => {
-  const { dashboard, resources, loading, connectionStatus, error, refresh } = useDashboardData();
-  const { user, buildings, units } = dashboard;
+  const { dashboard, loading, connectionStatus, error, refresh } = useDashboardData();
+  const { resources: liveResources, productionRates } = useResourceProduction();
+  const { user, buildings, units, facilities, researches, defenses } = dashboard;
   const location = useLocation();
   
-  // Portal Quest System
-  const {
-    activeQuests: portalQuests,
-    notification: questNotification,
-    clearNotification,
-  } = useQuests();
+  // Portal Quest System - Temporarily disabled (no quests seeded)
+  // const {
+  //   activeQuests: portalQuests,
+  //   notification: questNotification,
+  //   clearNotification,
+  // } = useQuests();
   
   // Tutorial context
   const {
@@ -157,6 +158,30 @@ const Dashboard = () => {
     image: `./images/training/${formatFileName(u.name)}.png`
   }));
 
+  const facilitiesData = facilities.map(f => ({
+    id: f.id,
+    name: f.name,
+    level: f.level,
+    image: `./images/facilities/${formatFileName(f.name)}.png`
+  }));
+
+  // Filtrer les recherches avec niveau > 0 (recherches complétées)
+  const researchesData = researches
+    .filter(r => r.level > 0)
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      level: r.level,
+      image: `./images/researches/${formatFileName(r.name)}.png`
+    }));
+
+  const defensesData = defenses.map(d => ({
+    id: d.id,
+    name: d.name,
+    quantity: d.quantity,
+    image: `./images/defenses/${formatFileName(d.name)}.png`
+  }));
+
   return (
     <div className="dashboard">
       <Menu />
@@ -179,9 +204,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        <ResourcesWidget resources={resources} id="resources-widget" />
-
-        <UpkeepWidget />
+        <ResourcesWidget />
 
         <div className="dashboard-stats-grid">
           <StatCard
@@ -228,10 +251,16 @@ const Dashboard = () => {
             emptyMessage="Aucun bâtiment construit"
           />
           <ProgressCard
-            title="Unités"
-            icon="⚔️"
-            items={unitsData}
-            emptyMessage="Aucune unité entraînée"
+            title="Installations"
+            icon="🏭"
+            items={facilitiesData}
+            emptyMessage="Aucune installation construite"
+          />
+          <ProgressCard
+            title="Recherches"
+            icon="🔬"
+            items={researchesData}
+            emptyMessage="Aucune recherche complétée"
           />
         </div>
 
@@ -239,12 +268,10 @@ const Dashboard = () => {
         <div className="dashboard-quest-toggle">
           <button 
             className="quest-toggle-button"
-            onClick={() => setShowQuests(!showQuests)}
+            onClick={() => setShowQuests(true)}
           >
             <span className="toggle-icon">📋</span>
-            <span className="toggle-text">
-              {showQuests ? 'Masquer les quêtes' : 'Afficher les quêtes'}
-            </span>
+            <span className="toggle-text">Quêtes</span>
           </button>
           <button 
             className="achievement-toggle-button"
@@ -260,22 +287,26 @@ const Dashboard = () => {
             <span className="toggle-icon">🎮</span>
             <span className="toggle-text">Battle Pass</span>
           </button>
+
           <button 
             className="leaderboard-toggle-button"
             onClick={() => setShowLeaderboard(true)}
+            style={{ backgroundColor: '#b8860b', color: '#fff', fontWeight: 'bold' }}
           >
             <span className="toggle-icon">🏆</span>
             <span className="toggle-text">Classements</span>
           </button>
         </div>
 
-        {/* Quest Panel */}
-        {showQuests && (
-          <div className="dashboard-quest-section">
-            <QuestPanel onRewardsClaimed={handleQuestRewardsClaimed} />
-          </div>
-        )}
       </div>
+
+      {/* Quest Panel Modal */}
+      {showQuests && (
+        <QuestPanel
+          onClose={() => setShowQuests(false)}
+          onRewardsClaimed={handleQuestRewardsClaimed}
+        />
+      )}
 
       {/* Tutorial Overlay */}
       {showTutorial && currentStep && (
@@ -319,18 +350,18 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Portal Quest System */}
-      <QuestTracker onOpenQuestLog={() => setShowPortalQuestLog(true)} />
+      {/* Portal Quest System - Temporarily disabled (no quests seeded) */}
+      {/* <QuestTracker onOpenQuestLog={() => setShowPortalQuestLog(true)} /> */}
       
-      <QuestLogModal
+      {/* <QuestLogModal
         open={showPortalQuestLog}
         onClose={() => setShowPortalQuestLog(false)}
-      />
+      /> */}
       
-      <QuestNotification
+      {/* <QuestNotification
         notification={questNotification}
         onClose={clearNotification}
-      />
+      /> */}
     </div>
   );
 };

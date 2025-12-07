@@ -7,6 +7,7 @@ const queueNames = {
   PRODUCTION: 'production',
   COMBAT: 'combat',
   RESOURCE_UPGRADE: 'resource-upgrade',
+  FACILITY_UPGRADE: 'facility-upgrade',
   COLONIZATION: 'colonization',
   ATTACK: 'attack',
   SPY: 'spy',

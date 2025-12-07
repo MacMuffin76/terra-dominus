@@ -1,0 +1,79 @@
+.production-rates {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.production-rates h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #fff;
+  text-align: center;
+}
+
+.production-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.production-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.production-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.production-item .resource-icon {
+  font-size: 20px;
+}
+
+.production-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.production-details .rate {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.production-details .bonus {
+  font-size: 11px;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.production-item.gold .rate {
+  color: #ffd700;
+}
+
+.production-item.metal .rate {
+  color: #b0c4de;
+}
+
+.production-item.fuel .rate {
+  color: #ff6b6b;
+}
+
+.production-item.energy .rate {
+  color: #4fc3f7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .production-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -101,6 +101,14 @@
   margin-bottom: 1rem;
 }
 
+/* Requirement Badges Container */
+.requirement-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
 .research-category {
   margin-bottom: 1rem;
 }
@@ -176,15 +184,54 @@
   margin: 0.25rem 0;
 }
 
+/* Requirements Compact - Version condensée */
+.requirements-compact {
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.requirements-compact .requirements-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  color: #f87171;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+}
+
+.requirements-list-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.requirement-chip {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #fca5a5;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
 /* Facility Card Styles */
 .facility-card {
-  background: #1a1a2e;
-  border: 2px solid transparent;
+  background: #1a3a5a; /* Bleu par défaut (comme available dans research) */
+  border: 2px solid #3b82f6;
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
 }
 
 .facility-card:hover {
@@ -198,28 +245,49 @@
 }
 
 .facility-card.max-level {
+  background: #1a472a; /* Vert (comme completed dans research) */
   border-color: #4ade80;
 }
 
 .facility-card.not-built {
-  opacity: 0.6;
+  background: #3a3a4a; /* Gris plus clair et légèrement bleuté */
+  border-color: #9ca3af;
+  opacity: 0.85;
   cursor: not-allowed;
 }
 
 .facility-icon {
-  font-size: 2.5rem;
+  font-size: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
 }
 
 .facility-info h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+/* Status badge styles for facilities (same as research) */
+.facility-card .status-badge.max-level {
+  background: #4ade80;
+  color: #000;
+}
+
+.facility-card .status-badge.not-built {
+  background: #9ca3af;
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.facility-card .status-badge:not(.max-level):not(.not-built) {
+  background: #3b82f6;
   color: #fff;
 }
 
@@ -228,6 +296,31 @@
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 1rem 0;
+}
+
+/* Requirement Badge */
+.requirement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0.75rem 0;
+  border: 1px solid;
+}
+
+.requirement-badge.met {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.requirement-badge.not-met {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
 }
 
 .facility-level {

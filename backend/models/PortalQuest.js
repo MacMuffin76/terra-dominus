@@ -128,11 +128,15 @@ module.exports = (sequelize) => {
       as: 'prerequisiteQuest',
     });
 
-    // User progress
-    PortalQuest.hasMany(models.UserQuest, {
-      foreignKey: 'quest_id',
-      as: 'userQuests',
-    });
+    // Note: UserQuest is now used by legacy Quest system
+    // For Portal quest system, a separate PortalUserQuest model would be needed
+    // Commenting out these associations to avoid conflicts:
+    
+    // // User progress
+    // PortalQuest.hasMany(models.UserQuest, {
+    //   foreignKey: 'quest_id',
+    //   as: 'userQuests',
+    // });
 
     // Unlocks granted
     PortalQuest.hasMany(models.UserQuestUnlock, {

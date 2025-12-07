@@ -28,7 +28,57 @@ export const getTileInfo = async (x, y) => {
 };
 
 export const getWorldStats = async () => {
-  const { data } = await axiosInstance.get('/world/stats');
+  const { data} = await axiosInstance.get('/world/stats');
+  return data;
+};
+
+export const getWorldConfig = async () => {
+  const { data } = await axiosInstance.get('/world/config', { 
+    useCache: true,
+    cacheTtl: 3600000 // Cache 1 heure
+  });
+  return data;
+};
+
+/**
+ * API Territories - Gestion des territoires
+ */
+
+export const getPlayerTerritories = async () => {
+  const { data } = await axiosInstance.get('/world/territories');
+  return data;
+};
+
+export const claimTerritory = async (latitude, longitude, terrainType) => {
+  const { data } = await axiosInstance.post('/world/territories/claim', {
+    latitude,
+    longitude,
+    terrainType,
+  });
+  return data;
+};
+
+export const getTerritoriesInBounds = async (minLat, maxLat, minLng, maxLng) => {
+  const { data } = await axiosInstance.get('/world/territories/bounds', {
+    params: { minLat, maxLat, minLng, maxLng },
+  });
+  return data;
+};
+
+/**
+ * API Exploration - Fog of War
+ */
+
+export const getExploredAreas = async () => {
+  const { data } = await axiosInstance.get('/world/exploration');
+  return data;
+};
+
+export const exploreArea = async (latitude, longitude) => {
+  const { data } = await axiosInstance.post('/world/exploration/explore', {
+    latitude,
+    longitude,
+  });
   return data;
 };
 

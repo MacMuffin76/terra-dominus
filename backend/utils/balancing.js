@@ -20,6 +20,10 @@
 /**
  * Production par seconde d'un bâtiment de ressource en fonction de son niveau.
  *
+ * IMPORTANT : Cette fonction utilise des formules de base mais les vrais taux
+ * devraient être chargés depuis la table `resource_production`.
+ * Pour des calculs précis, utilisez ProductionCalculatorService.
+ *
  * Mine de métal  : ressource principale, la plus rentable
  * Mine d'or      : moins de volume que le métal, plus rare
  * Extracteur     : carburant, encore plus lent
@@ -31,34 +35,26 @@ function getProductionPerSecond(buildingName, level) {
   const lvl = Number(level) || 0;
   if (lvl <= 0) return 0;
 
+  // Formules progressives basées sur le niveau
+  // Base production (level 1) * facteur de croissance
+  const growthFactor = Math.pow(1.15, lvl - 1); // Croissance de 15% par niveau
+
   switch (buildingName) {
     case 'Mine de métal':
-      // Départ très modeste, progression lente :
-      //  lvl 1 ≈ 0.20/s (12/min)
-      //  lvl 5 ≈ ~0.26/s (~16/min)
-      //  lvl 10 ≈ ~0.37/s (~22/min)
-      //  lvl 20 ≈ ~0.74/s (~44/min)
-      return 0.2 * Math.pow(1.07, lvl - 1);
+      // Production de base : 200/h au niveau 1
+      // Conversion en production par seconde : 200 / 3600 ≈ 0.0555
+      return (200 / 3600) * growthFactor;
 
     case "Mine d'or":
-      // Or encore plus lent :
-      //  lvl 1 ≈ 0.10/s (6/min)
-      //  lvl 5 ≈ ~0.13/s
-      //  lvl 10 ≈ ~0.18/s
-      //  lvl 20 ≈ ~0.32/s
-      return 0.1 * Math.pow(1.065, lvl - 1);
+      // Production de base : 100/h au niveau 1
+      return (100 / 3600) * growthFactor;
 
     case 'Extracteur':
-      // Carburant très lent :
-      //  lvl 1 ≈ 0.05/s (3/min)
-      //  lvl 5 ≈ ~0.06/s
-      //  lvl 10 ≈ ~0.08/s
-      //  lvl 20 ≈ ~0.14/s
-      return 0.05 * Math.pow(1.06, lvl - 1);
+      // Production de base : 50/h au niveau 1
+      return (50 / 3600) * growthFactor;
 
     case 'Centrale électrique':
-      // ⚠ On NE produit PAS d'énergie par seconde ici.
-      // L'énergie sera gérée comme une valeur fixe par niveau dans la logique du jeu.
+      // Pas de production par seconde
       return 0;
 
     default:

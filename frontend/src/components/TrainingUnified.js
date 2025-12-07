@@ -6,9 +6,13 @@ import { Users, Building, Award, Lock, Swords } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
 import { getAvailableUnits } from '../api/unitUnlocks';
+import { trainUnits } from '../api/unitTraining';
 import { useAsyncError } from '../hooks/useAsyncError';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
 import UnitTrainingCard from './units/UnitTrainingCard';
+import UnitTrainingModal from './units/UnitTrainingModal';
 import TierProgressBar from './units/TierProgressBar';
 import './Training.css';
 import './units/UnitTrainingPanel.css';
@@ -19,12 +23,15 @@ import './units/UnitTrainingPanel.css';
  */
 const TrainingUnified = () => {
   const { error, catchError } = useAsyncError('TrainingUnified');
+  const { toasts, removeToast, success, error: errorToast, warning } = useToast();
   
   // État des unités
   const [availableData, setAvailableData] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [unitsLoading, setUnitsLoading] = useState(true);
   const [filterTier, setFilterTier] = useState('all');
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+  const [unitToTrain, setUnitToTrain] = useState(null);
 
   // Chargement des unités disponibles
   const loadUnits = useCallback(async () => {
@@ -53,6 +60,36 @@ const TrainingUnified = () => {
     setSelectedUnit(prev => prev?.id === unit.id ? null : unit);
   }, []);
 
+  // Clic sur une unité verrouillée - afficher les prérequis
+  const handleLockedUnitClick = useCallback((unit) => {
+    if (unit.missingRequirements && unit.missingRequirements.length > 0) {
+      const message = `${unit.name} verrouillé : ${unit.missingRequirements.join(', ')}`;
+      warning(message, 6000);
+    } else {
+      warning(`${unit.name} : Prérequis non remplis`, 4000);
+    }
+  }, [warning]);
+
+  // Ouvrir le modal d'entraînement
+  const handleTrainClick = useCallback((unit) => {
+    setUnitToTrain(unit);
+    setTrainingModalOpen(true);
+  }, []);
+
+  // Entraîner des unités
+  const handleTrain = useCallback(async (unitId, quantity) => {
+    try {
+      const result = await trainUnits(unitId, quantity);
+      success(`✅ ${quantity}x ${unitToTrain?.name} entraînées avec succès!`);
+      setTrainingModalOpen(false);
+      setUnitToTrain(null);
+      // Recharger les unités et les ressources
+      await loadUnits();
+    } catch (err) {
+      errorToast(err.message || 'Erreur lors de l\'entraînement des unités');
+    }
+  }, [unitToTrain, success, errorToast, loadUnits]);
+
   // Affichage du loader général
   if (unitsLoading && !availableData) {
     return (
@@ -80,6 +117,7 @@ const TrainingUnified = () => {
   return (
     <div className="training-container">
       <Menu />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="training-content" id="main-content">
         <ResourcesWidget />
 
@@ -159,11 +197,24 @@ const TrainingUnified = () => {
                 requiredLevel={lockedData?.requiredLevel}
                 currentLevel={trainingCenterLevel}
                 onSelect={handleUnitSelect}
+                onLockedClick={handleLockedUnitClick}
+                onTrainClick={handleTrainClick}
                 isSelected={selectedUnit?.id === unit.id}
               />
             );
           })}
         </div>
+
+        {/* Modal d'entraînement */}
+        <UnitTrainingModal
+          isOpen={trainingModalOpen}
+          onClose={() => {
+            setTrainingModalOpen(false);
+            setUnitToTrain(null);
+          }}
+          unit={unitToTrain}
+          onTrain={handleTrain}
+        />
 
         {filteredUnits.length === 0 && !unitsLoading && (
           <div className="empty-state">

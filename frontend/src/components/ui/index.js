@@ -6,3 +6,4 @@ export { default as Tooltip } from './Tooltip';
 export { default as Loader } from './Loader';
 export { default as Skeleton } from './Skeleton';
 export { default as Alert } from './Alert';
+export { Toast, ToastContainer } from './Toast';

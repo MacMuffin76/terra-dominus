@@ -2,7 +2,7 @@
   position: fixed;
   left: 0;
   top: 0;
-  width: 280px;
+  width: 300px;
   height: 100%;
   background: linear-gradient(165deg, 
     var(--color-background-overlay) 0%, 
@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   z-index: 1000;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.3s ease;
@@ -40,7 +40,7 @@
   letter-spacing: 2px;
   margin-bottom: var(--spacing-lg);
   border-bottom: 2px solid rgba(255, 255, 255, 0.15);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-md);
   width: 100%;
   text-align: center;
   color: var(--color-text);
@@ -53,7 +53,10 @@
 }
 .menu-actions {
   width: 100%;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .theme-toggle {
@@ -62,7 +65,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--color-surface), var(--color-surface-raised));
   border: 1px solid var(--color-border);
@@ -87,23 +90,63 @@
   font-weight: 600;
 }
 
+.logout-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, 
+    rgba(220, 38, 38, 0.1), 
+    rgba(239, 68, 68, 0.2));
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.logout-button:hover,
+.logout-button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  background: linear-gradient(135deg, 
+    rgba(220, 38, 38, 0.2), 
+    rgba(239, 68, 68, 0.3));
+  border-color: rgba(220, 38, 38, 0.5);
+  outline: none;
+}
+
+.logout-button .menu-icon {
+  color: #ef4444;
+  font-size: 1.25rem;
+}
+
+.logout-label {
+  font-weight: 600;
+}
+
 .menu-list {
   list-style: none;
   padding: 0;
   margin: 0;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .menu a {
   color: var(--color-text);
   text-decoration: none;
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   width: 100%;
   text-align: left;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.06));
   border: 1px solid var(--color-border);

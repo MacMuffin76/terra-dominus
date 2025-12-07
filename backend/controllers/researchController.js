@@ -6,16 +6,22 @@ const blueprintRepository = new BlueprintRepository();
 const logger = getLogger({ module: 'ResearchController' });
 
 const DEFAULT_RESEARCH_TYPES = [
-  'Technologie Laser Photonique',
-  'Systèmes d’Armes Railgun',
-  'Déploiement de Champs de Force',
-  'Guidage Avancé de Missiles',
-  'Antigravitationnelle',
-  'Ingénierie des Contre-mesures EM',
-  'Confinement de Plasma',
-  'Impulsion EM Avancée',
-  'Nanotechnologie Autoréplicante',
-  'Réseau de Détection Quantique',
+        'Boucliers Énergétiques',
+        'Fortifications',
+        'Systèmes de Ciblage',
+        'Extraction Avancée',
+        'Efficacité Énergétique',
+        'Logistique',
+        'Cartographie',
+        'Logistique rapide',
+        'Armement Anti-Blindage',
+        'Armes à Énergie',
+        'Forces Spéciales',
+        'Armes Automatiques',
+        'Tactiques de Guérilla',
+        'Formation Militaire',
+        'Blindage Lourd',
+        'Motorisation',
 ];
 
 const computeCostBreakdown = (blueprint, level) => {
@@ -121,54 +127,76 @@ exports.getResearchDetails = async (req, res) => {
   }
 };
 
-// Upgrade a specific research item
+const ActionQueue = require('../models/ActionQueue');
+const sequelize = require('../db');
+
+// Upgrade a specific research item with delay queue
 exports.upgradeResearch = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const research = await Research.findByPk(req.params.id);
+    const research = await Research.findByPk(req.params.id, { transaction });
     if (!research) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Research not found' });
     }
     const blueprint = await blueprintRepository.findByCategoryAndType('research', research.name);
     if (blueprint?.max_level && research.level >= blueprint.max_level) {
+      await transaction.rollback();
       return res.status(400).json({ message: 'Max level reached for this research' });
     }
 
-    research.level += 1;
-    const nextCost = computeCostBreakdown(blueprint, research.level + 1);
-    research.nextlevelcost = sumCost(nextCost);
-    await research.save();
-    (req.logger || logger).audit({ userId: req.user.id, researchId: research.id }, 'Research upgraded');
-    
-    // Mettre à jour les leaderboards
-    const leaderboardIntegration = require('../utils/leaderboardIntegration');
-    leaderboardIntegration.updateResearchScore(req.user.id).catch(err => {
-      logger.error('Error updating research leaderboard:', err);
+    const city = await require('../utils/cityUtils').getUserMainCity(req.user.id);
+    if (!city) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'User city not found' });
+    }
+
+    // Count pending queued or in_progress actions for this city and entity
+    const pendingCount = await ActionQueue.count({
+      where: {
+        cityId: city.id,
+        entityId: research.id,
+        type: 'research',
+        status: ['queued', 'in_progress'],
+      },
+      transaction,
     });
-    leaderboardIntegration.updateTotalPower(req.user.id).catch(err => {
-      logger.error('Error updating total power leaderboard:', err);
+
+    const nextLevel = (Number(research.level) || 0) + pendingCount + 1;
+    const durationSeconds = blueprint ? (blueprint.base_duration_seconds || 0) * nextLevel : 0;
+
+    // Find last queued action to set startTime
+    const lastTask = await ActionQueue.findOne({
+      where: { cityId: city.id, type: 'research' },
+      order: [['slot', 'DESC']],
+      transaction,
     });
-    
-    // Grant Battle Pass XP
-    const battlePassService = require('../modules/battlepass/application/BattlePassService');
-    battlePassService.addXP(req.user.id, 50).catch(err => {
-      logger.error('Failed to grant Battle Pass XP for research upgrade:', err);
-    });
-    
-    // Check for achievement unlocks
-    const achievementChecker = require('../utils/achievementChecker');
-    achievementChecker.checkResearchAchievements(req.user.id)
-      .catch(err => logger.error('Failed to check research achievements:', err));
-    
-    res.json({
-      ...research.toJSON(),
-      nextLevelCost: research.nextlevelcost,
-      costBreakdown: nextCost,
-      nextLevelDuration: computeDuration(blueprint, research.level + 1),
-      maxLevel: blueprint?.max_level ?? null,
-    });
+
+    const startTime = lastTask && lastTask.finishTime ? new Date(lastTask.finishTime) : new Date();
+    const finishTime = new Date(startTime.getTime() + durationSeconds * 1000);
+
+    const queueItem = await ActionQueue.create({
+      cityId: city.id,
+      entityId: research.id,
+      type: 'research',
+      status: lastTask ? 'queued' : 'in_progress',
+      startTime,
+      finishTime,
+      slot: lastTask ? lastTask.slot + 1 : 1,
+    }, { transaction });
+
+    await transaction.commit();
+
+    // Emit event to notify client (optional, implement socket.io emit if needed)
+    // const io = require('../socket').getIO();
+    // io.to(`user_${req.user.id}`).emit('action_queue:update', { type: 'research', queue: queueItem });
+
+    res.json({ message: 'Research upgrade queued', queueItem });
   } catch (error) {
-    (req.logger || logger).error({ err: error }, 'Error upgrading research');
-    res.status(500).json({ message: 'Error upgrading research' });
+    await transaction.rollback();
+    (req.logger || logger).error({ err: error }, 'Error queuing research upgrade');
+    // Return a more descriptive error message for frontend
+    res.status(500).json({ message: 'Erreur lors du démarrage de la recherche, elle sera appliquée après délai.' });
   }
 };
 

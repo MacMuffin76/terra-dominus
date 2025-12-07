@@ -124,8 +124,8 @@ TradeConvoy.init(sequelize);
 PortalExpedition.init(sequelize);
 
 // Définir les associations pour les quêtes (legacy)
+// Note: UserQuest associations are defined in UserQuest.associate() method
 Quest.hasMany(UserQuest, { foreignKey: 'quest_id', as: 'userQuests' });
-User.hasMany(UserQuest, { foreignKey: 'user_id', as: 'userQuests' });
 
 // Définir les associations pour les achievements
 Achievement.hasMany(UserAchievement, { foreignKey: 'achievement_id', as: 'userAchievements' });

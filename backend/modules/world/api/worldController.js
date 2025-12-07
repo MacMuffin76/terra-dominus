@@ -90,11 +90,159 @@ const createWorldController = ({ worldService }) => {
     }
   };
 
+  /**
+   * GET /api/world/config
+   * Récupère la configuration du monde (seed de génération)
+   */
+  const getWorldConfig = async (req, res) => {
+    try {
+      const config = await worldService.getWorldConfig();
+      
+      return res.json(config);
+    } catch (err) {
+      (req.logger || logger).error({ err }, 'Error getting world config');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération de la configuration.' });
+    }
+  };
+
+  /**
+   * GET /api/world/territories
+   * Récupère les territoires du joueur
+   */
+  const getPlayerTerritories = async (req, res) => {
+    try {
+      const territories = await worldService.getPlayerTerritories(req.user.id);
+      
+      return res.json(territories);
+    } catch (err) {
+      (req.logger || logger).error({ err, userId: req.user.id }, 'Error getting player territories');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des territoires.' });
+    }
+  };
+
+  /**
+   * POST /api/world/territories/claim
+   * Revendique un territoire
+   */
+  const claimTerritory = async (req, res) => {
+    try {
+      const { latitude, longitude, terrainType } = req.body;
+
+      if (!latitude || !longitude || !terrainType) {
+        return res.status(400).json({ message: 'Latitude, longitude et terrainType requis' });
+      }
+
+      const territory = await worldService.claimTerritory(
+        req.user.id,
+        parseFloat(latitude),
+        parseFloat(longitude),
+        terrainType
+      );
+
+      // Auto-explorer autour du territoire
+      await worldService.exploreAroundTerritory(
+        req.user.id,
+        parseFloat(latitude),
+        parseFloat(longitude),
+        10
+      );
+      
+      return res.status(201).json(territory);
+    } catch (err) {
+      (req.logger || logger).error({ err, userId: req.user.id }, 'Error claiming territory');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la revendication du territoire.' });
+    }
+  };
+
+  /**
+   * GET /api/world/territories/bounds
+   * Récupère tous les territoires dans une zone
+   */
+  const getTerritoriesInBounds = async (req, res) => {
+    try {
+      const { minLat, maxLat, minLng, maxLng } = req.query;
+
+      if (!minLat || !maxLat || !minLng || !maxLng) {
+        return res.status(400).json({ message: 'Paramètres de zone requis' });
+      }
+
+      const territories = await worldService.getTerritoriesInBounds(
+        parseFloat(minLat),
+        parseFloat(maxLat),
+        parseFloat(minLng),
+        parseFloat(maxLng)
+      );
+      
+      return res.json(territories);
+    } catch (err) {
+      (req.logger || logger).error({ err }, 'Error getting territories in bounds');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des territoires.' });
+    }
+  };
+
+  /**
+   * GET /api/world/exploration
+   * Récupère les zones explorées par le joueur
+   */
+  const getExploredAreas = async (req, res) => {
+    try {
+      const explored = await worldService.getExploredAreas(req.user.id);
+      
+      return res.json(explored);
+    } catch (err) {
+      (req.logger || logger).error({ err, userId: req.user.id }, 'Error getting explored areas');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de la récupération des zones explorées.' });
+    }
+  };
+
+  /**
+   * POST /api/world/exploration/explore
+   * Marque une zone comme explorée
+   */
+  const exploreArea = async (req, res) => {
+    try {
+      const { latitude, longitude } = req.body;
+
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: 'Latitude et longitude requises' });
+      }
+
+      const result = await worldService.exploreArea(
+        req.user.id,
+        parseFloat(latitude),
+        parseFloat(longitude)
+      );
+      
+      return res.json(result);
+    } catch (err) {
+      (req.logger || logger).error({ err, userId: req.user.id }, 'Error exploring area');
+      return res
+        .status(err.status || 500)
+        .json({ message: err.message || 'Erreur lors de l\'exploration.' });
+    }
+  };
+
   return {
     getVisibleWorld,
     getAvailableCitySlots,
     getTileInfo,
     getWorldStats,
+    getWorldConfig,
+    getPlayerTerritories,
+    claimTerritory,
+    getTerritoriesInBounds,
+    getExploredAreas,
+    exploreArea,
   };
 };
 

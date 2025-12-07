@@ -1,5 +1,6 @@
 const leaderboardService = require('../modules/leaderboard/application/LeaderboardService');
-const logger = require('../utils/logger');
+const LeaderboardService = leaderboardService.constructor;
+const { logger } = require('../utils/logger');
 
 /**
  * Contrôleur pour les leaderboards
@@ -16,7 +17,7 @@ const leaderboardController = {
       const offset = parseInt(req.query.offset) || 0;
 
       // Valider la catégorie
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`
@@ -43,6 +44,7 @@ const leaderboardController = {
       });
     } catch (error) {
       logger.error('Error in getLeaderboard:', error);
+      console.error('Full leaderboard error:', error);
       res.status(500).json({ message: 'Error fetching leaderboard', error: error.message });
     }
   },
@@ -57,7 +59,7 @@ const leaderboardController = {
       const userId = req.user.id;
 
       // Valider la catégorie
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`
@@ -86,7 +88,7 @@ const leaderboardController = {
   async getAllMyPositions(req, res) {
     try {
       const userId = req.user.id;
-      const categories = Object.values(leaderboardService.CATEGORIES);
+      const categories = Object.values(LeaderboardService.CATEGORIES);
 
       const positions = {};
       
@@ -123,7 +125,7 @@ const leaderboardController = {
         return res.status(400).json({ message: 'Score must be a positive number' });
       }
 
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`
@@ -162,7 +164,7 @@ const leaderboardController = {
         return res.status(400).json({ message: 'Amount must be a positive number' });
       }
 
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`
@@ -192,7 +194,7 @@ const leaderboardController = {
       const userId = req.user.id;
       const seasonId = req.query.season_id ? parseInt(req.query.season_id) : null;
 
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`
@@ -247,7 +249,7 @@ const leaderboardController = {
     try {
       const { category } = req.params;
 
-      const validCategories = Object.values(leaderboardService.CATEGORIES);
+      const validCategories = Object.values(LeaderboardService.CATEGORIES);
       if (!validCategories.includes(category)) {
         return res.status(400).json({
           message: `Invalid category. Valid categories: ${validCategories.join(', ')}`

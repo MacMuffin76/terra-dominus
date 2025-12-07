@@ -94,7 +94,6 @@ const Resources = () => {
       <Menu />
       <div className="resources-content" id="main-content">
         <ResourcesWidget />
-
         <div className="resources-header">
           <div className="header-title">
             <Building size={32} />

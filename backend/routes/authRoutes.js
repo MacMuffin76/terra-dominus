@@ -37,6 +37,11 @@ router.post('/logout', protect, async (req, res) => {
     const tokenService = getTokenService();
     
     await tokenService.revokeToken(token);
+    
+    // Enregistrer l'heure de déconnexion pour le calcul de rattrapage offline
+    req.user.last_logout = new Date();
+    await req.user.save();
+    
     logger.info({ userId: req.user.id }, 'User logged out successfully');
     
     res.json({ message: 'Déconnexion réussie' });

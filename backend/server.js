@@ -5,6 +5,7 @@ const sequelize = require('./db');
 const { initIO } = require('./socket');
 const { userConnectedSchema } = require('./validation/socketValidation');
 const { startJobs } = require('./jobs');
+const { syncConstructionJobs } = require('./jobs/syncConstructionJobs');
 const { getLogger, runWithContext, generateTraceId } = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
@@ -29,6 +30,10 @@ const registerChatHandlers = require('./modules/chat/socket/chatSocketHandlers')
 (async () => {
   const io = await initIO(server);
   startJobs(container);
+  
+  // Synchroniser les jobs de construction au démarrage
+  // Cela reprogramme les constructions in_progress et marque les expirées comme completed
+  await syncConstructionJobs();
 
   io.on('connection', (socket) => {
   const userId = socket.user?.id;

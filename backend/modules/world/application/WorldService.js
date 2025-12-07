@@ -2,6 +2,7 @@ const { getLogger } = require('../../../utils/logger');
 const { cacheWrapper, invalidateCache } = require('../../../utils/cache');
 const City = require('../../../models/City');
 const Research = require('../../../models/Research');
+const WorldConfig = require('../../../models/WorldConfig');
 const {
   calculateDistance,
   getVisibleTilesFromPoint,
@@ -295,6 +296,255 @@ class WorldService {
       };
     } catch (error) {
       logger.error({ err: error }, 'Error getting world stats');
+      throw error;
+    }
+  }
+
+  /**
+   * Récupère la configuration du monde (seed de génération)
+   * @cache 1 heure TTL (la config ne change presque jamais)
+   */
+  async getWorldConfig() {
+    const cacheKey = 'world:config';
+    
+    return cacheWrapper(cacheKey, 3600, async () => {
+      try {
+        let config = await WorldConfig.findOne({
+          order: [['id', 'DESC']], // Prendre la config la plus récente
+        });
+
+        // Si pas de config, en créer une par défaut
+        if (!config) {
+          config = await WorldConfig.create({
+            seed: 12345,
+            map_width: 2400,
+            map_height: 800,
+            version: 1,
+            metadata: {
+              algorithm: 'perlin_fbm',
+              octaves: 6,
+              scale: 0.002,
+              land_water_ratio: 0.4,
+            },
+          });
+          logger.info({ seed: config.seed }, 'Created default world config');
+        }
+
+        return {
+          seed: config.seed,
+          width: config.map_width,
+          height: config.map_height,
+          version: config.version,
+          metadata: config.metadata,
+          generatedAt: config.generated_at,
+        };
+      } catch (error) {
+        logger.error({ err: error }, 'Error getting world config');
+        throw error;
+      }
+    });
+  }
+
+  /**
+   * Récupère les territoires d'un joueur
+   */
+  async getPlayerTerritories(userId) {
+    try {
+      const PlayerTerritory = require('../../../models/PlayerTerritory');
+      const territories = await PlayerTerritory.findAll({
+        where: { user_id: userId },
+        order: [['claimed_at', 'DESC']],
+      });
+
+      return territories;
+    } catch (error) {
+      logger.error({ err: error, userId }, 'Error getting player territories');
+      throw error;
+    }
+  }
+
+  /**
+   * Revendique un territoire pour un joueur
+   */
+  async claimTerritory(userId, latitude, longitude, terrainType) {
+    try {
+      const PlayerTerritory = require('../../../models/PlayerTerritory');
+
+      // Vérifier que le joueur n'a pas déjà un territoire à cet endroit
+      const existing = await PlayerTerritory.findOne({
+        where: {
+          latitude,
+          longitude,
+        },
+      });
+
+      if (existing) {
+        const error = new Error('Ce territoire est déjà revendiqué');
+        error.status = 400;
+        throw error;
+      }
+
+      // Calculer les bonus de ressources en fonction du terrain
+      const resourceBonus = this._calculateTerrainBonus(terrainType);
+
+      const territory = await PlayerTerritory.create({
+        user_id: userId,
+        latitude,
+        longitude,
+        radius: 5,
+        terrain_type: terrainType,
+        resource_bonus: resourceBonus,
+        defense_level: 1,
+      });
+
+      // Invalider le cache des territoires
+      invalidateCache(`territories:${userId}`);
+
+      logger.info({ userId, territoryId: territory.id, terrainType }, 'Territory claimed');
+
+      return territory;
+    } catch (error) {
+      logger.error({ err: error, userId }, 'Error claiming territory');
+      throw error;
+    }
+  }
+
+  /**
+   * Calcule les bonus de ressources en fonction du type de terrain
+   * @private
+   */
+  _calculateTerrainBonus(terrainType) {
+    const bonuses = {
+      plains: { food: 20, metal: 5 },
+      forest: { wood: 25, food: 10 },
+      mountain: { metal: 30, crystal: 15 },
+      hills: { metal: 15, crystal: 10 },
+      desert: { crystal: 20, energy: 10 },
+      water: { food: 15, energy: 5 },
+    };
+
+    return bonuses[terrainType] || { food: 5, metal: 5 };
+  }
+
+  /**
+   * Récupère tous les territoires visibles dans une zone
+   */
+  async getTerritoriesInBounds(minLat, maxLat, minLng, maxLng) {
+    try {
+      const PlayerTerritory = require('../../../models/PlayerTerritory');
+      const { Op } = require('sequelize');
+
+      const territories = await PlayerTerritory.findAll({
+        where: {
+          latitude: {
+            [Op.between]: [minLat, maxLat],
+          },
+          longitude: {
+            [Op.between]: [minLng, maxLng],
+          },
+        },
+        include: [
+          {
+            model: require('../../../models/User'),
+            as: 'user',
+            attributes: ['id', 'username'],
+          },
+        ],
+      });
+
+      return territories;
+    } catch (error) {
+      logger.error({ err: error }, 'Error getting territories in bounds');
+      throw error;
+    }
+  }
+
+  /**
+   * Récupère les zones explorées par un joueur
+   */
+  async getExploredAreas(userId) {
+    try {
+      const MapExploration = require('../../../models/MapExploration');
+      const explored = await MapExploration.findAll({
+        where: { user_id: userId },
+        attributes: ['latitude', 'longitude', 'explored_at'],
+        order: [['explored_at', 'DESC']],
+      });
+
+      return explored;
+    } catch (error) {
+      logger.error({ err: error, userId }, 'Error getting explored areas');
+      throw error;
+    }
+  }
+
+  /**
+   * Marque une zone comme explorée
+   */
+  async exploreArea(userId, latitude, longitude) {
+    try {
+      const MapExploration = require('../../../models/MapExploration');
+      
+      // Utiliser findOrCreate pour éviter les doublons
+      const [exploration, created] = await MapExploration.findOrCreate({
+        where: {
+          user_id: userId,
+          latitude: Math.round(latitude * 100) / 100, // Arrondir à 2 décimales
+          longitude: Math.round(longitude * 100) / 100,
+        },
+        defaults: {
+          user_id: userId,
+          latitude: Math.round(latitude * 100) / 100,
+          longitude: Math.round(longitude * 100) / 100,
+        },
+      });
+
+      if (created) {
+        logger.debug({ userId, latitude, longitude }, 'Area explored');
+      }
+
+      return { explored: true, created };
+    } catch (error) {
+      logger.error({ err: error, userId }, 'Error exploring area');
+      throw error;
+    }
+  }
+
+  /**
+   * Explore automatiquement autour d'un territoire
+   * Révèle une zone circulaire autour du territoire
+   */
+  async exploreAroundTerritory(userId, latitude, longitude, radius = 5) {
+    try {
+      const MapExploration = require('../../../models/MapExploration');
+      const explorations = [];
+
+      // Créer une grille de points autour du territoire
+      const step = 1; // 1 degré de pas
+      for (let lat = latitude - radius; lat <= latitude + radius; lat += step) {
+        for (let lng = longitude - radius; lng <= longitude + radius; lng += step) {
+          // Vérifier si le point est dans le rayon
+          const distance = Math.sqrt(Math.pow(lat - latitude, 2) + Math.pow(lng - longitude, 2));
+          if (distance <= radius) {
+            explorations.push({
+              user_id: userId,
+              latitude: Math.round(lat * 100) / 100,
+              longitude: Math.round(lng * 100) / 100,
+            });
+          }
+        }
+      }
+
+      // Bulk insert avec ignoreDuplicates
+      await MapExploration.bulkCreate(explorations, {
+        ignoreDuplicates: true,
+      });
+
+      logger.info({ userId, count: explorations.length }, 'Auto-explored around territory');
+
+      return { explored: explorations.length };
+    } catch (error) {
+      logger.error({ err: error, userId }, 'Error auto-exploring around territory');
       throw error;
     }
   }

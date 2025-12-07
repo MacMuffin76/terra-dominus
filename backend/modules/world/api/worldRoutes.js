@@ -8,6 +8,9 @@ const createWorldRouter = (container) => {
   const router = Router();
   const controller = container.resolve('worldController');
 
+  // Récupérer la configuration du monde (seed de génération) - PUBLIC
+  router.get('/config', controller.getWorldConfig);
+
   // Récupérer la portion visible de la carte
   router.get('/visible', protect, controller.getVisibleWorld);
 
@@ -19,6 +22,25 @@ const createWorldRouter = (container) => {
 
   // Statistiques globales
   router.get('/stats', protect, controller.getWorldStats);
+
+  // === Territoires ===
+  
+  // Récupérer les territoires du joueur
+  router.get('/territories', protect, controller.getPlayerTerritories);
+  
+  // Revendiquer un territoire
+  router.post('/territories/claim', protect, controller.claimTerritory);
+  
+  // Récupérer les territoires dans une zone
+  router.get('/territories/bounds', protect, controller.getTerritoriesInBounds);
+
+  // === Exploration (Fog of War) ===
+  
+  // Récupérer les zones explorées
+  router.get('/exploration', protect, controller.getExploredAreas);
+  
+  // Explorer une zone
+  router.post('/exploration/explore', protect, controller.exploreArea);
 
   return router;
 };

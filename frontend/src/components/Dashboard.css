@@ -86,7 +86,8 @@
 
 .quest-toggle-button,
 .achievement-toggle-button,
-.battlepass-toggle-button {
+.battlepass-toggle-button,
+.leaderboard-toggle-button {
   display: flex;
   align-items: center;
   gap: 12px;

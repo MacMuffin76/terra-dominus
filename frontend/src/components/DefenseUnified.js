@@ -6,16 +6,27 @@ import { Shield, Lock, Award } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
 import { getAvailableDefenses } from '../api/defenseUnlocks';
+import { buildDefense } from '../api/defenseBuilding';
 import { useAsyncError } from '../hooks/useAsyncError';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
+import DefenseBuildModal from './defense/DefenseBuildModal';
 import './Defense.css';
 import './units/UnitTrainingPanel.css';
 
 /**
  * Defense Card Component
  */
-const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected }) => {
+const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected, onBuildClick }) => {
   const { name, description, tier, stats, cost, missingRequirements, icon } = defense;
+
+  const handleBuildClick = (e) => {
+    e.stopPropagation();
+    if (!isLocked && onBuildClick) {
+      onBuildClick(defense);
+    }
+  };
 
   return (
     <div
@@ -66,13 +77,18 @@ const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected }) => {
         </div>
       )}
 
-      {/* Prérequis manquants */}
+      {/* Prérequis manquants - Version compacte */}
       {isLocked && missingRequirements && missingRequirements.length > 0 && (
-        <div className="requirements">
-          <p className="requirements-title">Prérequis:</p>
-          {missingRequirements.map((req, idx) => (
-            <p key={idx} className="requirement-item">🔒 {req}</p>
-          ))}
+        <div className="requirements-compact">
+          <div className="requirements-title">
+            <Lock size={12} />
+            <span>Manquants:</span>
+          </div>
+          <div className="requirements-list-compact">
+            {missingRequirements.map((req, idx) => (
+              <span key={idx} className="requirement-chip">{req}</span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -87,6 +103,17 @@ const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected }) => {
           <p className="weak-label">⚠️ Faible contre: {defense.weakTo.join(', ')}</p>
         </div>
       )}
+
+      {!isLocked && (
+        <button 
+          className="unit-train-btn"
+          onClick={handleBuildClick}
+          aria-label={`Construire ${defense.name}`}
+          style={{ background: 'linear-gradient(135deg, #ff4444, #cc0000)' }}
+        >
+          🛡️ Construire
+        </button>
+      )}
     </div>
   );
 };
@@ -96,10 +123,13 @@ const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected }) => {
  */
 const DefenseUnified = () => {
   const { error, catchError } = useAsyncError('DefenseUnified');
+  const { toasts, removeToast, success, error: errorToast, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [availableData, setAvailableData] = useState(null);
   const [selectedDefense, setSelectedDefense] = useState(null);
   const [filterTier, setFilterTier] = useState('all');
+  const [buildModalOpen, setBuildModalOpen] = useState(false);
+  const [defenseToBuild, setDefenseToBuild] = useState(null);
 
   const loadDefenses = useCallback(async () => {
     setLoading(true);
@@ -124,6 +154,32 @@ const DefenseUnified = () => {
   const handleDefenseSelect = useCallback((defense) => {
     setSelectedDefense(prev => prev?.id === defense.id ? null : defense);
   }, []);
+
+  const handleBuildClick = useCallback((defense) => {
+    setDefenseToBuild(defense);
+    setBuildModalOpen(true);
+  }, []);
+
+  const handleBuild = useCallback(async (defenseId, quantity) => {
+    try {
+      const result = await buildDefense(defenseId, quantity);
+      success(`✅ ${quantity}x ${defenseToBuild?.name} construites avec succès!`);
+      setBuildModalOpen(false);
+      setDefenseToBuild(null);
+      await loadDefenses();
+    } catch (err) {
+      errorToast(err.message || 'Erreur lors de la construction de la défense');
+    }
+  }, [defenseToBuild, success, errorToast, loadDefenses]);
+
+  const handleLockedDefenseClick = useCallback((defense) => {
+    if (defense.missingRequirements && defense.missingRequirements.length > 0) {
+      const message = `${defense.name} verrouillée : ${defense.missingRequirements.join(', ')}`;
+      warning(message, 6000);
+    } else {
+      warning(`${defense.name} : Prérequis non remplis`, 4000);
+    }
+  }, [warning]);
 
   if (loading) {
     return (
@@ -167,6 +223,7 @@ const DefenseUnified = () => {
   return (
     <div className="defense-container">
       <Menu />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="defense-content" id="main-content">
         <ResourcesWidget />
 
@@ -229,12 +286,24 @@ const DefenseUnified = () => {
                 key={defense.id}
                 defense={defense}
                 isLocked={isLocked}
-                onSelect={handleDefenseSelect}
+                onSelect={isLocked ? () => handleLockedDefenseClick(defense) : handleDefenseSelect}
+                onBuildClick={handleBuildClick}
                 isSelected={selectedDefense?.id === defense.id}
               />
             );
           })}
         </div>
+
+        {/* Modal de construction */}
+        <DefenseBuildModal
+          isOpen={buildModalOpen}
+          onClose={() => {
+            setBuildModalOpen(false);
+            setDefenseToBuild(null);
+          }}
+          defense={defenseToBuild}
+          onBuild={handleBuild}
+        />
 
         {filteredDefenses.length === 0 && (
           <div className="empty-state">

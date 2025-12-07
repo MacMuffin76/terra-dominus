@@ -50,17 +50,23 @@ class LeaderboardService {
       });
 
       // Calculer les rangs
-      const rankedEntries = entries.map((entry, index) => ({
-        rank: offset + index + 1,
-        user: {
-          id: entry.user.id,
-          username: entry.user.username
-        },
-        score: parseInt(entry.score),
-        previous_rank: entry.previous_rank,
-        rank_change: entry.previous_rank ? entry.previous_rank - (offset + index + 1) : 0,
-        last_updated: entry.last_updated
-      }));
+      const rankedEntries = entries.map((entry, index) => {
+        if (!entry.user) {
+          logger.warn(`User not found for leaderboard entry ${entry.id}`);
+          return null;
+        }
+        return {
+          rank: offset + index + 1,
+          user: {
+            id: entry.user.id,
+            username: entry.user.username
+          },
+          score: parseInt(entry.score),
+          previous_rank: entry.previous_rank,
+          rank_change: entry.previous_rank ? entry.previous_rank - (offset + index + 1) : 0,
+          last_updated: entry.last_updated
+        };
+      }).filter(entry => entry !== null);
 
       logger.info(`Retrieved ${rankedEntries.length} entries for ${category}`);
       return rankedEntries;

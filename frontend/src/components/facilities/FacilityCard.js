@@ -3,7 +3,7 @@
 import React from 'react';
 import './FacilityCard.css';
 
-const FacilityCard = ({ facility, isSelected, onClick, loading = false }) => {
+const FacilityCard = ({ facility, isSelected, onClick, loading = false, isLocked = false, lockReason = '' }) => {
   const formatFileName = (name) =>
     name
       .toLowerCase()
@@ -27,10 +27,12 @@ const FacilityCard = ({ facility, isSelected, onClick, loading = false }) => {
   return (
     <button
       type="button"
-      className={`terra-facility-card ${isSelected ? 'terra-facility-selected' : ''}`}
-      onClick={() => onClick(facility)}
+      className={`terra-facility-card ${isSelected ? 'terra-facility-selected' : ''} ${isLocked ? 'terra-facility-locked' : ''}`}
+      onClick={() => !isLocked && onClick(facility)}
       aria-pressed={isSelected}
-      aria-label={`${facility.name}, niveau ${facility.level}`}
+      aria-label={`${facility.name}, niveau ${facility.level}${isLocked ? ' - verrouillé' : ''}`}
+      disabled={isLocked}
+      title={isLocked ? lockReason : ''}
     >
       <div className="terra-facility-image-wrapper">
         <img
@@ -38,6 +40,11 @@ const FacilityCard = ({ facility, isSelected, onClick, loading = false }) => {
           alt={facility.name}
           className="terra-facility-image"
         />
+        {isLocked && (
+          <div className="terra-facility-lock-overlay">
+            <span className="terra-facility-lock-icon">🔒</span>
+          </div>
+        )}
         <div className="terra-facility-overlay">
           <span className="terra-facility-level-badge">NIV. {facility.level}</span>
         </div>
@@ -45,7 +52,9 @@ const FacilityCard = ({ facility, isSelected, onClick, loading = false }) => {
       <div className="terra-facility-info">
         <h3 className="terra-facility-name">{facility.name}</h3>
         <p className="terra-facility-description">
-          {facility.level === 0 ? 'Non construit' : `Niveau ${facility.level} actif`}
+          {isLocked 
+            ? lockReason
+            : facility.level === 0 ? 'Non construit' : `Niveau ${facility.level} actif`}
         </p>
       </div>
       <div className="terra-facility-scanlines"></div>

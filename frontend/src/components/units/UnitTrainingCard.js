@@ -14,11 +14,22 @@ const UnitTrainingCard = ({
   requiredLevel, 
   currentLevel,
   onSelect,
+  onLockedClick,
+  onTrainClick,
   isSelected 
 }) => {
   const handleClick = () => {
-    if (!isLocked && onSelect) {
+    if (isLocked && onLockedClick) {
+      onLockedClick(unit);
+    } else if (!isLocked && onSelect) {
       onSelect(unit);
+    }
+  };
+
+  const handleTrainClick = (e) => {
+    e.stopPropagation();
+    if (!isLocked && onTrainClick) {
+      onTrainClick(unit);
     }
   };
 
@@ -69,9 +80,9 @@ const UnitTrainingCard = ({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="button"
-      tabIndex={isLocked ? -1 : 0}
+      tabIndex={0}
       aria-disabled={isLocked}
-      style={{ borderColor: getTierColor(unit.tier) }}
+      style={{ borderColor: getTierColor(unit.tier), cursor: isLocked ? 'pointer' : 'pointer' }}
     >
       {isLocked && (
         <div className="lock-overlay">
@@ -93,6 +104,21 @@ const UnitTrainingCard = ({
       </div>
 
       <p className="unit-description">{unit.description}</p>
+
+      {/* Prérequis manquants - Version compacte */}
+      {isLocked && unit.missingRequirements && unit.missingRequirements.length > 0 && (
+        <div className="requirements-compact">
+          <div className="requirements-title">
+            <Lock size={12} />
+            <span>Manquants:</span>
+          </div>
+          <div className="requirements-list-compact">
+            {unit.missingRequirements.map((req, idx) => (
+              <span key={idx} className="requirement-chip">{req}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="unit-stats">
         <div className="stat">
@@ -143,6 +169,16 @@ const UnitTrainingCard = ({
           <span className="weak-label">⚠️ Weak to:</span>
           <span className="weak-list">{unit.weakTo.join(', ')}</span>
         </div>
+      )}
+
+      {!isLocked && (
+        <button 
+          className="unit-train-btn"
+          onClick={handleTrainClick}
+          aria-label={`Entraîner ${unit.name}`}
+        >
+          ⚔️ Entraîner
+        </button>
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import { safeStorage } from '../utils/safeStorage';
 import { logger } from '../utils/logger';
 import PropTypes from 'prop-types';
 import { Button, Loader } from './ui';
+import axiosInstance from '../utils/axiosInstance';
 import {
   downgradeResourceBuilding,
   getResourceBuildingDetail,
@@ -160,6 +161,9 @@ const ResourceDetail = ({
     const controller = new AbortController();
     
     const loadData = async () => {
+      // 🎮 Style Ogame : Ne PAS synchroniser à l'ouverture
+      // On charge juste les détails rapidement (pas de clignotement)
+      // La synchronisation se fera au moment de l'upgrade
       try {
         await refreshBuilding(controller.signal);
       } catch (err) {
@@ -169,10 +173,12 @@ const ResourceDetail = ({
     
     loadData();
     return () => controller.abort();
-  }, [building.id]);
+  }, [building.id]); // ✅ Retirer refreshBuilding des dépendances pour éviter la boucle
 
   const handleUpgrade = async () => {
     try {
+      // 🎮 Style Ogame : Le backend recalcule AUTOMATIQUEMENT les ressources
+      // Pas besoin de synchroniser manuellement, upgradeResourceBuilding le fait
       const upgradeData = await upgradeResourceBuilding(building.id);
 
       if (!upgradeData || !detail) {
@@ -180,22 +186,29 @@ const ResourceDetail = ({
         return;
       }
 
-      if (detail) {
-        // Déduction des ressources côté front (visuel)
-        const costList = detail.nextLevelCost || [];
-        const updatedResources = resources.map((r) => {
-          const cost = costList.find((c) => c.resource_type === r.type);
-          if (cost) {
-            const baseAmount = Number(r.amount) || 0;
-            return {
-              ...r,
-              amount: baseAmount - Number(cost.amount || 0),
-            };
-          }
-          return r;
-        });
-        setResources(updatedResources);
-        safeStorage.setItem('resourcesData', JSON.stringify(updatedResources));
+      // ✅ IMPORTANT : Récupérer les vraies ressources depuis le backend après l'upgrade
+      // Le backend a recalculé la production + déduit les coûts
+      try {
+        const freshResourcesResponse = await axiosInstance.get('/resources/user-resources');
+        if (freshResourcesResponse.data) {
+          const freshResources = Array.isArray(freshResourcesResponse.data)
+            ? freshResourcesResponse.data
+            : freshResourcesResponse.data.resources || [];
+          
+          setResources(freshResources);
+          safeStorage.setItem('resourcesData', JSON.stringify(freshResources));
+          
+          // Synchroniser le localStorage avec les vraies valeurs du serveur
+          const resourcesObj = freshResources.reduce((acc, r) => {
+            acc[r.type] = r.amount;
+            return acc;
+          }, {});
+          localStorage.setItem('localResources', JSON.stringify(resourcesObj));
+          
+          console.log('✅ Ressources synchronisées après upgrade:', resourcesObj);
+        }
+      } catch (syncErr) {
+        console.warn('⚠️ Échec de la récupération des ressources:', syncErr);
       }
 
       const updatedDetail = await refreshBuilding();
@@ -337,19 +350,76 @@ const ResourceDetail = ({
           <p className="stat-value-large">{detail.level}</p>
         </div>
 
-        <div className="stat-block">
-          <h4>Production actuelle :</h4>
-          <p className="stat-value">
-            {formatAmount(Math.floor(detail.production_rate * 3600))} / heure
-          </p>
-        </div>
+        {/* Pour les bâtiments de stockage et centrales : afficher "Capacité" au lieu de "Production" */}
+        {(detail.name === 'Hangar' || detail.name === 'Réservoir' || detail.name === 'Centrale électrique') ? (
+          <>
+            <div className="stat-block">
+              <h4>Capacité actuelle :</h4>
+              <p className="stat-value">
+                {detail.storage_capacity && detail.name === 'Hangar' && (
+                  <>
+                    {formatAmount(detail.storage_capacity.or)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>or / métal</span>
+                  </>
+                )}
+                {detail.storage_capacity && detail.name === 'Réservoir' && (
+                  <>
+                    {formatAmount(detail.storage_capacity.carburant)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>carburant</span>
+                  </>
+                )}
+                {detail.storage_capacity && detail.name === 'Centrale électrique' && (
+                  <>
+                    {formatAmount(detail.storage_capacity.energie)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>énergie</span>
+                  </>
+                )}
+                {!detail.storage_capacity && formatAmount(Math.floor(detail.production_rate))}
+              </p>
+            </div>
 
-        <div className="stat-block">
-          <h4>Production niveau suivant :</h4>
-          <p className="stat-value highlight">
-            {formatAmount(Math.floor(detail.next_production_rate * 3600))} / heure
-          </p>
-        </div>
+            <div className="stat-block">
+              <h4>Capacité niveau suivant :</h4>
+              <p className="stat-value highlight">
+                {detail.next_storage_capacity && detail.name === 'Hangar' && (
+                  <>
+                    {formatAmount(detail.next_storage_capacity.or)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>or / métal</span>
+                  </>
+                )}
+                {detail.next_storage_capacity && detail.name === 'Réservoir' && (
+                  <>
+                    {formatAmount(detail.next_storage_capacity.carburant)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>carburant</span>
+                  </>
+                )}
+                {detail.next_storage_capacity && detail.name === 'Centrale électrique' && (
+                  <>
+                    {formatAmount(detail.next_storage_capacity.energie)}<br/>
+                    <span style={{fontSize: '12px', opacity: 0.8}}>énergie</span>
+                  </>
+                )}
+                {!detail.next_storage_capacity && formatAmount(Math.floor(detail.next_production_rate))}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="stat-block">
+              <h4>Production actuelle :</h4>
+              <p className="stat-value">
+                {formatAmount(Math.floor(detail.production_rate * 3600))} / heure
+              </p>
+            </div>
+
+            <div className="stat-block">
+              <h4>Production niveau suivant :</h4>
+              <p className="stat-value highlight">
+                {formatAmount(Math.floor(detail.next_production_rate * 3600))} / heure
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="stat-block">
           <h4>Durée de construction :</h4>

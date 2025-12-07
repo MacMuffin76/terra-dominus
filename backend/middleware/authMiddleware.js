@@ -36,12 +36,10 @@ const protect = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       (req.logger || logger).error({ err: error }, 'JWT validation failed');
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+  } else {
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 });
 

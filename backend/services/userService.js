@@ -120,8 +120,12 @@ async function initializeUserGameData(userId, transaction) {
   );
 
   const facilityTypes = [
-    'Centre de Recherche',
-    "Terrain d'Entrainement",
+    'Centre de commandement',
+    'Comptoir commercial',
+    'Atelier de defense',
+    'Centre d\'entraînement',
+    'Forge militaire',
+    'Laboratoire de recherche'
   ];
 
   await Promise.all(
@@ -150,14 +154,17 @@ async function initializeUserGameData(userId, transaction) {
   const unitTypes = unitBlueprints.length
     ? unitBlueprints.map((bp) => bp.type)
     : [
-        'Drone d’assaut terrestre',
-        'Fantassin plasmique',
-        'Infiltrateur holo-camouflage',
-        'Tireur à antimatière',
-        'Artilleur à railgun',
-        'Exo-sentinelle',
-        'Commandos nano-armure',
-        'Légionnaire quantique',
+        'Militia',
+        'Infantry',
+        'Archer',
+        'Cavalry',
+        'Spearmen',
+        'Artillery',
+        'Enginneer',
+        'Tanks',
+        'Anti_tant',
+        'Mec',
+        'Spy'
       ];
 
   await Promise.all(
@@ -175,16 +182,22 @@ async function initializeUserGameData(userId, transaction) {
   const researchTypes = researchBlueprints.length
     ? researchBlueprints.map((bp) => bp.type)
     : [
-        'Technologie Laser Photonique',
-        'Systèmes d’Armes Railgun',
-        'Déploiement de Champs de Force',
-        'Guidage Avancé de Missiles',
-        'Antigravitationnelle',
-        'Ingénierie des Contre-mesures EM',
-        'Confinement de Plasma',
-        'Impulsion EM Avancée',
-        'Nanotechnologie Autoréplicante',
-        'Réseau de Détection Quantique',
+        'Boucliers Énergétiques',
+        'Fortifications',
+        'Systèmes de Ciblage',
+        'Extraction Avancée',
+        'Efficacité Énergétique',
+        'Logistique',
+        'Cartographie',
+        'Logistique rapide',
+        'Armement Anti-Blindage',
+        'Armes à Énergie',
+        'Forces Spéciales',
+        'Armes Automatiques',
+        'Tactiques de Guérilla',
+        'Formation Militaire',
+        'Blindage Lourd',
+        'Motorisation',
       ];
 
   await Promise.all(
@@ -293,10 +306,112 @@ async function loginUser({ username, password }) {
     throw error;
   }
 
+  // Calculer le rattrapage de production offline
+  // Si last_logout existe, on l'utilise. Sinon, on utilise last_login (utilisateur qui a fermé l'onglet sans se déconnecter)
+  const lastActivity = user.last_logout || user.last_login;
+  
+  if (lastActivity) {
+    try {
+      await calculateOfflineCatchup(user.id, lastActivity);
+    } catch (error) {
+      console.error('Erreur lors du calcul du rattrapage offline:', error);
+      // Ne pas bloquer le login si le calcul échoue
+    }
+  }
+
+  // Réinitialiser last_logout et enregistrer l'heure de connexion
+  user.last_logout = null;
+  user.last_login = new Date();
+  await user.save();
+
   const accessToken = buildAccessToken(user.id);
   const refreshToken = await createRefreshTokenRecord(user.id);
 
   return { token: accessToken, refreshToken: refreshToken.token, user };
+}
+
+/**
+ * Calculer et appliquer le rattrapage de production offline
+ */
+async function calculateOfflineCatchup(userId, lastLogout) {
+  const sequelize = require('../db');
+  const ProductionCalculatorService = require('../modules/resources/application/ProductionCalculatorService');
+  const ResourceProduction = require('../models/ResourceProduction');
+  
+  // Utiliser une transaction pour garantir la cohérence des données
+  await sequelize.transaction(async (transaction) => {
+    const productionCalculator = new ProductionCalculatorService({
+      Building,
+      Research,
+      Facility,
+      City,
+      ResourceProduction,
+    });
+
+    // Calculer les taux de production
+    const { production, storage } = await productionCalculator.calculateProductionRates(userId);
+
+    // Calculer le temps écoulé en secondes
+    const now = new Date();
+    const elapsedSeconds = Math.floor((now - new Date(lastLogout)) / 1000);
+
+    if (elapsedSeconds <= 0) return;
+
+    // Récupérer les ressources actuelles avec lock
+    const city = await City.findOne({ 
+      where: { user_id: userId, is_capital: true },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+    if (!city) return;
+
+    const resources = await Resource.findAll({ 
+      where: { city_id: city.id },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+    
+    const currentResources = {
+      gold: resources.find(r => r.type === 'or')?.amount || 0,
+      metal: resources.find(r => r.type === 'metal')?.amount || 0,
+      fuel: resources.find(r => r.type === 'carburant')?.amount || 0,
+      energy: resources.find(r => r.type === 'energie')?.amount || 0,
+    };
+
+    // Calculer les nouvelles ressources avec le plafond de stockage
+    const newResources = productionCalculator.calculateOfflineProduction(
+      currentResources,
+      production,
+      storage,
+      elapsedSeconds
+    );
+
+    // Mettre à jour les ressources en base de données
+    // ⚠️ IMPORTANT: On met last_update à 'now' pour que getUserResources() 
+    // ne recalcule pas la production immédiatement après
+    const resourceMap = {
+      gold: 'or',
+      metal: 'metal',
+      fuel: 'carburant',
+      energy: 'energie',
+    };
+
+    const updateTime = new Date();
+    await Promise.all(
+      Object.entries(newResources).map(([key, amount]) => {
+        const dbType = resourceMap[key];
+        return Resource.update(
+          { amount, last_update: updateTime },
+          { 
+            where: { city_id: city.id, type: dbType },
+            transaction
+          }
+        );
+      })
+    );
+
+    console.log(`Rattrapage offline pour userId ${userId}: ${elapsedSeconds}s écoulées, nouvelles ressources:`, newResources);
+  });
 }
 
 async function refreshSession(refreshToken) {

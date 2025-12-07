@@ -26,15 +26,16 @@ const Facilities = () => {
     setLoading(true);
     
     try {
-      const { data: facilities } = await axiosInstance.get(
-        '/facilities/facility-buildings',
+      // Récupérer les installations avec leur statut de déverrouillage
+      const { data: unlockData } = await axiosInstance.get(
+        '/facilities/unlock/available',
         { signal }
       );
       
       // Vérifier si le composant est toujours monté
       if (!signal?.aborted) {
         // 2) Filtrer les facilities autorisées
-        const filtered = facilities.filter(f =>
+        const filtered = (unlockData.facilities || []).filter(f =>
           allowedFacilities.includes(f.name)
         );
         setData(filtered);
@@ -128,10 +129,12 @@ const Facilities = () => {
           ) : ordered.length > 0 ? (
             ordered.map((facility) => (
               <FacilityCard
-                key={facility.id}
+                key={facility.id || facility.key}
                 facility={facility}
                 isSelected={selectedFacility?.id === facility.id}
                 onClick={handleFacilityClick}
+                isLocked={facility.isLocked}
+                lockReason={facility.lockReason}
               />
             ))
           ) : (

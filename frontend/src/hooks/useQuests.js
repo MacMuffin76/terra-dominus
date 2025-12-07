@@ -95,7 +95,7 @@ export const useQuests = () => {
   const updateQuestProgress = useCallback((objectiveType, value = 1, metadata = {}) => {
     // Find quests with matching objectives
     const updatedQuests = activeQuests.filter(quest => {
-      return quest.progress?.some(obj => obj.type === objectiveType);
+      return Array.isArray(quest.progress) && quest.progress.some(obj => obj.type === objectiveType);
     });
 
     if (updatedQuests.length > 0) {

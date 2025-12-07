@@ -1,0 +1,254 @@
+.training-modal-content {
+  padding: 0;
+}
+
+.training-unit-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.training-unit-icon {
+  font-size: 3rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.training-unit-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #00d4ff;
+  font-size: 1.2rem;
+}
+
+.training-unit-description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Quantity section */
+.training-quantity-section {
+  margin-bottom: 1.5rem;
+}
+
+.training-quantity-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+.training-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.training-quantity-controls input {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.training-quantity-controls input:focus {
+  outline: none;
+  border-color: #00d4ff;
+}
+
+.training-quantity-controls .quantity-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 212, 255, 0.2);
+  border: 1px solid rgba(0, 212, 255, 0.5);
+  border-radius: 8px;
+  color: #00d4ff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.training-quantity-controls .quantity-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.3);
+  border-color: #00d4ff;
+}
+
+.training-quantity-controls .quantity-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.training-quick-amounts {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.training-quick-amounts button {
+  flex: 1;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.training-quick-amounts button:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.training-quick-amounts button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Cost section */
+.training-cost-section,
+.training-upkeep-section,
+.training-stats-section {
+  margin-bottom: 1.5rem;
+}
+
+.training-cost-section h5,
+.training-upkeep-section h5,
+.training-stats-section h5 {
+  margin: 0 0 0.75rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.training-costs,
+.training-upkeep {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cost-item,
+.upkeep-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.resource-icon {
+  font-size: 1.5rem;
+}
+
+/* Stats section */
+.training-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 8px;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: #00d4ff;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Footer */
+.training-modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.training-modal-footer .btn-primary,
+.training-modal-footer .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+
+.training-modal-footer .btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: white;
+}
+
+.training-modal-footer .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00e4ff, #00a9dc);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
+.training-modal-footer .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.training-modal-footer .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.training-modal-footer .btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.training-modal-footer .btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .training-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .training-costs,
+  .training-upkeep {
+    flex-direction: column;
+  }
+
+  .cost-item,
+  .upkeep-item {
+    width: 100%;
+  }
+}

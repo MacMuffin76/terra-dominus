@@ -30,3 +30,13 @@ export const getResearchByCategory = async (category) => {
   const { data } = await axiosInstance.get(`/research/unlock/category/${category}`);
   return data;
 };
+
+/**
+ * Start/upgrade a research
+ * @param {string} researchId - Research definition ID (e.g., 'MILITARY_TRAINING_1')
+ * @returns {Promise<{message: string, research: Object}>}
+ */
+export const startResearch = async (researchId) => {
+  const { data } = await axiosInstance.post(`/research/unlock/start/${researchId}`);
+  return data;
+};

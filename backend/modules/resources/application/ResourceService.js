@@ -2,8 +2,10 @@ const { Op } = require('sequelize');
 const Resource = require('../../../models/Resource');
 const Building = require('../../../models/Building');
 const ResourceCost = require('../../../models/ResourceCost');
+const ResourceProduction = require('../../../models/ResourceProduction');
 const Entity = require('../../../models/Entity');
 const ConstructionQueue = require('../../../models/ConstructionQueue');
+const ProductionCalculatorService = require('./ProductionCalculatorService');
 const { getQueue, queueNames, serializeJobData } = require('../../../jobs/queueConfig');
 const { getUserMainCity } = require('../../../utils/cityUtils');
 const { getProductionPerSecond, getBuildDurationSeconds } = require('../../../utils/balancing');
@@ -223,8 +225,66 @@ class ResourceService {
       amount: Number(c.amount),
     }));
 
-    const production_rate = getProductionPerSecond(building.name, currentLevel);
-    const next_production_rate = getProductionPerSecond(building.name, nextLevel);
+    // Récupérer la production depuis resource_production OU calculer la capacité de stockage
+    let production_rate = 0;
+    let next_production_rate = 0;
+    let storage_capacity = null;
+    let next_storage_capacity = null;
+
+    // Bâtiments de stockage : calculer les capacités
+    if (building.name === 'Hangar') {
+      const currentCapacities = calculateStorageCapacities({ hangarLevel: currentLevel });
+      const nextCapacities = calculateStorageCapacities({ hangarLevel: nextLevel });
+      storage_capacity = {
+        or: currentCapacities.or,
+        metal: currentCapacities.metal,
+      };
+      next_storage_capacity = {
+        or: nextCapacities.or,
+        metal: nextCapacities.metal,
+      };
+      // Pour l'affichage, on met dans production_rate (le frontend l'utilise)
+      production_rate = currentCapacities.or; // Capacité or/métal (identique)
+      next_production_rate = nextCapacities.or;
+    } else if (building.name === 'Réservoir') {
+      const currentCapacities = calculateStorageCapacities({ reservoirLevel: currentLevel });
+      const nextCapacities = calculateStorageCapacities({ reservoirLevel: nextLevel });
+      storage_capacity = {
+        carburant: currentCapacities.carburant,
+      };
+      next_storage_capacity = {
+        carburant: nextCapacities.carburant,
+      };
+      production_rate = currentCapacities.carburant;
+      next_production_rate = nextCapacities.carburant;
+    } else if (building.name === 'Centrale électrique') {
+      const currentCapacities = calculateStorageCapacities({ centraleLevel: currentLevel });
+      const nextCapacities = calculateStorageCapacities({ centraleLevel: nextLevel });
+      storage_capacity = {
+        energie: currentCapacities.energie,
+      };
+      next_storage_capacity = {
+        energie: nextCapacities.energie,
+      };
+      production_rate = currentCapacities.energie;
+      next_production_rate = nextCapacities.energie;
+    } else {
+      // Bâtiments de production : lire depuis resource_production
+      const currentProductionData = await ResourceProduction.findOne({
+        where: { building_name: building.name, level: currentLevel },
+      });
+      if (currentProductionData) {
+        production_rate = parseFloat(currentProductionData.production_rate) / 3600;
+      }
+
+      const nextProductionData = await ResourceProduction.findOne({
+        where: { building_name: building.name, level: nextLevel },
+      });
+      if (nextProductionData) {
+        next_production_rate = parseFloat(nextProductionData.production_rate) / 3600;
+      }
+    }
+
     const buildDuration = getBuildDurationSeconds(nextLevel);
 
     return {
@@ -239,6 +299,8 @@ class ResourceService {
       remainingTime: etaSeconds,
       production_rate,
       next_production_rate,
+      storage_capacity,
+      next_storage_capacity,
       buildDuration,
       nextLevelCost,
     };
@@ -255,6 +317,49 @@ class ResourceService {
             const error = new Error('Bâtiment introuvable.');
             error.status = 404;
             throw error;
+          }
+
+          // 🔒 SÉCURITÉ Style Ogame : Recalculer les ressources côté serveur AVANT de vérifier les coûts
+          // Cela évite la triche et garantit que la production depuis last_update est prise en compte
+          const Research = require('../../../models/Research');
+          const Facility = require('../../../models/Facility');
+          const City = require('../../../models/City');
+          const productionCalc = new ProductionCalculatorService({
+            Building,
+            Research,
+            Facility,
+            City,
+            ResourceProduction
+          });
+          const productionData = await productionCalc.calculateProductionRates(userId);
+
+          const currentResources = await Resource.findAll({
+            where: { city_id: city.id },
+            transaction,
+            lock: transaction.LOCK.UPDATE
+          });
+
+          const now = new Date();
+          const typeMap = { 'or': 'gold', 'metal': 'metal', 'carburant': 'fuel', 'energie': 'energy' };
+
+          // Recalculer et mettre à jour chaque ressource
+          for (const resource of currentResources) {
+            const lastUpdate = resource.last_update ? new Date(resource.last_update) : now;
+            const elapsedSeconds = Math.max(0, (now - lastUpdate) / 1000);
+            const prodKey = typeMap[resource.type];
+            const productionPerSecond = productionData.production[prodKey] || 0;
+            const storageCapacity = productionData.storage[prodKey] || 999999999;
+            const produced = productionPerSecond * elapsedSeconds;
+            const newAmount = Math.min(
+              Math.floor(Number(resource.amount) + produced),
+              storageCapacity
+            );
+
+            await Resource.update(
+              { amount: newAmount, last_update: now },
+              { where: { id: resource.id }, transaction }
+            );
+            resource.amount = newAmount; // Mettre à jour l'objet en mémoire
           }
 
           // Vérifier qu'il n'y a pas déjà une construction en cours
@@ -637,28 +742,81 @@ class ResourceService {
   }
 
   async saveUserResources(userId, resourcesPayload) {
+    // ⚠️ SÉCURITÉ : Ne JAMAIS faire confiance aux valeurs envoyées par le client !
+    // À la place, on recalcule la production côté serveur depuis last_update
+    
     const city = await this.withCity(userId);
 
-    const payload = Array.isArray(resourcesPayload) ? resourcesPayload : [];
+    // Récupérer les ressources actuelles avec leur last_update
+    const currentResources = await Resource.findAll({
+      where: { city_id: city.id }
+    });
 
-    for (const resource of payload) {
-      if (!resource.type) continue;
+    // Récupérer les taux de production réels depuis les bâtiments
+    const buildings = await Building.findAll({
+      where: { city_id: city.id }
+    });
+
+    // Importer ProductionCalculatorService pour calculer la vraie production
+    const ProductionCalculatorService = require('./ProductionCalculatorService');
+    const productionCalc = new ProductionCalculatorService();
+    
+    const researches = []; // TODO: récupérer si nécessaire
+    const facilities = []; // TODO: récupérer si nécessaire
+    
+    const productionData = await productionCalc.calculateProduction(buildings, researches, facilities);
+
+    const now = new Date();
+    const updatedResources = [];
+
+    for (const resource of currentResources) {
+      const lastUpdate = resource.last_update ? new Date(resource.last_update) : now;
+      const elapsedSeconds = Math.max(0, (now - lastUpdate) / 1000);
+
+      // Mapper les types
+      const typeMap = {
+        'or': 'gold',
+        'metal': 'metal',
+        'carburant': 'fuel',
+        'energie': 'energy'
+      };
+      
+      const prodKey = typeMap[resource.type];
+      const productionPerSecond = productionData.production[prodKey] || 0;
+      const storageCapacity = productionData.storage[prodKey] || 999999999;
+
+      // Calculer la nouvelle quantité (production depuis last_update)
+      const produced = productionPerSecond * elapsedSeconds;
+      const newAmount = Math.min(
+        Math.floor(Number(resource.amount) + produced),
+        storageCapacity
+      );
 
       await Resource.update(
         {
-          amount: Number(resource.amount) || 0,
-          last_update: new Date(),
+          amount: newAmount,
+          last_update: now,
         },
         {
           where: {
-            city_id: city.id,
-            type: resource.type,
+            id: resource.id,
           },
         }
       );
+
+      updatedResources.push({
+        type: resource.type,
+        amount: newAmount,
+        produced: Math.floor(produced)
+      });
     }
 
-    return { message: 'Ressources sauvegardées (backend maître).' };
+    console.log(`✅ Ressources calculées côté serveur pour user ${userId}:`, updatedResources);
+
+    return { 
+      message: 'Ressources recalculées (backend maître).', 
+      resources: updatedResources 
+    };
   }
 
   getAllowedResourceBuildingNames() {
@@ -812,6 +970,124 @@ class ResourceService {
     } else {
       return this.transactionProvider(executeInTransaction);
     }
+  }
+
+  /**
+   * Finaliser l'amélioration d'un resource building depuis la queue
+   * Appelé automatiquement par le worker quand le timer est écoulé
+   * @param {number} queueId - ID de l'entrée dans la construction queue
+   * @param {number} userId - ID du joueur (optionnel)
+   * @returns {Promise<Object>}
+   */
+  async finalizeResourceUpgrade(queueId, userId = null) {
+    return this.transactionProvider(async (transaction) => {
+      const queueItem = await ConstructionQueue.findOne({
+        where: { id: queueId },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (!queueItem) {
+        throw new Error(`Queue item ${queueId} not found`);
+      }
+
+      if (queueItem.status !== 'in_progress') {
+        console.log(`[ResourceService] Queue item ${queueId} already in status ${queueItem.status}`);
+        return { message: 'Already processed', status: queueItem.status };
+      }
+
+      // Vérifier que le timer est écoulé
+      const now = new Date();
+      if (queueItem.finishTime > now) {
+        const error = new Error('Construction not finished yet');
+        error.status = 400;
+        throw error;
+      }
+
+      // Récupérer l'entité pour trouver le building
+      const entity = await Entity.findOne({
+        where: { entity_id: queueItem.entityId },
+        transaction
+      });
+
+      if (!entity) {
+        throw new Error(`Entity ${queueItem.entityId} not found`);
+      }
+
+      // Récupérer le building
+      const building = await Building.findOne({
+        where: {
+          city_id: queueItem.cityId,
+          name: entity.entity_name
+        },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      if (!building) {
+        throw new Error(`Building ${entity.entity_name} not found in city ${queueItem.cityId}`);
+      }
+
+      // Upgrader le niveau
+      const currentVersion = Number(building.version) || 0;
+      const [affected] = await Building.update(
+        {
+          level: building.level + 1,
+          version: currentVersion + 1,
+          build_start: null,
+          build_duration: null,
+        },
+        {
+          where: { id: building.id, version: currentVersion },
+          transaction
+        }
+      );
+
+      this.assertOptimisticUpdate(affected);
+
+      // Marquer la queue comme completed
+      queueItem.status = 'completed';
+      await queueItem.save({ transaction });
+
+      console.log(`[ResourceService] Resource building ${building.name} upgraded to level ${building.level + 1}`);
+
+      // Après commit, émettre l'événement socket et mettre à jour les leaderboards
+      transaction.afterCommit(async () => {
+        try {
+          const { getIO } = require('../../../socket');
+          const io = getIO();
+          if (io && userId) {
+            const queue = await ConstructionQueue.findAll({
+              where: { cityId: queueItem.cityId },
+              order: [['slot', 'ASC']],
+            });
+            io.to(`user_${userId}`).emit('construction_queue:update', queue);
+          }
+
+          // Mettre à jour les leaderboards
+          if (userId) {
+            const leaderboardIntegration = require('../../../utils/leaderboardIntegration');
+            leaderboardIntegration.updateBuildingsScore(userId).catch(err => {
+              console.error('Error updating buildings leaderboard:', err);
+            });
+            leaderboardIntegration.updateTotalPower(userId).catch(err => {
+              console.error('Error updating total power leaderboard:', err);
+            });
+          }
+        } catch (err) {
+          console.error('[ResourceService] Error in afterCommit:', err);
+        }
+      });
+
+      return {
+        message: 'Resource building upgrade completed',
+        building: {
+          id: building.id,
+          name: building.name,
+          level: building.level + 1
+        }
+      };
+    });
   }
 
   /**

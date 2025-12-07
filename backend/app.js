@@ -36,7 +36,7 @@ const createApp = (container) => {
 
   const apiLimiter = rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-    max: Number(process.env.RATE_LIMIT_MAX || 100),
+    max: Number(process.env.RATE_LIMIT_MAX || 500), // Augmenté pour le développement
     standardHeaders: true,
     legacyHeaders: false,
   });

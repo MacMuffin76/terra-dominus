@@ -368,21 +368,25 @@ class QuestService {
         // Mark rewards as claimed
         await this.questRepository.markClaimed(userQuest.id);
 
-        // Grant Battle Pass XP
-        const battlePassService = require('../../battlepass/application/BattlePassService');
-        battlePassService.addXP(userId, 50)
-          .catch(err => logger.error(`Failed to grant Battle Pass XP for quest ${questId}:`, err));
+        // TODO: Grant Battle Pass XP (requires BattlePassService integration)
+        // const battlePassService = require('../../battlepass/application/BattlePassService');
+        // if (battlePassService && typeof battlePassService.addXP === 'function') {
+        //   battlePassService.addXP(userId, 50)
+        //     .catch(err => logger.error(`Failed to grant Battle Pass XP for quest ${questId}:`, err));
+        // }
         
-        // Check for achievement unlocks
-        const achievementChecker = require('../../../utils/achievementChecker');
-        achievementChecker.checkQuestAchievements(userId)
-          .catch(err => logger.error('Failed to check quest achievements:', err));
+        // TODO: Check for achievement unlocks (requires achievementChecker integration)
+        // const achievementChecker = require('../../../utils/achievementChecker');
+        // if (achievementChecker && typeof achievementChecker.checkQuestAchievements === 'function') {
+        //   achievementChecker.checkQuestAchievements(userId)
+        //     .catch(err => logger.error('Failed to check quest achievements:', err));
+        // }
         
-        // Check for level achievements if user leveled up
-        if (user.level > oldLevel) {
-          achievementChecker.checkLevelAchievements(userId, user.level)
-            .catch(err => logger.error('Failed to check level achievements:', err));
-        }
+        // // Check for level achievements if user leveled up
+        // if (user.level > oldLevel && achievementChecker && typeof achievementChecker.checkLevelAchievements === 'function') {
+        //   achievementChecker.checkLevelAchievements(userId, user.level)
+        //     .catch(err => logger.error('Failed to check level achievements:', err));
+        // }
 
         const result = {
           rewards,

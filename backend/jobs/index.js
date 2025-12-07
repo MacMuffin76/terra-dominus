@@ -1,6 +1,8 @@
 const { createConstructionWorker } = require('./workers/constructionWorker');
 const { createProductionWorker } = require('./workers/productionWorkers');
 const { createCombatWorker } = require('./workers/combatWorker');
+const { createResourceUpgradeWorker } = require('./workers/resourceUpgradeWorker');
+const { createFacilityUpgradeWorker } = require('./workers/facilityUpgradeWorker');
 const { createColonizationWorker } = require('./workers/colonizationWorker');
 const { createAttackWorker } = require('./workers/attackWorker');
 const { createSpyWorker } = require('./workers/spyWorker');
@@ -8,16 +10,20 @@ const { createTradeWorker } = require('./workers/tradeWorker');
 const createPortalSpawningJob = require('./portalSpawningJob');
 const createQuestRotationJob = require('./questRotationJob');
 const { startUpkeepJob, stopUpkeepJob } = require('./upkeepJob');
-// const { setupResourceProductionJob } = require('./resourceProductionJob'); // Désactivé - productionWorker gère maintenant la production
+const { updateLeaderboards } = require('./leaderboardUpdateJob'); // Import du nouveau job
+const territoryResourceJob = require('./territoryResourceJob');
 
 let portalJobs = null;
 let questJobs = null;
 let upkeepJobStarted = false;
+let leaderboardInterval = null; // Variable pour stocker l'intervalle
 
 function startJobs(container) {
   createConstructionWorker(container);
   createProductionWorker(container);
   createCombatWorker(container);
+  createResourceUpgradeWorker(container);
+  createFacilityUpgradeWorker(container);
   createColonizationWorker(container);
   createAttackWorker(container);
   createSpyWorker(container);
@@ -35,8 +41,13 @@ function startJobs(container) {
   startUpkeepJob(container);
   upkeepJobStarted = true;
   
-  // Note: Resource production is now handled by productionWorker via BullMQ
-  // configured with PRODUCTION_TICK_MS env variable (default: 1000ms)
+  // Territory resource job (hourly)
+  territoryResourceJob.start();
+  
+  // Lancer le job de mise à jour des leaderboards toutes les 5 minutes
+  leaderboardInterval = setInterval(() => {
+    updateLeaderboards();
+  }, 5 * 60 * 1000); // 5 minutes en millisecondes
 }
 
 function stopJobs() {
@@ -48,6 +59,10 @@ function stopJobs() {
   }
   if (upkeepJobStarted) {
     stopUpkeepJob();
+  }
+  if (leaderboardInterval) {
+    clearInterval(leaderboardInterval);
+    leaderboardInterval = null;
   }
 }
 

@@ -2,11 +2,13 @@
 // Page Installations avec niveaux, bonus et déblocages
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building, TrendingUp, Lock, Award } from 'lucide-react';
+import { Building, TrendingUp, Lock, Award, ArrowUp } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
-import { getPlayerFacilities, getTotalBonuses } from '../api/facilityUnlocks';
+import { getPlayerFacilities, getTotalBonuses, upgradeFacility } from '../api/facilityUnlocks';
 import { useAsyncError } from '../hooks/useAsyncError';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
 import './Facilities.css';
 import './units/UnitTrainingPanel.css';
@@ -15,7 +17,7 @@ import './UnifiedPages.css';
 /**
  * Facility Card Component
  */
-const FacilityCard = ({ facility, onSelect, isSelected }) => {
+const FacilityCard = ({ facility, onSelect, isSelected, onUpgrade }) => {
   const { 
     name, 
     description, 
@@ -28,24 +30,57 @@ const FacilityCard = ({ facility, onSelect, isSelected }) => {
     currentBonuses,
     nextBonuses,
     upgradeCost,
-    nextLevelUnlocks
+    nextLevelUnlocks,
+    requiredCommandCenter,
+    currentCommandCenterLevel,
+    meetsRequirement,
+    id
   } = facility;
 
   const progressPercent = (currentLevel / maxLevel) * 100;
 
+  const handleUpgradeClick = (e) => {
+    e.stopPropagation();
+    onUpgrade(facility);
+  };
+
+  // Déterminer le statut et la classe CSS
+  const getStatusConfig = () => {
+    if (!isBuilt) return { className: 'not-built', label: 'Non construite' };
+    if (isMaxLevel) return { className: 'max-level', label: 'Niveau Max' };
+    return { className: '', label: `Niveau ${currentLevel}/${maxLevel}` };
+  };
+
+  const statusConfig = getStatusConfig();
+
   return (
     <div
-      className={`facility-card ${!isBuilt ? 'not-built' : ''} ${isMaxLevel ? 'max-level' : ''} ${isSelected ? 'selected' : ''}`}
+      className={`facility-card ${statusConfig.className} ${isSelected ? 'selected' : ''}`}
       onClick={() => onSelect(facility)}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: !isBuilt ? 'not-allowed' : 'pointer' }}
     >
       <div className="card-header">
-        <div className="facility-icon">{icon || '🏗️'}</div>
+        <div className="facility-icon">{icon || <Building size={32} />}</div>
         <div className="facility-info">
           <h3>{name}</h3>
-          <span className={`category-badge ${category}`}>{category}</span>
+          <span className={`status-badge ${statusConfig.className}`}>
+            {statusConfig.label}
+          </span>
         </div>
       </div>
+
+      {/* Prérequis Centre de Commandement */}
+      {requiredCommandCenter > 0 && (
+        <div className={`requirement-badge ${meetsRequirement ? 'met' : 'not-met'}`}>
+          <Building size={14} />
+          <span>
+            {meetsRequirement 
+              ? `✓ CC Niv ${requiredCommandCenter}` 
+              : `🔒 CC Niv ${requiredCommandCenter} requis (actuel: ${currentCommandCenterLevel})`
+            }
+          </span>
+        </div>
+      )}
 
       <p className="facility-description">{description}</p>
 
@@ -107,6 +142,19 @@ const FacilityCard = ({ facility, onSelect, isSelected }) => {
               </div>
             </div>
           )}
+
+          {/* Action button */}
+          {isSelected && (
+            <button 
+              className="upgrade-action-button"
+              onClick={handleUpgradeClick}
+              disabled={!meetsRequirement}
+              title={!meetsRequirement ? `Centre de Commandement niveau ${requiredCommandCenter} requis` : ''}
+            >
+              <ArrowUp size={20} />
+              <span>Améliorer</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -161,11 +209,13 @@ const BonusesSummary = ({ bonuses }) => {
  */
 const FacilitiesUnified = () => {
   const { error, catchError } = useAsyncError('FacilitiesUnified');
+  const { toasts, removeToast, success, error: errorToast, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState([]);
   const [totalBonuses, setTotalBonuses] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [upgrading, setUpgrading] = useState(false);
 
   const loadFacilities = useCallback(async () => {
     setLoading(true);
@@ -194,6 +244,38 @@ const FacilitiesUnified = () => {
   const handleFacilitySelect = useCallback((facility) => {
     setSelectedFacility(prev => prev?.id === facility.id ? null : facility);
   }, []);
+
+  const handleUpgrade = useCallback(async (facility) => {
+    if (!facility.key || upgrading) return;
+
+    setUpgrading(true);
+    try {
+      const result = await upgradeFacility(facility.key);
+      // Recharger les données en arrière-plan sans attendre
+      loadFacilities().catch(() => {});
+      setSelectedFacility(null);
+      success(`${facility.name} amélioré au niveau ${facility.currentLevel + 1} !`, 4000);
+      console.log('Facility upgraded:', result);
+    } catch (err) {
+      console.error('Error upgrading facility:', err);
+      
+      // Extraire le message d'erreur
+      const errorMessage = err?.response?.data?.message || err?.message || 'Erreur lors de l\'amélioration';
+      
+      // Si c'est une erreur de prérequis, afficher un warning plus doux
+      if (errorMessage.includes('requis') || errorMessage.includes('niveau')) {
+        warning(errorMessage, 6000);
+      } else {
+        errorToast(errorMessage, 5000);
+      }
+      
+      // Recharger quand même pour voir si ça a fonctionné
+      loadFacilities().catch(() => {});
+    } finally {
+      setUpgrading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upgrading, loadFacilities, success, errorToast, warning]);
 
   if (loading) {
     return (
@@ -238,6 +320,7 @@ const FacilitiesUnified = () => {
   return (
     <div className="facilities-container">
       <Menu />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="facilities-content" id="main-content">
         <ResourcesWidget />
 
@@ -295,6 +378,7 @@ const FacilitiesUnified = () => {
               key={facility.key}
               facility={facility}
               onSelect={handleFacilitySelect}
+              onUpgrade={handleUpgrade}
               isSelected={selectedFacility?.key === facility.key}
             />
           ))}

@@ -9,20 +9,21 @@ ResourceProduction.init({
     primaryKey: true,
     autoIncrement: true
   },
-  entity_id: {
+  building_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  production_rate: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  last_updated: {
-    type: DataTypes.DATE,
     allowNull: false
   },
   level: {
     type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  production_rate: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    comment: 'Production par heure pour ce niveau de bâtiment'
+  },
+  last_updated: {
+    type: DataTypes.DATE,
     allowNull: false
   }
 }, {
@@ -31,5 +32,12 @@ ResourceProduction.init({
   tableName: 'resource_production',
   timestamps: false
 });
+
+ResourceProduction.associate = (models) => {
+  ResourceProduction.belongsTo(models.Entity, {
+    foreignKey: 'building_id',
+    as: 'building'
+  });
+};
 
 module.exports = ResourceProduction;

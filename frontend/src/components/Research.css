@@ -43,6 +43,38 @@
   margin-bottom: var(--spacing-xl);
 }
 
+/* Action Button */
+.research-action-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 2px solid #34d399;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.research-action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #10b981;
+}
+
+.research-action-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
 /* Animations */
 @keyframes neon-pulse {
   0%, 100% {

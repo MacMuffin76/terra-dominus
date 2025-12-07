@@ -7,19 +7,22 @@ function createResourceUpgradeWorker(container) {
   return createWorker(
     queueNames.RESOURCE_UPGRADE,
     async (job) => {
-      const { buildingId, userId } = job.data || {};
+      const { queueId, buildingId, userId } = job.data || {};
 
-      if (!buildingId) {
-        job.log('Missing buildingId in resource upgrade job payload');
+      // Support ancien format avec buildingId et nouveau format avec queueId
+      const id = queueId || buildingId;
+
+      if (!id) {
+        job.log('Missing queueId/buildingId in resource upgrade job payload');
         return;
       }
 
       try {
         const resourceService = container.resolve('resourceService');
-        await resourceService.finalizeResourceUpgrade(buildingId, userId);
-        job.log(`Resource building ${buildingId} upgrade finalized`);
+        await resourceService.finalizeResourceUpgrade(id, userId);
+        job.log(`Resource building ${id} upgrade finalized`);
       } catch (err) {
-        logger.error({ err, buildingId }, 'Failed to finalize resource building upgrade');
+        logger.error({ err, queueId: id }, 'Failed to finalize resource building upgrade');
         throw err;
       }
     },

@@ -29,17 +29,16 @@ module.exports = (sequelize) => {
         defaultValue: 'available',
       },
       
-      // Progress tracking (JSONB array)
+      // Progress tracking (integer for legacy quest system)
       progress: {
-        type: DataTypes.JSONB,
+        type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: [],
+        defaultValue: 0,
       },
       
       started_at: {
         type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
+        allowNull: true,
       },
       completed_at: {
         type: DataTypes.DATE,
@@ -57,7 +56,7 @@ module.exports = (sequelize) => {
     },
     {
       tableName: 'user_quests',
-      timestamps: false,
+      timestamps: true,
       indexes: [
         { fields: ['user_id'] },
         { fields: ['quest_id'] },
@@ -87,37 +86,46 @@ module.exports = (sequelize) => {
   };
 
   UserQuest.prototype.getProgressPercent = function () {
-    if (!Array.isArray(this.progress) || this.progress.length === 0) {
+    // Handle both legacy INTEGER and new JSONB array format
+    if (Array.isArray(this.progress) && this.progress.length > 0) {
+      // Calculate average progress for all objectives
+      const totalProgress = this.progress.reduce((sum, obj) => {
+        const percent = (obj.current / obj.target) * 100;
+        return sum + Math.min(percent, 100);
+      }, 0);
+      return Math.round(totalProgress / this.progress.length);
+    }
+    
+    // Legacy format fallback
+    if (!this.quest || !this.quest.objective_target) {
       return 0;
     }
-
-    const totalObjectives = this.progress.length;
-    const completedObjectives = this.progress.filter(
-      (p) => p.current >= p.target
-    ).length;
-
-    return Math.round((completedObjectives / totalObjectives) * 100);
+    return Math.round((this.progress / this.quest.objective_target) * 100);
   };
 
   UserQuest.prototype.getAllObjectivesComplete = function () {
-    if (!Array.isArray(this.progress) || this.progress.length === 0) {
+    // Handle JSONB array format
+    if (Array.isArray(this.progress) && this.progress.length > 0) {
+      return this.progress.every(obj => obj.current >= obj.target);
+    }
+    
+    // Legacy format fallback
+    if (!this.quest || !this.quest.objective_target) {
       return false;
     }
-
-    return this.progress.every((p) => p.current >= p.target);
+    return this.progress >= this.quest.objective_target;
   };
 
-  UserQuest.prototype.updateProgress = function (objectiveIndex, increment = 1) {
-    if (!Array.isArray(this.progress) || objectiveIndex >= this.progress.length) {
+  UserQuest.prototype.updateProgress = function (increment = 1) {
+    // This method is deprecated for JSONB format
+    // Use QuestService.updateQuestProgress instead
+    
+    // Legacy format fallback
+    if (!this.quest || !this.quest.objective_target) {
       return false;
     }
-
-    const objective = this.progress[objectiveIndex];
-    objective.current = Math.min(objective.current + increment, objective.target);
     
-    // Mark as modified for Sequelize
-    this.changed('progress', true);
-    
+    this.progress = Math.min(this.progress + increment, this.quest.objective_target);
     return true;
   };
 
@@ -159,7 +167,8 @@ module.exports = (sequelize) => {
       as: 'user',
     });
 
-    UserQuest.belongsTo(models.PortalQuest, {
+    // Associate with legacy Quest model
+    UserQuest.belongsTo(models.Quest, {
       foreignKey: 'quest_id',
       as: 'quest',
     });
