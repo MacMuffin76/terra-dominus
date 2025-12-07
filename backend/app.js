@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
@@ -24,6 +25,8 @@ const createApp = (container) => {
   app.use(correlationMiddleware);
   app.use(requestLogger);
   app.use(metricsMiddleware);
+
+  app.use('/legal', express.static(path.join(__dirname, '../docs/legal')));
 
   app.get('/metrics', metricsHandler);
   app.use(createHealthRouter());

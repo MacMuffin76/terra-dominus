@@ -52,6 +52,7 @@ const createApiRouter = (container) => {
   router.use('/research', createResearchRouter(container));
   router.use('/training', createTrainingRouter(container));
   router.use('/defense', createDefenseRouter(container));
+  router.use('/shop', require('../routes/shopRoutes'));
   router.use('/world', createWorldRouter(container));
   router.use('/colonization', createColonizationRouter(container));
   router.use('/combat', createCombatRouter(container));

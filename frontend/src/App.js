@@ -29,6 +29,7 @@ const Register = React.lazy(() => import('./components/Register'));
 const Home = React.lazy(() => import('./pages/Home'));
 const DesignSystemTest = React.lazy(() => import('./pages/DesignSystemTest'));
 const Portals = React.lazy(() => import('./pages/Portals'));
+const Shop = React.lazy(() => import('./pages/Shop'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -153,6 +154,14 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <Market />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/shop"
+                element={(
+                  <PrivateRoute>
+                    <Shop />
                   </PrivateRoute>
                 )}
               />

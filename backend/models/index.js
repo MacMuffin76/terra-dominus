@@ -72,6 +72,11 @@ const QuestStreak = require('./QuestStreak')(sequelize);
 const Achievement = require('./Achievement');
 const UserAchievement = require('./UserAchievement');
 
+// Boutique / paiements
+const ShopItem = require('./ShopItem');
+const PaymentIntent = require('./PaymentIntentRecord');
+const UserTransaction = require('./UserTransaction');
+
 // Import des modèles battle pass
 const BattlePassSeason = require('./BattlePassSeason')(sequelize);
 const BattlePassReward = require('./BattlePassReward')(sequelize);
@@ -192,6 +197,9 @@ const models = {
   LeaderboardReward,
   UserLeaderboardReward,
   ChatMessage,
+  ShopItem,
+  PaymentIntent,
+  UserTransaction,
   AllianceTreasuryLog,
   AllianceTerritory,
   AllianceWar,
@@ -210,6 +218,17 @@ const models = {
   UnitStats,
   UnitUpkeep
 };
+
+PaymentIntent.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+PaymentIntent.belongsTo(ShopItem, { foreignKey: 'shop_item_id', as: 'shopItem' });
+ShopItem.hasMany(PaymentIntent, { foreignKey: 'shop_item_id', as: 'paymentIntents' });
+
+UserTransaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+UserTransaction.belongsTo(PaymentIntent, { foreignKey: 'payment_intent_id', as: 'paymentIntent' });
+UserTransaction.belongsTo(ShopItem, { foreignKey: 'shop_item_id', as: 'shopItem' });
+User.hasMany(UserTransaction, { foreignKey: 'user_id', as: 'transactions' });
+ShopItem.hasMany(UserTransaction, { foreignKey: 'shop_item_id', as: 'transactions' });
+
 
 // Ajouter sequelize et Sequelize pour les associations
 models.sequelize = sequelize;
