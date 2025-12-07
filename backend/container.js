@@ -67,6 +67,9 @@ const createContainer = () => {
       transactionProvider,
     });
   });
+
+   // Notification service (Socket.IO real-time dispatch)
+  container.register('notificationService', () => require('./utils/notificationService'));
   container.register('blueprintRepository', () => {
     const BlueprintRepository = require('./repositories/BlueprintRepository');
     return new BlueprintRepository();

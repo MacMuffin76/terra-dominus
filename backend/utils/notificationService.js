@@ -37,6 +37,41 @@ class NotificationService {
   };
 
   /**
+   * Création générique de notification (compatibilité DI)
+   * Utilisée par les jobs/services qui attendent une méthode `createNotification`.
+   *
+   * @param {Object} params - Paramètres de notification
+   * @param {number} params.userId - ID utilisateur destinataire
+   * @param {string} params.type - Type de notification
+   * @param {string} params.title - Titre de la notification
+   * @param {string} params.message - Message de la notification
+   * @param {Object} [params.data={}] - Données additionnelles (icon, link, payload spécifique)
+   * @param {string} [params.priority=NotificationService.PRIORITIES.MEDIUM] - Priorité
+   * @returns {Promise<void>}
+   */
+  static async createNotification({
+    userId,
+    type,
+    title,
+    message,
+    data = {},
+    priority = NotificationService.PRIORITIES.MEDIUM
+  }) {
+    if (!userId || !type || !title || !message) {
+      throw new Error('Missing required fields: userId, type, title, and message are mandatory');
+    }
+
+    // Harmonise le format attendu par les appels Socket.IO
+    const payload = {
+      title,
+      message,
+      ...data
+    };
+
+    NotificationService.sendToUser(userId, type, payload, priority);
+  }
+
+  /**
    * Envoie une notification à un utilisateur spécifique
    * 
    * @param {number} userId - ID de l'utilisateur
@@ -49,38 +84,39 @@ class NotificationService {
    * @param {string} [priority='medium'] - Priorité de la notification
    */
   static async sendToUser(userId, type, data, priority = NotificationService.PRIORITIES.MEDIUM) {
-    try {
-      const prefs = await notificationPreferencesService.getPreferences(userId);
-      if (!prefs.inAppEnabled) {
-        logger.info('Notification skipped due to user preferences', { userId, type });
-        return;
-      }
-    try {
-      const io = getIO();
-      if (!io) {
-        logger.warn('Socket.IO not initialized, skipping notification');
-        return;
-      }
-
-      const notification = {
-        type,
-        ...data,
-        priority,
-        timestamp: new Date().toISOString()
-      };
-
-      // Envoyer à tous les sockets de l'utilisateur (multi-device)
-      io.to(`user_${userId}`).emit('notification', notification);
-
-      logger.info(`Notification sent to user ${userId}:`, {
-        type,
-        title: data.title,
-        priority
-      });
-    } catch (error) {
-      logger.error(`Error sending notification to user ${userId}:`, error);
+  try {
+    const prefs = await notificationPreferencesService.getPreferences(userId);
+    if (!prefs.inAppEnabled) {
+      logger.info('Notification skipped due to user preferences', { userId, type });
+      return;
     }
+    // Ajout de l'accolade fermante manquante ici + fusion des deux try
+    const io = getIO();
+    if (!io) {
+      logger.warn('Socket.IO not initialized, skipping notification');
+      return;
+    }
+
+    const notification = {
+      type,
+      ...data,
+      priority,
+      timestamp: new Date().toISOString()
+    };
+
+    // Envoyer à tous les sockets de l'utilisateur (multi-device)
+    io.to(`user_${userId}`).emit('notification', notification);
+
+    logger.info(`Notification sent to user ${userId}:`, {
+      type,
+      title: data.title,
+      priority
+    });
+  } catch (error) {
+    logger.error(`Error sending notification to user ${userId}:`, error);
   }
+}
+  
 
   /**
    * Envoie une notification broadcast à tous les utilisateurs connectés
