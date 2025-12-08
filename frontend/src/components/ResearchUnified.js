@@ -5,7 +5,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FlaskConical, Lock, Award, CheckCircle, Clock, Play } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
-import { getAvailableResearch, startResearch } from '../api/researchUnlocks';
+import {
+  getAvailableResearch,
+  startResearch,
+  accelerateResearch,
+  cancelResearch,
+} from '../api/researchUnlocks';
 import { useAsyncError } from '../hooks/useAsyncError';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
@@ -149,6 +154,7 @@ const ResearchUnified = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [starting, setStarting] = useState(false);
+  const [queueAction, setQueueAction] = useState(null);
 
   const loadResearch = useCallback(async () => {
     setLoading(true);
@@ -182,7 +188,7 @@ const ResearchUnified = () => {
       // Recharger les données en arrière-plan sans attendre
       loadResearch().catch(() => {});
       setSelectedResearch(null);
-      success(`${research.name} recherche lancée avec succès !`, 4000);
+      success(`${research.name} ajoutée à la file de recherche !`, 4000);
       console.log('Research started:', result);
     } catch (err) {
       console.error('Error starting research:', err);
@@ -204,6 +210,46 @@ const ResearchUnified = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starting, loadResearch, success, errorToast, warning]);
+
+  const handleAccelerate = useCallback(async (item) => {
+    if (!item?.id) return;
+    setQueueAction(item.id);
+    try {
+      await accelerateResearch(item.id);
+      success('Recherche accélérée !');
+      loadResearch().catch(() => {});
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Impossible d’accélérer cette recherche';
+      errorToast(message, 5000);
+    } finally {
+      setQueueAction(null);
+    }
+  }, [errorToast, loadResearch, success]);
+
+  const handleCancel = useCallback(async (item) => {
+    if (!item?.id) return;
+    setQueueAction(item.id);
+    try {
+      await cancelResearch(item.id);
+      success('Recherche retirée de la file');
+      loadResearch().catch(() => {});
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Impossible d’annuler cette recherche';
+      errorToast(message, 5000);
+    } finally {
+      setQueueAction(null);
+    }
+  }, [errorToast, loadResearch, success]);
+
+  const formatDuration = (seconds) => {
+    const value = Number(seconds) || 0;
+    if (value < 60) return `${value}s`;
+    const minutes = Math.floor(value / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours > 0) return `${hours}h ${remainingMinutes}m`;
+    return `${minutes}m`;
+  };
 
   if (loading) {
     return (
@@ -234,7 +280,9 @@ const ResearchUnified = () => {
     );
   }
 
-  const { available = [], inProgress = [], completed = [], locked = [], buildings = {}, categories = {} } = researchData || {};
+  const { available = [], inProgress = [], completed = [], locked = [], buildings = {}, categories = {}, queue = [] } = researchData || {};
+  const activeResearch = queue.find(item => item.status === 'in_progress');
+  const queuedResearch = queue.filter(item => item.status === 'queued');
 
   // Créer un tableau avec toutes les recherches et leur statut
   // Tri intelligent : Tier (1→4), puis par statut (available → locked → completed)
@@ -302,6 +350,57 @@ const ResearchUnified = () => {
             </div>
           </div>
         </div>
+
+        <div className="research-queue-panel">
+          <div className="queue-header">
+            <h3>File de recherche</h3>
+            <span className="queue-count">{queue.length} tâche(s)</span>
+          </div>
+          {activeResearch ? (
+            <div className="queue-card active">
+              <div className="queue-info">
+                <p className="queue-title">{activeResearch.researchName || 'Recherche en cours'}</p>
+                <p className="queue-subtitle">Termine dans {formatDuration(activeResearch.remainingSeconds)}</p>
+              </div>
+              <div className="queue-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleAccelerate(activeResearch)}
+                  disabled={queueAction === activeResearch.id}
+                >
+                  Accélérer
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="queue-card empty">
+              <p>Aucune recherche en cours.</p>
+            </div>
+          )}
+
+          {queuedResearch.length > 0 && (
+            <div className="queue-list">
+              {queuedResearch.map((item) => (
+                <div className="queue-card" key={item.id}>
+                  <div className="queue-info">
+                    <p className="queue-title">{item.researchName || 'Recherche planifiée'}</p>
+                    <p className="queue-subtitle">Début prévu après la tâche active</p>
+                  </div>
+                  <div className="queue-actions">
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleCancel(item)}
+                      disabled={queueAction === item.id}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
 
         {/* Filter Tabs - Status */}
         <div className="tier-filters">

@@ -40,3 +40,18 @@ export const startResearch = async (researchId) => {
   const { data } = await axiosInstance.post(`/research/unlock/start/${researchId}`);
   return data;
 };
+
+export const getResearchQueue = async () => {
+  const { data } = await axiosInstance.get('/research/unlock/queue');
+  return data;
+};
+
+export const accelerateResearch = async (queueId) => {
+  const { data } = await axiosInstance.post(`/research/unlock/queue/${queueId}/accelerate`);
+  return data;
+};
+
+export const cancelResearch = async (queueId) => {
+  const { data } = await axiosInstance.post(`/research/unlock/queue/${queueId}/cancel`);
+  return data;
+};

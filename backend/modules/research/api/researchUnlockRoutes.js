@@ -61,6 +61,37 @@ const createResearchUnlockRouter = (container) => {
     }
   });
 
+  router.get('/queue', protect, async (req, res) => {
+    try {
+      const queue = await researchUnlockService.listResearchQueue(req.user.id);
+      res.json(queue);
+    } catch (error) {
+      req.logger?.error({ err: error }, 'Error listing research queue');
+      res.status(error.status || 500).json({ message: error.message });
+    }
+  });
+
+  router.post('/queue/:id/accelerate', protect, async (req, res) => {
+    try {
+      const result = await researchUnlockService.accelerateResearch(req.user.id, req.params.id);
+      res.json(result);
+    } catch (error) {
+      req.logger?.error({ err: error }, 'Error accelerating research');
+      res.status(error.status || 500).json({ message: error.message });
+    }
+  });
+
+  router.post('/queue/:id/cancel', protect, async (req, res) => {
+    try {
+      const result = await researchUnlockService.cancelResearch(req.user.id, req.params.id);
+      res.json(result);
+    } catch (error) {
+      req.logger?.error({ err: error }, 'Error cancelling research');
+      res.status(error.status || 500).json({ message: error.message });
+    }
+  });
+
+
   return router;
 };
 

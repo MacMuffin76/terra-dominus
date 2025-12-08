@@ -124,7 +124,24 @@ function getBuildDurationSeconds(nextLevel) {
   return patternDays[idx] * 24 * 3600;
 }
 
+/**
+ * Durée de recherche (en secondes) pour un niveau donné.
+ * Utilise la durée de base de la définition et augmente linéairement selon le niveau.
+ * Permet d'appliquer un multiplicateur de vitesse (ex: spécialisation de ville ou bonus d'installation).
+ */
+function getResearchDurationSeconds(baseTime, level = 1, speedMultiplier = 1) {
+  const base = Number(baseTime) || 0;
+  const lvl = Number(level) || 1;
+  const multiplier = Number(speedMultiplier) || 1;
+
+  const rawDuration = base * lvl;
+  const adjusted = multiplier > 0 ? rawDuration / multiplier : rawDuration;
+
+  return Math.max(1, Math.floor(adjusted));
+}
+
 module.exports = {
   getProductionPerSecond,
   getBuildDurationSeconds,
+  getResearchDurationSeconds,
 };

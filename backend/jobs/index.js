@@ -12,11 +12,13 @@ const createQuestRotationJob = require('./questRotationJob');
 const { startUpkeepJob, stopUpkeepJob } = require('./upkeepJob');
 const { updateLeaderboards } = require('./leaderboardUpdateJob'); // Import du nouveau job
 const territoryResourceJob = require('./territoryResourceJob');
+const createResearchQueueJob = require('./researchQueueJob');
 
 let portalJobs = null;
 let questJobs = null;
 let upkeepJobStarted = false;
 let leaderboardInterval = null; // Variable pour stocker l'intervalle
+let researchQueueJob = null;
 
 function startJobs(container) {
   createConstructionWorker(container);
@@ -28,6 +30,9 @@ function startJobs(container) {
   createAttackWorker(container);
   createSpyWorker(container);
   createTradeWorker(container);
+
+  researchQueueJob = createResearchQueueJob(container);
+  researchQueueJob.start();
   
   // Portal cron jobs (new system)
   portalJobs = createPortalSpawningJob(container);
@@ -63,6 +68,10 @@ function stopJobs() {
   if (leaderboardInterval) {
     clearInterval(leaderboardInterval);
     leaderboardInterval = null;
+  }
+  if (researchQueueJob) {
+    researchQueueJob.stop();
+    researchQueueJob = null;
   }
 }
 

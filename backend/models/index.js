@@ -20,6 +20,7 @@ const ResourceCost = require('./ResourceCost');
 const ResourceProduction = require('./ResourceProduction');
 const RefreshToken = require('./RefreshToken');
 const ConstructionQueue = require('./ConstructionQueue');
+const ResearchQueue = require('./ResearchQueue');
 const BattleReport = require('./BattleReport');
 const BlueprintAudit = require('./BlueprintAudit');
 
@@ -155,6 +156,7 @@ const models = {
   ResourceProduction,
   RefreshToken,
   ConstructionQueue,
+  ResearchQueue,
   BattleReport,
   BlueprintAudit,
   WorldGrid,
