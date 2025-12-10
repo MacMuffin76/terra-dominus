@@ -1,4 +1,5 @@
 const express = require('express');
+const { getUnitById } = require('../domain/unitDefinitions');
 
 module.exports = (container) => {
   const router = express.Router();
@@ -30,9 +31,8 @@ module.exports = (container) => {
         });
       }
 
-      // Get unit definition from unitDefinitions
-      const unitDefinitions = require('../domain/unitDefinitions');
-      const unitDefinition = unitDefinitions.find(u => u.id === unitId);
+      // Récupérer la définition de l'unité à partir du domaine combat
+      const unitDefinition = getUnitById(unitId);
 
       if (!unitDefinition) {
         return res.status(404).json({ 
@@ -57,14 +57,16 @@ module.exports = (container) => {
 
     } catch (error) {
       console.error('[TrainingRoutes] Error training units:', error);
-      
-      if (error.message.includes('Ressources insuffisantes')) {
-        return res.status(400).json({ 
-          success: false, 
-          message: error.message 
+
+      // Propager les erreurs métier avec leur message exact
+      if (error && error.message) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
         });
       }
 
+      // Fallback vraiment inattendu
       res.status(500).json({ 
         success: false, 
         message: 'Erreur lors de l\'entraînement des unités' 

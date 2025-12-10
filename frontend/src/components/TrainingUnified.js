@@ -11,6 +11,7 @@ import { useAsyncError } from '../hooks/useAsyncError';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
+import { useResources } from '../context/ResourcesContext';
 import UnitTrainingCard from './units/UnitTrainingCard';
 import UnitTrainingModal from './units/UnitTrainingModal';
 import TierProgressBar from './units/TierProgressBar';
@@ -24,6 +25,7 @@ import './units/UnitTrainingPanel.css';
 const TrainingUnified = () => {
   const { error, catchError } = useAsyncError('TrainingUnified');
   const { toasts, removeToast, success, error: errorToast, warning } = useToast();
+  const { setResources } = useResources();
   
   // État des unités
   const [availableData, setAvailableData] = useState(null);
@@ -80,15 +82,53 @@ const TrainingUnified = () => {
   const handleTrain = useCallback(async (unitId, quantity) => {
     try {
       const result = await trainUnits(unitId, quantity);
-      success(`✅ ${quantity}x ${unitToTrain?.name} entraînées avec succès!`);
+
+      // Afficher un message avec les ressources restantes si disponibles
+      const remaining = result?.remainingResources;
+      let extraInfo = '';
+      if (remaining) {
+        const parts = [];
+        if (typeof remaining.gold === 'number') parts.push(`Or: ${remaining.gold}`);
+        if (typeof remaining.metal === 'number') parts.push(`Métal: ${remaining.metal}`);
+        if (typeof remaining.fuel === 'number') parts.push(`Carburant: ${remaining.fuel}`);
+        if (parts.length > 0) {
+          extraInfo = ` (Ressources restantes → ${parts.join(', ')})`;
+        }
+
+        // Mettre à jour les ressources côté client (Redux + context production)
+        const freshResourcesArray = [
+          { type: 'or', amount: remaining.gold },
+          { type: 'metal', amount: remaining.metal },
+          { type: 'carburant', amount: remaining.fuel },
+          { type: 'energie', amount: remaining.energy },
+        ];
+        setResources(freshResourcesArray);
+
+        const resourcesObj = {
+          or: remaining.gold,
+          metal: remaining.metal,
+          carburant: remaining.fuel,
+          energie: remaining.energy,
+        };
+        try {
+          localStorage.setItem('localResources', JSON.stringify(resourcesObj));
+        } catch {
+          // ignore storage errors
+        }
+        if (typeof window !== 'undefined' && window.dispatchUpdateResources) {
+          window.dispatchUpdateResources(resourcesObj);
+        }
+      }
+
+      success(`✅ ${quantity}x ${unitToTrain?.name} entraînées avec succès!${extraInfo}`);
       setTrainingModalOpen(false);
       setUnitToTrain(null);
-      // Recharger les unités et les ressources
+      // Recharger les unités (l'état des ressources est renvoyé dans la réponse)
       await loadUnits();
     } catch (err) {
       errorToast(err.message || 'Erreur lors de l\'entraînement des unités');
     }
-  }, [unitToTrain, success, errorToast, loadUnits]);
+  }, [unitToTrain, success, errorToast, loadUnits, setResources]);
 
   // Affichage du loader général
   if (unitsLoading && !availableData) {

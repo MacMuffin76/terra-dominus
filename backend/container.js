@@ -197,31 +197,35 @@ const createContainer = () => {
     });
   });
 
-  container.register('unitTrainingService', () => {
+  container.register('unitTrainingService', (c) => {
     const UnitTrainingService = require('./modules/combat/application/UnitTrainingService');
     const { User, Unit, City, Resource, Facility } = require('./models');
     const sequelize = require('./db');
+    const resourceService = c.resolve('resourceService');
     return new UnitTrainingService({
       User,
       Unit,
       City,
       Resource,
       Facility,
-      sequelize
+      sequelize,
+      resourceService,
     });
   });
 
-  container.register('defenseBuildingService', () => {
+  container.register('defenseBuildingService', (c) => {
     const DefenseBuildingService = require('./modules/combat/application/DefenseBuildingService');
     const { User, Defense, City, Resource, Facility } = require('./models');
     const sequelize = require('./db');
+    const resourceService = c.resolve('resourceService');
     return new DefenseBuildingService({
       User,
       Defense,
       City,
       Resource,
       Facility,
-      sequelize
+      sequelize,
+      resourceService,
     });
   });
 

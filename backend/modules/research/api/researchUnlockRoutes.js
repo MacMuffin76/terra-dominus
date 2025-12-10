@@ -57,7 +57,9 @@ const createResearchUnlockRouter = (container) => {
       res.json(result);
     } catch (error) {
       req.logger?.error({ err: error }, 'Error starting research');
-      res.status(500).json({ message: 'Error starting research', error: error.message });
+      const status = error.status || 500;
+      const message = error.message || 'Error starting research';
+      res.status(status).json({ message, error: error.message });
     }
   });
 

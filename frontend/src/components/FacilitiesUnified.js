@@ -2,7 +2,7 @@
 // Page Installations avec niveaux, bonus et déblocages
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building, TrendingUp, Lock, Award, ArrowUp } from 'lucide-react';
+import { Building, TrendingUp, Lock, Award, ArrowUp, Clock } from 'lucide-react';
 import Menu from './Menu';
 import ResourcesWidget from './ResourcesWidget';
 import { getPlayerFacilities, getTotalBonuses, upgradeFacility } from '../api/facilityUnlocks';
@@ -34,8 +34,44 @@ const FacilityCard = ({ facility, onSelect, isSelected, onUpgrade }) => {
     requiredCommandCenter,
     currentCommandCenterLevel,
     meetsRequirement,
+    status,
+    constructionEndsAt,
+    remainingTime: initialRemainingTime,
     id
   } = facility;
+
+  const [remainingTime, setRemainingTime] = useState(initialRemainingTime || 0);
+
+  // Timer countdown
+  useEffect(() => {
+    if (status !== 'building' || !constructionEndsAt) {
+      return;
+    }
+
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((new Date(constructionEndsAt) - new Date()) / 1000));
+      setRemainingTime(remaining);
+      
+      if (remaining === 0) {
+        // Reload facilities when construction completes
+        window.location.reload();
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [status, constructionEndsAt]);
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   const progressPercent = (currentLevel / maxLevel) * 100;
 
@@ -46,6 +82,7 @@ const FacilityCard = ({ facility, onSelect, isSelected, onUpgrade }) => {
 
   // Déterminer le statut et la classe CSS
   const getStatusConfig = () => {
+    if (status === 'building') return { className: 'building', label: '🏗️ En construction' };
     if (!isBuilt) return { className: 'not-built', label: 'Non construite' };
     if (isMaxLevel) return { className: 'max-level', label: 'Niveau Max' };
     return { className: '', label: `Niveau ${currentLevel}/${maxLevel}` };
@@ -68,6 +105,14 @@ const FacilityCard = ({ facility, onSelect, isSelected, onUpgrade }) => {
           </span>
         </div>
       </div>
+
+      {/* Construction Timer */}
+      {status === 'building' && remainingTime > 0 && (
+        <div className="construction-timer">
+          <Clock size={16} />
+          <span>Niveau {currentLevel + 1} dans {formatTime(remainingTime)}</span>
+        </div>
+      )}
 
       {/* Prérequis Centre de Commandement */}
       {requiredCommandCenter > 0 && (
@@ -148,11 +193,14 @@ const FacilityCard = ({ facility, onSelect, isSelected, onUpgrade }) => {
             <button 
               className="upgrade-action-button"
               onClick={handleUpgradeClick}
-              disabled={!meetsRequirement}
-              title={!meetsRequirement ? `Centre de Commandement niveau ${requiredCommandCenter} requis` : ''}
+              disabled={!meetsRequirement || status === 'building'}
+              title={
+                status === 'building' ? 'Construction en cours' :
+                !meetsRequirement ? `Centre de Commandement niveau ${requiredCommandCenter} requis` : ''
+              }
             >
               <ArrowUp size={20} />
-              <span>Améliorer</span>
+              <span>{status === 'building' ? 'En construction...' : 'Améliorer'}</span>
             </button>
           )}
         </div>
@@ -254,8 +302,15 @@ const FacilitiesUnified = () => {
       // Recharger les données en arrière-plan sans attendre
       loadFacilities().catch(() => {});
       setSelectedFacility(null);
-      success(`${facility.name} amélioré au niveau ${facility.currentLevel + 1} !`, 4000);
-      console.log('Facility upgraded:', result);
+      
+      // Message plus clair indiquant que c'est une construction
+      const buildDuration = result.buildDuration || 0;
+      const minutes = Math.floor(buildDuration / 60);
+      const seconds = buildDuration % 60;
+      const timeStr = minutes > 0 ? `${minutes}min ${seconds}s` : `${seconds}s`;
+      
+      success(`Construction de ${facility.name} niveau ${facility.currentLevel + 1} démarrée ! (${timeStr})`, 5000);
+      console.log('Facility upgrade started:', result);
     } catch (err) {
       console.error('Error upgrading facility:', err);
       

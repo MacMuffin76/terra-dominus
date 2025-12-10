@@ -19,9 +19,17 @@ export const buildDefense = async (defenseId, quantity) => {
       throw new Error(response.data.message || 'Erreur lors de la construction');
     }
   } catch (error) {
+    // 1. Si l'intercepteur axios a déjà normalisé le message
+    if (error?.message) {
+      throw new Error(error.message);
+    }
+
+    // 2. Sinon, tenter de lire la réponse brute
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
     }
+
+    // 3. Fallback réseau
     throw new Error('Erreur réseau lors de la construction des défenses');
   }
 };

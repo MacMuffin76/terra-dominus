@@ -58,14 +58,16 @@ module.exports = (container) => {
 
     } catch (error) {
       console.error('[DefenseBuildingRoutes] Error building defense:', error);
-      
-      if (error.message.includes('insuffisant')) {
-        return res.status(400).json({ 
-          success: false, 
-          message: error.message 
+
+      // Propager les erreurs métier avec leur message exact
+      if (error && error.message) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
         });
       }
 
+      // Fallback vraiment inattendu
       res.status(500).json({ 
         success: false, 
         message: 'Erreur lors de la construction de la défense' 

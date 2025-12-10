@@ -16,6 +16,7 @@ export const ResourceProductionProvider = ({ children }) => {
   const [localResources, setLocalResources] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const intervalRef = useRef(null);
+  const lastUpdateRef = useRef(Date.now());
 
   // Récupérer les taux de production au montage
   useEffect(() => {
@@ -64,43 +65,57 @@ export const ResourceProductionProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Initialiser les ressources locales au chargement et restaurer depuis localStorage si possible
+  // Initialiser les ressources locales au chargement UNIQUEMENT (une seule fois)
   useEffect(() => {
+    // Ne s'exécute qu'une seule fois au montage du composant
+    if (isInitialized) {
+      return; // Déjà initialisé, ne pas réinitialiser
+    }
+
     const savedResources = localStorage.getItem('localResources');
-    if (savedResources) {
+    const savedTimestamp = localStorage.getItem('localResourcesTimestamp');
+    
+    if (savedResources && savedTimestamp) {
       try {
         const parsed = JSON.parse(savedResources);
-        setLocalResources(parsed);
-        setIsInitialized(true);
-        console.log('📦 Ressources restaurées depuis localStorage:', parsed);
-        return;
+        const timestamp = parseInt(savedTimestamp, 10);
+        const now = Date.now();
+        
+        // Si les données ont moins de 5 minutes, les restaurer
+        if (now - timestamp < 5 * 60 * 1000) {
+          setLocalResources(parsed);
+          setIsInitialized(true);
+          console.log('📦 Ressources restaurées depuis localStorage:', parsed);
+          return;
+        } else {
+          console.log('⏰ Données localStorage trop anciennes, utilisation de Redux');
+        }
       } catch {
-        // ignore parse error
+        console.log('❌ Erreur parsing localStorage');
       }
     }
+    
+    // Fallback: utiliser les données de Redux
     if (resources && Array.isArray(resources) && resources.length > 0) {
-      // Convertir le tableau en objet
       const resourcesObj = resources.reduce((acc, r) => {
         acc[r.type] = r.amount;
         return acc;
       }, {});
       setLocalResources(resourcesObj);
-      if (!isInitialized) {
-        setIsInitialized(true);
-        console.log('📦 Ressources initiales (Context):', resourcesObj);
-      } else {
-        console.log('🔄 Ressources mises à jour (Context):', resourcesObj);
-      }
+      setIsInitialized(true);
+      console.log('📦 Ressources initiales depuis Redux:', resourcesObj);
     }
-  }, [resources]);
+  }, [resources, isInitialized]);
   
-  // Sauvegarder localResources dans localStorage à chaque mise à jour
+  // Sauvegarder localResources dans localStorage à chaque mise à jour (avec timestamp)
   useEffect(() => {
-    if (localResources) {
+    if (localResources && isInitialized) {
       localStorage.setItem('localResources', JSON.stringify(localResources));
-      console.log('💾 Ressources sauvegardées dans localStorage:', localResources);
+      localStorage.setItem('localResourcesTimestamp', Date.now().toString());
+      // Log réduit pour éviter le spam
+      // console.log('💾 Ressources sauvegardées dans localStorage:', localResources);
     }
-  }, [localResources]);
+  }, [localResources, isInitialized]);
 
   // Incrémenter les ressources chaque seconde (démarrage unique)
   useEffect(() => {
@@ -126,9 +141,12 @@ export const ResourceProductionProvider = ({ children }) => {
         
         const { production, storage } = productionRates;
 
-        console.log('🔄 Increment resources - previous:', prev);
-        console.log('🔄 Increment resources - production:', production);
-        console.log('🔄 Increment resources - storage:', storage);
+        // Log réduit (seulement toutes les 10 secondes)
+        const shouldLog = Math.floor(Date.now() / 1000) % 10 === 0;
+        if (shouldLog) {
+          console.log('🔄 Increment resources - previous:', prev);
+          console.log('🔄 Increment resources - production:', production);
+        }
         
         // Incrémenter de 1 seconde de production
         const newResources = {
@@ -150,22 +168,15 @@ export const ResourceProductionProvider = ({ children }) => {
           ),
         };
 
-        console.log('🔄 Increment resources - new:', newResources);
+        if (shouldLog) {
+          console.log('🔄 Increment resources - new:', newResources);
+        }
 
-        // Synchroniser localResources avec Redux store toutes les 10 secondes
-        if (window.lastSyncTime === undefined) {
-          window.lastSyncTime = Date.now();
-        }
-        const now = Date.now();
-        if (now - window.lastSyncTime > 10000) {
-          window.lastSyncTime = now;
-          // Dispatch action pour mettre à jour Redux store
-          // On suppose que dispatch est accessible ici, sinon il faut l'ajouter
-          if (window.dispatchUpdateResources) {
-            window.dispatchUpdateResources(newResources);
-            console.log('🔄 Synchronisation des ressources locales avec Redux store');
-          }
-        }
+        // Mettre à jour le timestamp de dernière modification
+        lastUpdateRef.current = Date.now();
+
+        // Synchronisation Redux désactivée ici :
+        // le store est mis à jour par d'autres flux (chargement initial, actions explicites).
 
         return newResources;
       });
@@ -180,6 +191,35 @@ export const ResourceProductionProvider = ({ children }) => {
     };
   }, [productionRates, isInitialized]);
 
+  // Watchdog : vérifier que l'incrémentation fonctionne toujours
+  useEffect(() => {
+    if (!isInitialized || !productionRates) {
+      return;
+    }
+
+    const watchdogInterval = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateRef.current;
+      
+      // Si pas de mise à jour depuis plus de 5 secondes, l'intervalle est peut-être cassé
+      if (timeSinceLastUpdate > 5000) {
+        console.warn('⚠️ Incrémentation bloquée détectée! Temps depuis dernière maj:', timeSinceLastUpdate, 'ms');
+        console.log('🔧 Tentative de redémarrage de l\'intervalle...');
+        
+        // Forcer le redémarrage en changeant isInitialized temporairement
+        // Cela va redéclencher le useEffect de l'intervalle
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        lastUpdateRef.current = now;
+      }
+    }, 10000); // Vérifier toutes les 10 secondes
+
+    return () => clearInterval(watchdogInterval);
+  }, [isInitialized, productionRates]);
+
   // Convertir l'objet en tableau pour ResourcesWidget
   const resourcesArray = localResources && productionRates ? [
     { type: 'or', amount: localResources.or, storage_capacity: productionRates.storage.gold, production_rate: productionRates.production.gold },
@@ -187,6 +227,44 @@ export const ResourceProductionProvider = ({ children }) => {
     { type: 'carburant', amount: localResources.carburant, storage_capacity: productionRates.storage.fuel, production_rate: productionRates.production.fuel },
     { type: 'energie', amount: localResources.energie, storage_capacity: productionRates.storage.energy, production_rate: productionRates.production.energy },
   ] : null;
+
+  // Permettre aux autres modules (upgrade bâtiments, entraînement, etc.)
+  // de pousser des mises à jour de ressources côté client
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchUpdateResources = (newResources) => {
+        console.log('🔧 Mise à jour manuelle des ressources:', newResources);
+        setLocalResources((prev) => ({
+          ...(prev || {}),
+          ...newResources,
+        }));
+      };
+      
+      // Fonction pour forcer la resynchronisation avec Redux
+      window.forceResourceSync = () => {
+        console.log('🔄 Resynchronisation forcée avec Redux');
+        if (resources && Array.isArray(resources) && resources.length > 0) {
+          const resourcesObj = resources.reduce((acc, r) => {
+            acc[r.type] = r.amount;
+            return acc;
+          }, {});
+          setLocalResources(resourcesObj);
+          console.log('✅ Ressources synchronisées:', resourcesObj);
+        }
+      };
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        if (window.dispatchUpdateResources) {
+          delete window.dispatchUpdateResources;
+        }
+        if (window.forceResourceSync) {
+          delete window.forceResourceSync;
+        }
+      }
+    };
+  }, [resources]);
 
   const value = {
     resources: resourcesArray,

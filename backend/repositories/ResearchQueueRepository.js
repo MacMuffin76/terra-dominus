@@ -10,8 +10,10 @@ class ResearchQueueRepository {
         researchId,
         status: { [Op.in]: ['queued', 'in_progress'] },
       },
+      // Pas de lock ici : les agrégats (COUNT) ne supportent pas FOR UPDATE
+      // et on se repose déjà sur les verrous/l'optimistic locking ailleurs
+      // dans la transaction pour la cohérence.
       transaction,
-      lock: transaction?.LOCK?.UPDATE,
     });
   }
 

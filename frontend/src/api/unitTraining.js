@@ -19,9 +19,17 @@ export const trainUnits = async (unitId, quantity) => {
       throw new Error(response.data.message || 'Erreur lors de l\'entraînement');
     }
   } catch (error) {
-    if (error.response?.data?.message) {
+    // 1. Si l'intercepteur axios a déjà aplati l'erreur avec un message lisible
+    if (error?.message) {
+      throw new Error(error.message);
+    }
+
+    // 2. Sinon, si on a encore la structure complète axios
+    if (error?.response?.data?.message) {
       throw new Error(error.response.data.message);
     }
+
+    // 3. Vrai cas inconnu / réseau
     throw new Error('Erreur réseau lors de l\'entraînement des unités');
   }
 };

@@ -11,6 +11,7 @@ import { useAsyncError } from '../hooks/useAsyncError';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
+import { useResources } from '../context/ResourcesContext';
 import DefenseBuildModal from './defense/DefenseBuildModal';
 import './Defense.css';
 import './units/UnitTrainingPanel.css';
@@ -124,6 +125,7 @@ const DefenseUnlockCard = ({ defense, isLocked, onSelect, isSelected, onBuildCli
 const DefenseUnified = () => {
   const { error, catchError } = useAsyncError('DefenseUnified');
   const { toasts, removeToast, success, error: errorToast, warning } = useToast();
+  const { setResources } = useResources();
   const [loading, setLoading] = useState(true);
   const [availableData, setAvailableData] = useState(null);
   const [selectedDefense, setSelectedDefense] = useState(null);
@@ -163,14 +165,52 @@ const DefenseUnified = () => {
   const handleBuild = useCallback(async (defenseId, quantity) => {
     try {
       const result = await buildDefense(defenseId, quantity);
-      success(`✅ ${quantity}x ${defenseToBuild?.name} construites avec succès!`);
+
+      // Afficher un message avec les ressources restantes si disponibles
+      const remaining = result?.remainingResources;
+      let extraInfo = '';
+      if (remaining) {
+        const parts = [];
+        if (typeof remaining.gold === 'number') parts.push(`Or: ${remaining.gold}`);
+        if (typeof remaining.metal === 'number') parts.push(`Métal: ${remaining.metal}`);
+        if (typeof remaining.fuel === 'number') parts.push(`Carburant: ${remaining.fuel}`);
+        if (parts.length > 0) {
+          extraInfo = ` (Ressources restantes → ${parts.join(', ')})`;
+        }
+
+        // Mettre à jour les ressources côté client
+        const freshResourcesArray = [
+          { type: 'or', amount: remaining.gold },
+          { type: 'metal', amount: remaining.metal },
+          { type: 'carburant', amount: remaining.fuel },
+          { type: 'energie', amount: remaining.energy },
+        ];
+        setResources(freshResourcesArray);
+
+        const resourcesObj = {
+          or: remaining.gold,
+          metal: remaining.metal,
+          carburant: remaining.fuel,
+          energie: remaining.energy,
+        };
+        try {
+          localStorage.setItem('localResources', JSON.stringify(resourcesObj));
+        } catch {
+          // ignore
+        }
+        if (typeof window !== 'undefined' && window.dispatchUpdateResources) {
+          window.dispatchUpdateResources(resourcesObj);
+        }
+      }
+
+      success(`✅ ${quantity}x ${defenseToBuild?.name} construites avec succès!${extraInfo}`);
       setBuildModalOpen(false);
       setDefenseToBuild(null);
       await loadDefenses();
     } catch (err) {
       errorToast(err.message || 'Erreur lors de la construction de la défense');
     }
-  }, [defenseToBuild, success, errorToast, loadDefenses]);
+  }, [defenseToBuild, success, errorToast, loadDefenses, setResources]);
 
   const handleLockedDefenseClick = useCallback((defense) => {
     if (defense.missingRequirements && defense.missingRequirements.length > 0) {

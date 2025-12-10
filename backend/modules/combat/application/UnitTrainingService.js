@@ -9,13 +9,14 @@ const { runWithContext } = require('../../../utils/logger');
  * - Calculer coût total
  */
 class UnitTrainingService {
-  constructor({ User, Unit, City, Resource, Facility, sequelize }) {
+  constructor({ User, Unit, City, Resource, Facility, sequelize, resourceService }) {
     this.User = User;
     this.Unit = Unit;
     this.City = City;
     this.Resource = Resource;
     this.Facility = Facility;
     this.sequelize = sequelize;
+    this.resourceService = resourceService;
   }
 
   /**
@@ -54,39 +55,16 @@ class UnitTrainingService {
           throw new Error('City not found');
         }
 
-        // Récupérer les ressources
-        const resources = await this.Resource.findOne({
-          where: { user_id: userId },
-          transaction
-        });
-        if (!resources) {
-          throw new Error('Resources not found');
-        }
-
         // Calculer coût total
         const totalCost = {
           gold: (unitDefinition.cost.gold || 0) * quantity,
           metal: (unitDefinition.cost.metal || 0) * quantity,
-          fuel: (unitDefinition.cost.fuel || 0) * quantity
+          fuel: (unitDefinition.cost.fuel || 0) * quantity,
+          energy: 0
         };
 
-        // Vérifier ressources suffisantes
-        if (resources.or < totalCost.gold) {
-          throw new Error(`Or insuffisant (besoin: ${totalCost.gold}, disponible: ${resources.or})`);
-        }
-        if (resources.metal < totalCost.metal) {
-          throw new Error(`Métal insuffisant (besoin: ${totalCost.metal}, disponible: ${resources.metal})`);
-        }
-        if (resources.carburant < totalCost.fuel) {
-          throw new Error(`Carburant insuffisant (besoin: ${totalCost.fuel}, disponible: ${resources.carburant})`);
-        }
-
-        // Déduire les ressources
-        await resources.update({
-          or: resources.or - totalCost.gold,
-          metal: resources.metal - totalCost.metal,
-          carburant: resources.carburant - totalCost.fuel
-        }, { transaction });
+        // Déduire les ressources via le ResourceService (gestion par ville + table resources)
+        await this.resourceService.deductResourcesFromUser(userId, totalCost, transaction);
 
         // Ajouter/créer l'unité dans la BDD
         let unit = await this.Unit.findOne({
@@ -115,6 +93,9 @@ class UnitTrainingService {
 
         await transaction.commit();
 
+        // Recharger les ressources restantes via le ResourceService
+        const remainingResources = await this.resourceService.getUserResourceAmounts(userId);
+
         return {
           success: true,
           message: `${quantity} ${unitDefinition.name} entraîné${quantity > 1 ? 's' : ''} avec succès`,
@@ -124,11 +105,7 @@ class UnitTrainingService {
             quantity: unit.quantity
           },
           costPaid: totalCost,
-          remainingResources: {
-            gold: resources.or - totalCost.gold,
-            metal: resources.metal - totalCost.metal,
-            fuel: resources.carburant - totalCost.fuel
-          }
+          remainingResources
         };
 
       } catch (error) {

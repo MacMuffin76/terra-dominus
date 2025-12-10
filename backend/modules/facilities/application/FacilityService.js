@@ -23,6 +23,21 @@ class FacilityService {
   }
 
   /**
+   * Mapper les noms de ressources anglais vers français
+   * @param {string} resourceName - Nom anglais de la ressource
+   * @returns {string} - Nom français de la ressource
+   */
+  _mapResourceName(resourceName) {
+    const mapping = {
+      'gold': 'or',
+      'metal': 'metal',
+      'fuel': 'carburant',
+      'energy': 'energie'
+    };
+    return mapping[resourceName.toLowerCase()] || resourceName;
+  }
+
+  /**
    * Obtenir toutes les installations du joueur
    * @param {number} userId - ID du joueur
    * @returns {Promise<Array>}
@@ -336,17 +351,23 @@ class FacilityService {
 
       // Calculer le coût et vérifier les ressources
       const upgradeCost = this._calculateUpgradeCost(facilityDef, targetLevel);
+      console.log(`[FacilityService] Upgrade cost for ${facilityDef.name} level ${targetLevel}:`, upgradeCost);
+      
       const resources = await Resource.findAll({
         where: { city_id: city.id },
         transaction,
         lock: transaction.LOCK.UPDATE
       });
 
+      console.log(`[FacilityService] Resources before deduction:`, resources.map(r => ({ type: r.type, amount: r.amount })));
+
       // Vérifier que le joueur a assez de ressources
       for (const [resourceType, cost] of Object.entries(upgradeCost)) {
-        const resource = resources.find(r => r.type.toLowerCase() === resourceType.toLowerCase());
-        if (!resource || resource.quantity < cost) {
-          const error = new Error(`Not enough ${resourceType}. Required: ${cost}, Available: ${resource?.quantity || 0}`);
+        const mappedType = this._mapResourceName(resourceType);
+        const resource = resources.find(r => r.type.toLowerCase() === mappedType.toLowerCase());
+        if (!resource || resource.amount < cost) {
+          const availableAmount = resource?.amount ?? 0;
+          const error = new Error(`Not enough ${resourceType}. Required: ${cost}, Available: ${availableAmount}`);
           error.status = 400;
           throw error;
         }
@@ -354,9 +375,12 @@ class FacilityService {
 
       // Déduire les ressources
       for (const [resourceType, cost] of Object.entries(upgradeCost)) {
-        const resource = resources.find(r => r.type.toLowerCase() === resourceType.toLowerCase());
-        resource.quantity -= cost;
+        const mappedType = this._mapResourceName(resourceType);
+        const resource = resources.find(r => r.type.toLowerCase() === mappedType.toLowerCase());
+        console.log(`[FacilityService] Deducting ${cost} ${mappedType} (was: ${resource.amount})`);
+        resource.amount -= cost;
         await resource.save({ transaction });
+        console.log(`[FacilityService] After deduction: ${resource.amount}`);
       }
 
       // Créer ou récupérer l'entité pour la queue

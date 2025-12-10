@@ -77,15 +77,31 @@ class ResearchUnlockService {
   }
 
   async _ensureResources(cityId, costs, transaction) {
+    // Mapping logique -> DB : gold → or, fuel → carburant, energy → energie
+    const typeMap = {
+      gold: 'or',
+      metal: 'metal',
+      fuel: 'carburant',
+      energy: 'energie',
+    };
+
     // Vérification des ressources
     for (const [resourceType, amount] of costs) {
+      const dbType = typeMap[resourceType] || resourceType;
+
       const userResource = await Resource.findOne({
-        where: { city_id: cityId, type: resourceType },
+        where: { city_id: cityId, type: dbType },
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
 
-      const currentAmount = userResource ? Number(userResource.amount) || 0 : 0;
+      if (!userResource) {
+        const error = new Error(`Ressource ${resourceType} introuvable pour la recherche`);
+        error.status = 404;
+        throw error;
+      }
+
+      const currentAmount = Number(userResource.amount) || 0;
       if (currentAmount < Number(amount)) {
         const error = new Error('Ressources insuffisantes pour la recherche');
         error.status = 400;
@@ -95,11 +111,19 @@ class ResearchUnlockService {
 
     // Décrémentation des ressources
     for (const [resourceType, amount] of costs) {
+      const dbType = typeMap[resourceType] || resourceType;
+
       const userResource = await Resource.findOne({
-        where: { city_id: cityId, type: resourceType },
+        where: { city_id: cityId, type: dbType },
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
+
+      if (!userResource) {
+        const error = new Error(`Ressource ${resourceType} introuvable pour la recherche`);
+        error.status = 404;
+        throw error;
+      }
 
       const currentAmount = Number(userResource.amount);
       const updatedAmount = currentAmount - Number(amount);

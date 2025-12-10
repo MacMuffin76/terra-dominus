@@ -3,17 +3,18 @@
  * 
  * Permet aux joueurs de construire des défenses pour protéger leur ville
  * - Vérification des prérequis
- * - Déduction des ressources
+ * - Déduction des ressources (via ResourceService)
  * - Création/mise à jour des défenses
  */
 class DefenseBuildingService {
-  constructor({ User, Defense, City, Resource, Facility, sequelize }) {
+  constructor({ User, Defense, City, Resource, Facility, sequelize, resourceService }) {
     this.User = User;
     this.Defense = Defense;
     this.City = City;
-    this.Resource = Resource;
+    this.Resource = Resource; // conservé pour compat éventuelle
     this.Facility = Facility;
     this.sequelize = sequelize;
+    this.resourceService = resourceService;
   }
 
   /**
@@ -37,86 +38,71 @@ class DefenseBuildingService {
         throw new Error('Définition de défense introuvable');
       }
 
+      // Vérifier que l'utilisateur existe (optionnel mais plus propre)
+      const user = await this.User.findByPk(userId, { transaction });
+      if (!user) {
+        throw new Error('User not found');
+      }
+
       // Récupérer la ville principale du joueur
-      const user = await this.User.findByPk(userId, {
-        include: [{
-          model: this.City,
-          as: 'city',
-          required: true
-        }],
-        transaction
+      const city = await this.City.findOne({
+        where: { user_id: userId, is_capital: true },
+        transaction,
       });
 
-      if (!user || !user.city) {
-        throw new Error('Ville introuvable');
+      if (!city) {
+        throw new Error('City not found');
       }
 
-      const city = user.city;
-
-      // Récupérer les ressources du joueur
-      const resources = await this.Resource.findOne({
-        where: { user_id: userId },
-        transaction
-      });
-
-      if (!resources) {
-        throw new Error('Ressources introuvables');
-      }
-
-      // Calculer le coût total
+      // Calculer le coût total (schéma logique : gold/metal/fuel/energy)
       const totalCost = {
         gold: (defenseDefinition.cost?.gold || 0) * quantity,
         metal: (defenseDefinition.cost?.metal || 0) * quantity,
-        fuel: (defenseDefinition.cost?.fuel || 0) * quantity
+        fuel: (defenseDefinition.cost?.fuel || 0) * quantity,
+        energy: 0,
       };
 
-      // Vérifier les ressources disponibles
-      if (resources.or < totalCost.gold) {
-        throw new Error(`Or insuffisant (besoin: ${totalCost.gold}, disponible: ${resources.or})`);
-      }
-      if (resources.metal < totalCost.metal) {
-        throw new Error(`Métal insuffisant (besoin: ${totalCost.metal}, disponible: ${resources.metal})`);
-      }
-      if (resources.carburant < totalCost.fuel) {
-        throw new Error(`Carburant insuffisant (besoin: ${totalCost.fuel}, disponible: ${resources.carburant})`);
-      }
-
-      // Déduire les ressources
-      await resources.update({
-        or: resources.or - totalCost.gold,
-        metal: resources.metal - totalCost.metal,
-        carburant: resources.carburant - totalCost.fuel
-      }, { transaction });
+      // Déduire les ressources via le ResourceService (gère city_id + table resources)
+      await this.resourceService.deductResourcesFromUser(userId, totalCost, transaction);
 
       // Ajouter/créer la défense dans la BDD
       let defense = await this.Defense.findOne({
-        where: { 
+        where: {
           city_id: city.id,
-          name: defenseDefinition.name
+          name: defenseDefinition.name,
         },
-        transaction
+        transaction,
       });
 
       if (defense) {
         // Défense existe déjà, augmenter la quantité
-        await defense.update({
-          quantity: defense.quantity + quantity,
-          date_modification: new Date()
-        }, { transaction });
+        await defense.update(
+          {
+            quantity: defense.quantity + quantity,
+            date_modification: new Date(),
+          },
+          { transaction },
+        );
       } else {
         // Créer nouvelle entrée de défense
-        defense = await this.Defense.create({
-          city_id: city.id,
-          name: defenseDefinition.name,
-          description: defenseDefinition.description,
-          quantity: quantity,
-          cost: totalCost.gold + totalCost.metal + totalCost.fuel, // Coût total enregistré
-          date_creation: new Date(),
-          date_modification: new Date()
-        }, { transaction });
+        defense = await this.Defense.create(
+          {
+            city_id: city.id,
+            name: defenseDefinition.name,
+            description: defenseDefinition.description,
+            quantity,
+            cost: (totalCost.gold || 0) + (totalCost.metal || 0) + (totalCost.fuel || 0),
+            date_creation: new Date(),
+            date_modification: new Date(),
+          },
+          { transaction },
+        );
       }
 
       await transaction.commit();
+
+      // Recharger les ressources restantes via le ResourceService
+      const remainingResources = await this.resourceService.getUserResourceAmounts(userId);
 
       return {
         success: true,
@@ -124,16 +110,11 @@ class DefenseBuildingService {
         defense: {
           id: defense.id,
           name: defense.name,
-          quantity: defense.quantity
+          quantity: defense.quantity,
         },
         costPaid: totalCost,
-        remainingResources: {
-          gold: resources.or - totalCost.gold,
-          metal: resources.metal - totalCost.metal,
-          fuel: resources.carburant - totalCost.fuel
-        }
+        remainingResources,
       };
-
     } catch (error) {
       await transaction.rollback();
       console.error('[DefenseBuildingService] Error building defense:', error);
@@ -148,25 +129,24 @@ class DefenseBuildingService {
    */
   async getPlayerDefenses(userId) {
     try {
-      const user = await this.User.findByPk(userId, {
-        include: [{
-          model: this.City,
-          as: 'city',
-          required: true
-        }]
-      });
+      // Vérifier que l'utilisateur existe
+      const user = await this.User.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
 
-      if (!user || !user.city) {
-        throw new Error('Ville introuvable');
+      // Récupérer la ville principale
+      const city = await this.City.findOne({ where: { user_id: userId, is_capital: true } });
+      if (!city) {
+        throw new Error('City not found');
       }
 
       const defenses = await this.Defense.findAll({
-        where: { city_id: user.city.id },
-        order: [['name', 'ASC']]
+        where: { city_id: city.id },
+        order: [['name', 'ASC']],
       });
 
       return defenses;
-
     } catch (error) {
       console.error('[DefenseBuildingService] Error fetching player defenses:', error);
       throw error;
