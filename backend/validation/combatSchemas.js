@@ -14,6 +14,8 @@ const launchAttackSchema = z.object({
     attackType: z.enum(['raid', 'conquest', 'siege'], {
       errorMap: () => ({ message: 'Type d\'attaque invalide. Doit être raid, conquest ou siege' })
     }),
+    formation: z.enum(['line', 'wedge', 'echelon']).optional(),
+    speedFactor: z.number().min(0.5).max(2).optional(),
     units: z.array(z.object({
       entityId: z.number().int().positive(),
       quantity: z.number().int().positive()

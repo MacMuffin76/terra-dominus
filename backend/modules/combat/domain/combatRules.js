@@ -15,8 +15,10 @@ const ATTACK_TYPES = {
 const ARMY_SPEED = 2;
 
 // Calcul du temps de trajet pour une attaque
-function calculateTravelTime(distance) {
-  const hours = distance / ARMY_SPEED;
+// speedFactor permet d'appliquer des bonus/malus de formation ou de choix de vitesse (0.5x à 2x)
+function calculateTravelTime(distance, speedFactor = 1) {
+  const effectiveSpeed = ARMY_SPEED * Math.max(0.1, speedFactor || 1);
+  const hours = distance / effectiveSpeed;
   return Math.ceil(hours * 3600); // Secondes
 }
 
@@ -145,14 +147,20 @@ function calculateTechBonus(researches, techNames) {
 }
 
 // Simuler un combat
-function simulateCombat(attackerStrength, defenderStrength, defenderWallsBonus = 0) {
+// Ajoute un contexte optionnel pour enrichir les logs (formation, bonus de mur, etc.)
+function simulateCombat(attackerStrength, defenderStrength, defenderWallsBonus = 0, context = {}) {
   const rounds = [];
   let attStrength = attackerStrength;
   let defStrength = defenderStrength * (1 + defenderWallsBonus);
   let roundCount = 0;
 
+  const { formation = null, formationMultipliers = null } = context || {};
+
   while (attStrength > 0 && defStrength > 0 && roundCount < 10) {
     roundCount++;
+
+    const attackerStrengthBefore = attStrength;
+    const defenderStrengthBefore = defStrength;
     
     // Chaque round, les deux camps s'infligent des dégâts
     const attackerDamage = attStrength * 0.3;
@@ -161,13 +169,22 @@ function simulateCombat(attackerStrength, defenderStrength, defenderWallsBonus =
     defStrength -= attackerDamage;
     attStrength -= defenderDamage;
 
-    rounds.push({
+    const roundData = {
       round: roundCount,
+      // Valeurs "post-round" (compatibilité avec l'ancien schéma)
       attacker_strength: Math.max(0, attStrength),
       defender_strength: Math.max(0, defStrength),
       attacker_damage: attackerDamage,
-      defender_damage: defenderDamage
-    });
+      defender_damage: defenderDamage,
+      // Contexte enrichi pour replays AAA-lite
+      attacker_strength_before: Math.max(0, attackerStrengthBefore),
+      defender_strength_before: Math.max(0, defenderStrengthBefore),
+      defender_walls_bonus: defenderWallsBonus,
+      formation,
+      formation_multipliers: formationMultipliers || null
+    };
+
+    rounds.push(roundData);
 
     if (attStrength <= 0 || defStrength <= 0) break;
   }
@@ -182,7 +199,12 @@ function simulateCombat(attackerStrength, defenderStrength, defenderWallsBonus =
     outcome = 'draw';
   }
 
-  return { rounds, outcome, finalAttackerStrength: Math.max(0, attStrength), finalDefenderStrength: Math.max(0, defStrength) };
+  return {
+    rounds,
+    outcome,
+    finalAttackerStrength: Math.max(0, attStrength),
+    finalDefenderStrength: Math.max(0, defStrength)
+  };
 }
 
 // Calculer les pertes d'unités
@@ -221,6 +243,33 @@ function calculateLoot(defenderResources, attackType) {
     gold: Math.floor(defenderResources.gold * lootPercentage),
     metal: Math.floor(defenderResources.metal * lootPercentage),
     fuel: Math.floor(defenderResources.fuel * lootPercentage)
+  };
+}
+
+// Espionnage - dégradation de la précision du rapport dans le temps
+function calculateIntelDecay(successRate, arrivalTime, now = new Date()) {
+  if (!successRate || !arrivalTime) {
+    return {
+      effectiveSuccessRate: successRate || 0,
+      ageHours: 0,
+      decaySteps: 0,
+      isStale: false
+    };
+  }
+
+  const arrival = arrivalTime instanceof Date ? arrivalTime : new Date(arrivalTime);
+  const ageMs = now.getTime() - arrival.getTime();
+  const ageHours = Math.max(0, ageMs / 3600000);
+  const decaySteps = Math.floor(ageHours / 6); // -20% toutes les 6h
+  const decayFactor = Math.max(0, 1 - 0.2 * decaySteps);
+  const effective = Number((successRate * decayFactor).toFixed(3));
+  const isStale = ageHours >= 24; // Après 24h, le rapport est considéré comme périmé
+
+  return {
+    effectiveSuccessRate: effective,
+    ageHours,
+    decaySteps,
+    isStale
   };
 }
 
@@ -276,5 +325,6 @@ module.exports = {
   calculateLoot,
   calculateSpySuccessRate,
   calculateSpyLosses,
-  isSpyMissionDetected
+  isSpyMissionDetected,
+  calculateIntelDecay
 };

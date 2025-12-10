@@ -73,6 +73,10 @@ class Attack extends Model {
       defender_losses: {
         type: DataTypes.JSONB,
         allowNull: true
+      },
+      metadata: {
+        type: DataTypes.JSONB,
+        allowNull: true
       }
     }, {
       sequelize,

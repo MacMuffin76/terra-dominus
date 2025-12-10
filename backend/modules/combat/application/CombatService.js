@@ -26,7 +26,23 @@ class CombatService {
    */
   async launchAttack(userId, attackData) {
     return runWithContext(async () => {
-      const { attackerCityId, defenderCityId, attackType, units } = attackData;
+      const {
+        attackerCityId: directAttackerCityId,
+        defenderCityId: directDefenderCityId,
+        fromCityId,
+        toCityId,
+        attackType,
+        units,
+        formation = 'line',
+        speedFactor = 1
+      } = attackData;
+
+      const attackerCityId = directAttackerCityId ?? fromCityId;
+      const defenderCityId = directDefenderCityId ?? toCityId;
+
+      if (!attackerCityId || !defenderCityId) {
+        throw new Error('Ville attaquante ou cible manquante');
+      }
 
       const transaction = await this.sequelize.transaction();
 
@@ -213,8 +229,8 @@ class CombatService {
           });
         }
 
-        // 4. Calculer le temps de trajet
-        const travelTime = combatRules.calculateTravelTime(distance);
+        // 4. Calculer le temps de trajet (impacté par speedFactor)
+        const travelTime = combatRules.calculateTravelTime(distance, speedFactor);
         const departureTime = new Date();
         const arrivalTime = new Date(departureTime.getTime() + travelTime * 1000);
 
@@ -230,14 +246,16 @@ class CombatService {
             departure_time: departureTime,
             arrival_time: arrivalTime,
             distance,
-            // Store PvP balancing data for resolveCombat
-            metadata: costModifier && rewardModifier ? JSON.stringify({
+            // Store PvP balancing + tactical data (formation, vitesse) for resolveCombat
+            metadata: JSON.stringify({
               attackerPower,
               defenderPower,
-              costMultiplier: costModifier.costMultiplier,
-              rewardMultiplier: rewardModifier.rewardMultiplier,
-              isWeakTarget: costModifier.isWeakTarget
-            }) : null
+              costMultiplier: costModifier?.costMultiplier ?? 1,
+              rewardMultiplier: rewardModifier?.rewardMultiplier ?? 1,
+              isWeakTarget: costModifier?.isWeakTarget ?? false,
+              formation,
+              speedFactor
+            })
           },
           waves,
           transaction
@@ -347,13 +365,43 @@ class CombatService {
           defenderUnits
         );
 
+        // Lire les métadonnées (formation, vitesse, PvP) éventuelles
+        let metadata = null;
+        let formation = 'line';
+        try {
+          if (attack.metadata) {
+            // metadata peut être une string JSON ou un objet JS selon la source
+            const raw = typeof attack.metadata === 'string'
+              ? attack.metadata
+              : JSON.stringify(attack.metadata);
+            metadata = JSON.parse(raw);
+            if (metadata.formation) {
+              formation = metadata.formation;
+            }
+          }
+        } catch (error) {
+          console.error('⚠️ Failed to parse attack metadata for formation:', error.message);
+        }
+
         // Apply tech bonuses
-        const attackerStrength = strengthCalc.attackerStrength * (1 + attackerTechBonus);
-        const defenderStrength = strengthCalc.defenderStrength * (1 + defenderTechBonus);
+        let attackerStrength = strengthCalc.attackerStrength * (1 + attackerTechBonus);
+        let defenderStrength = strengthCalc.defenderStrength * (1 + defenderTechBonus);
+
+        // Appliquer les bonus/malus de formation (feeling AAA-lite)
+        const formationMultipliers = {
+          line:   { attacker: 1.0,  defender: 1.0 },   // Équilibré par défaut
+          wedge:  { attacker: 1.15, defender: 0.9 },   // Formation en coin : attaque forte, défense plus fragile
+          echelon:{ attacker: 0.95, defender: 1.1 }    // Échelon : plus défensif, attaque un peu réduite
+        };
+        const fm = formationMultipliers[formation] || formationMultipliers.line;
+        attackerStrength *= fm.attacker;
+        defenderStrength *= fm.defender;
 
         console.log('⚔️  Combat strength calculated:', {
           attacker: attackerStrength,
           defender: defenderStrength,
+          formation,
+          formationMultipliers: fm,
           counterBonuses: strengthCalc.counterBonuses,
           techBonuses: { attacker: attackerTechBonus, defender: defenderTechBonus },
           wallsBonus
@@ -402,11 +450,10 @@ class CombatService {
 
           loot = combatRules.calculateLoot(defenderResources, attack.attack_type);
           
-          // Apply PvP balancing reward scaling
+          // Apply PvP balancing reward scaling (en s'appuyant sur les métadonnées lues plus haut)
           let rewardMultiplier = 1.0;
           try {
-            if (attack.metadata) {
-              const metadata = JSON.parse(attack.metadata);
+            if (metadata && metadata.rewardMultiplier) {
               rewardMultiplier = metadata.rewardMultiplier || 1.0;
               
               // Apply scaling to loot
@@ -417,7 +464,9 @@ class CombatService {
                 original: scaledLoot.original,
                 scaled: scaledLoot.scaled,
                 multiplier: rewardMultiplier,
-                isWeakTarget: metadata.isWeakTarget
+                isWeakTarget: metadata.isWeakTarget,
+                formation: metadata.formation,
+                speedFactor: metadata.speedFactor
               });
             }
           } catch (error) {
@@ -746,9 +795,37 @@ class CombatService {
 
   /**
    * Récupérer les missions d'espionnage d'un utilisateur
+   * Applique une dégradation temporelle de la précision du rapport
    */
   async getUserSpyMissions(userId, filters) {
-    return this.combatRepository.getUserSpyMissions(userId, filters);
+    const missions = await this.combatRepository.getUserSpyMissions(userId, filters);
+
+    return missions.map((mission) => {
+      const plain = typeof mission.toJSON === 'function' ? mission.toJSON() : mission;
+
+      const decay = combatRules.calculateIntelDecay(
+        plain.success_rate,
+        plain.arrival_time
+      );
+
+      const result = {
+        ...plain,
+        // success_rate reflète la fiabilité actuelle du rapport
+        success_rate: decay.effectiveSuccessRate,
+        intel_decay: {
+          ageHours: decay.ageHours,
+          decaySteps: decay.decaySteps,
+          isStale: decay.isStale
+        }
+      };
+
+      // Si le rapport est périmé (>24h), on masque les données de renseignement
+      if (decay.isStale) {
+        result.intel_data = null;
+      }
+
+      return result;
+    });
   }
 
   /**
