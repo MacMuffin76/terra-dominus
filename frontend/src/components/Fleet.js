@@ -220,13 +220,13 @@ const Fleet = () => {
                           min="0"
                           max={unit.quantity}
                           value={selected}
-                          onChange={(e) => handleQuantityChange(unit.id, unit.entity_id, e.target.value)}
+                          onChange={(e) => handleQuantityChange(unit.id, unit.entityid, e.target.value)}
                           className="quantity-input"
                           placeholder="0"
                         />
                         <button
                           className="max-button"
-                          onClick={() => handleMaxClick(unit.id, unit.entity_id, unit.quantity)}
+                          onClick={() => handleMaxClick(unit.id, unit.entityid, unit.quantity)}
                         >
                           MAX
                         </button>

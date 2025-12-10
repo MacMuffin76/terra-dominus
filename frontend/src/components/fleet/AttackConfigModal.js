@@ -1,9 +1,11 @@
 // frontend/src/components/fleet/AttackConfigModal.js
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Button, Loader } from '../ui';
 import { Target, Clock, Fuel, AlertTriangle } from 'lucide-react';
 import { launchAttack } from '../../api/combat';
+import { getUserCities } from '../../api/city';
+import { getTileInfo } from '../../api/world';
 import './AttackConfigModal.css';
 
 const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) => {
@@ -11,6 +13,25 @@ const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) =>
   const [targetCoordY, setTargetCoordY] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userCities, setUserCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(true);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const cities = await getUserCities();
+        setUserCities(cities);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message || 'Impossible de récupérer vos villes');
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  const attackerCity = userCities.find((city) => city.is_capital) || userCities[0];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,14 +42,33 @@ const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) =>
       return;
     }
 
+    if (!attackerCity) {
+      setError('Vous devez posséder une ville pour lancer une attaque');
+      return;
+    }
+
+    const parsedCoordX = parseInt(targetCoordX, 10);
+    const parsedCoordY = parseInt(targetCoordY, 10);
+
+    if (Number.isNaN(parsedCoordX) || Number.isNaN(parsedCoordY)) {
+      setError('Les coordonnées doivent être des nombres');
+      return;
+    }
+
+
     setLoading(true);
 
     try {
-      // Pour le moment, on utilise attackerCityId = 1 et on trouve la ville cible
-      // TODO: Récupérer la ville de l'utilisateur et chercher la ville cible par coordonnées
+      const tileInfo = await getTileInfo(parsedCoordX, parsedCoordY);
+      const defenderCityId = tileInfo?.citySlot?.cityId;
+
+      if (!defenderCityId) {
+        throw new Error('Aucune ville trouvée aux coordonnées indiquées');
+      }
+
       const attackData = {
-        attackerCityId: 1, // À remplacer par la vraie ville
-        defenderCityId: 2, // À calculer depuis les coordonnées
+        fromCityId: attackerCity.id,
+        toCityId: defenderCityId,
         attackType,
         units: selectedUnits.map(u => ({
           entityId: u.entityId,
@@ -81,6 +121,27 @@ const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) =>
             }</span>
           </div>
         </div>
+
+        {/* Departure City */}
+        <div className="config-section">
+          <h4>Ville de départ</h4>
+          <div className="attack-type-display">
+            {loadingCities ? (
+              <>
+                <Loader size="sm" />
+                <span>Chargement de vos villes...</span>
+              </>
+            ) : attackerCity ? (
+              <>
+                <span>{attackerCity.name}</span>
+                <span className="city-coordinates">({attackerCity.coord_x}:{attackerCity.coord_y})</span>
+              </>
+            ) : (
+              <span>Aucune ville disponible</span>
+            )}
+          </div>
+        </div>
+
 
         {/* Target Coordinates */}
         <div className="config-section">
@@ -159,7 +220,7 @@ const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) =>
           <Button
             type="submit"
             variant="primary"
-            disabled={loading}
+            disabled={loading || loadingCities || !attackerCity}
             icon={loading ? <Loader size="sm" /> : <Target size={18} />}
           >
             {loading ? 'Lancement...' : 'Lancer l\'attaque'}
