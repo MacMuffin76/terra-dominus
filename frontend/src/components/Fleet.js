@@ -199,7 +199,10 @@ const Fleet = () => {
                         src={`/images/training/${unit.name?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['']/g, '').replace(/\s+/g, '_')}.png`}
                         alt={unit.name}
                         className="fleet-unit-image"
-                        onError={(e) => { e.target.src = '/images/placeholder.png'; }}
+                        onError={(e) => { 
+                          e.target.onerror = null; // Empêcher la boucle infinie
+                          e.target.src = '/images/placeholder.png'; 
+                        }}
                       />
                       {selected > 0 && (
                         <div className="selected-badge">{selected}</div>
