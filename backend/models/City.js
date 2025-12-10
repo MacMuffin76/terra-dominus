@@ -23,11 +23,19 @@ const City = sequelize.define('City', {
   },
   coord_x: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
+    unique: 'cities_coord_unique',
+    validate: {
+      notNull: true,
+    },
   },
   coord_y: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
+    unique: 'cities_coord_unique',
+    validate: {
+      notNull: true,
+    },
   },
   vision_range: {
     type: DataTypes.INTEGER,
@@ -61,6 +69,13 @@ const City = sequelize.define('City', {
 }, {
   tableName: 'cities',
   timestamps: false,
+  indexes: [
+    {
+      unique: true,
+      fields: ['coord_x', 'coord_y'],
+      name: 'cities_coord_unique',
+    },
+  ],
 });
 
 // Define associations

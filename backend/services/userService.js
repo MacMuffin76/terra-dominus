@@ -4,6 +4,7 @@ const crypto = require('crypto');
 
 const User = require('../models/User');
 const City = require('../models/City');
+const CitySlot = require('../models/CitySlot');
 const Resource = require('../models/Resource');
 const Building = require('../models/Building');
 const Unit = require('../models/Unit');
@@ -12,6 +13,7 @@ const Training = require('../models/Training');
 const Defense = require('../models/Defense');
 const Facility = require('../models/Facility');
 const Entity = require('../models/Entity');
+const WorldGrid = require('../models/WorldGrid');
 const sequelize = require('../db');
 const RefreshToken = require('../models/RefreshToken');
 const BlueprintRepository = require('../repositories/BlueprintRepository');
@@ -41,6 +43,65 @@ const buildAccessToken = (userId) =>
   jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: ACCESS_TOKEN_TTL,
   });
+
+  async function findOrCreateCapitalSlot(transaction) {
+  const availableSlot = await CitySlot.findOne({
+    where: { status: 'free', city_id: null },
+    include: [
+      {
+        model: WorldGrid,
+        as: 'grid',
+        attributes: ['coord_x', 'coord_y'],
+      },
+    ],
+    order: [['id', 'ASC']],
+    transaction,
+    lock: transaction.LOCK.UPDATE,
+  });
+
+  if (availableSlot && availableSlot.grid) {
+    return availableSlot;
+  }
+
+  const [existingCoords] = await sequelize.query(
+    'SELECT coord_x, coord_y FROM world_grid FOR UPDATE',
+    { transaction }
+  );
+  const usedCoords = new Set(existingCoords.map((row) => `${row.coord_x},${row.coord_y}`));
+
+  let coordX = 0;
+  let coordY = 0;
+  while (usedCoords.has(`${coordX},${coordY}`)) {
+    coordX += 1;
+    if (coordX > 100000) {
+      coordX = 0;
+      coordY += 1;
+    }
+  }
+
+  const grid = await WorldGrid.create(
+    {
+      coord_x: coordX,
+      coord_y: coordY,
+      terrain_type: 'plains',
+      has_city_slot: true,
+    },
+    { transaction }
+  );
+
+  const slot = await CitySlot.create(
+    {
+      grid_id: grid.id,
+      status: 'free',
+      quality: 1,
+    },
+    { transaction }
+  );
+
+  slot.grid = grid;
+  return slot;
+}
+
   
 async function createRefreshTokenRecord(userId, transaction) {
   const token = crypto.randomBytes(64).toString('hex');
@@ -60,13 +121,28 @@ async function createRefreshTokenRecord(userId, transaction) {
 }
 
 async function initializeUserGameData(userId, transaction) {
+  const capitalSlot = await findOrCreateCapitalSlot(transaction);
+
+  if (!capitalSlot || !capitalSlot.grid) {
+    throw new Error('Aucun emplacement disponible pour la capitale');
+  }
+
   const city = await City.create({
     user_id: userId,
     name: 'Capitale',
     is_capital: true,
-    coord_x: 0,
-    coord_y: 0,
+    coord_x: capitalSlot.grid.coord_x,
+    coord_y: capitalSlot.grid.coord_y,
   }, { transaction });
+
+  await CitySlot.update({
+    city_id: city.id,
+    status: 'occupied',
+    updated_at: new Date(),
+  }, {
+    where: { id: capitalSlot.id },
+    transaction,
+  });
 
   const cityId = city.id;
 

@@ -115,7 +115,7 @@ class ColonizationService {
         throw error;
       }
 
-      if (!departureCity.coord_x || !departureCity.coord_y) {
+      if (departureCity.coord_x === null || departureCity.coord_y === null) {
         const error = new Error('La ville de départ n\'a pas de coordonnées valides.');
         error.status = 400;
         throw error;
@@ -147,7 +147,7 @@ class ColonizationService {
         targetSlot.grid?.coord_y
       );
 
-      if (!targetGrid) {
+      if (!targetGrid || targetGrid.coord_x === null || targetGrid.coord_y === null) {
         const error = new Error('Coordonnées du slot cible introuvables.');
         error.status = 500;
         throw error;
@@ -457,8 +457,8 @@ class ColonizationService {
       }
 
       const targetGrid = mission.targetSlot?.grid;
-      if (!targetGrid) {
-        throw new Error('Target grid not found for mission');
+      if (!targetGrid || targetGrid.coord_x === null || targetGrid.coord_y === null) {
+        throw new Error('Target grid not found or missing coordinates for mission');
       }
 
       // Créer la nouvelle ville
