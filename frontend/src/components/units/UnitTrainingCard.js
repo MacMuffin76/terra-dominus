@@ -147,14 +147,7 @@ const UnitTrainingCard = ({
             {unit.cost?.fuel > 0 && <span className="cost fuel">{Number(unit.cost.fuel)}f</span>}
           </div>
         </div>
-        <div className="upkeep-section">
-          <span className="upkeep-label">Upkeep/h:</span>
-          <div className="upkeep-values">
-            {unit.upkeepPerHour?.gold > 0 && <span className="upkeep gold">{Number(unit.upkeepPerHour.gold)}g</span>}
-            {unit.upkeepPerHour?.metal > 0 && <span className="upkeep metal">{Number(unit.upkeepPerHour.metal)}m</span>}
-            {unit.upkeepPerHour?.fuel > 0 && <span className="upkeep fuel">{Number(unit.upkeepPerHour.fuel)}f</span>}
-          </div>
-        </div>
+        {/* Upkeep désactivé - Les unités ne consomment plus de ressources */}
       </div>
 
       {unit.counters && Array.isArray(unit.counters) && unit.counters.length > 0 && !isLocked && (

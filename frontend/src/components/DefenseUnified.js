@@ -13,8 +13,11 @@ import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
 import { useResources } from '../context/ResourcesContext';
 import DefenseBuildModal from './defense/DefenseBuildModal';
+import PremiumCard from './shared/PremiumCard';
+import DetailModal from './shared/DetailModal';
 import './Defense.css';
 import './units/UnitTrainingPanel.css';
+import './shared/PremiumStyles.css';
 
 /**
  * Defense Card Component
@@ -317,18 +320,25 @@ const DefenseUnified = () => {
         </div>
 
         {/* Defenses Grid */}
-        <div className="units-grid">
+        <div className="defense-grid">
           {filteredDefenses.map(defense => {
             const isLocked = locked.some(d => d.id === defense.id);
 
             return (
-              <DefenseUnlockCard
+              <PremiumCard
                 key={defense.id}
-                defense={defense}
+                title={defense.name}
+                image={`/images/defenses/${defense.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                description={defense.description}
+                tier={defense.tier}
+                badge={defense.icon || '🛡️'}
                 isLocked={isLocked}
-                onSelect={isLocked ? () => handleLockedDefenseClick(defense) : handleDefenseSelect}
-                onBuildClick={handleBuildClick}
-                isSelected={selectedDefense?.id === defense.id}
+                lockReason={defense.missingRequirements?.join(', ') || 'Verrouillée'}
+                stats={defense.stats || {}}
+                cost={defense.cost || {}}
+                onClick={() => isLocked ? handleLockedDefenseClick(defense) : handleDefenseSelect(defense)}
+                onAction={() => handleBuildClick(defense)}
+                actionLabel="Construire"
               />
             );
           })}

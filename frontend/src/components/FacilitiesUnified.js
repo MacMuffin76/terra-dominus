@@ -10,9 +10,12 @@ import { useAsyncError } from '../hooks/useAsyncError';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
+import PremiumCard from './shared/PremiumCard';
+import DetailModal from './shared/DetailModal';
 import './Facilities.css';
 import './units/UnitTrainingPanel.css';
 import './UnifiedPages.css';
+import './shared/PremiumStyles.css';
 
 /**
  * Facility Card Component
@@ -262,7 +265,6 @@ const FacilitiesUnified = () => {
   const [facilities, setFacilities] = useState([]);
   const [totalBonuses, setTotalBonuses] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
-  const [filterCategory, setFilterCategory] = useState('all');
   const [upgrading, setUpgrading] = useState(false);
 
   const loadFacilities = useCallback(async () => {
@@ -361,14 +363,6 @@ const FacilitiesUnified = () => {
     );
   }
 
-  // Filtrer par catégorie
-  const filteredFacilities = filterCategory === 'all'
-    ? facilities
-    : facilities.filter(f => f.category === filterCategory);
-
-  // Obtenir les catégories uniques
-  const uniqueCategories = [...new Set(facilities.map(f => f.category))];
-
   const builtCount = facilities.filter(f => f.isBuilt).length;
   const maxLevelCount = facilities.filter(f => f.isMaxLevel).length;
 
@@ -396,53 +390,43 @@ const FacilitiesUnified = () => {
           </div>
         </div>
 
-        {/* Total Bonuses Summary */}
-        {totalBonuses && <BonusesSummary bonuses={totalBonuses} />}
+        {/* Facilities Grid */}
+        <div className="facilities-grid">
+          {facilities.map(facility => {
+            const getTier = (cat) => {
+              if (cat === 'Militaire') return 3;
+              if (cat === 'Économie') return 2;
+              return 1;
+            };
 
-        {/* Filter Tabs - Category */}
-        <div className="tier-filters" style={{ marginTop: '1.5rem' }}>
-          <button
-            className={`filter-tab ${filterCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('all')}
-          >
-            Toutes ({facilities.length})
-          </button>
-          {uniqueCategories.map(category => {
-            const count = facilities.filter(f => f.category === category).length;
             return (
-              <button
-                key={category}
-                className={`filter-tab ${filterCategory === category ? 'active' : ''}`}
-                onClick={() => setFilterCategory(category)}
-              >
-                {category} ({count})
-              </button>
+              <PremiumCard
+                key={facility.key}
+                title={facility.name}
+                image={`/images/facilities/${facility.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                description={facility.description}
+                tier={getTier(facility.category)}
+                level={facility.currentLevel}
+                maxLevel={facility.maxLevel}
+                isLocked={!facility.isBuilt}
+                lockReason={!facility.meetsRequirement ? `Centre de Commandement Niv ${facility.requiredCommandCenter} requis` : 'Non construite'}
+                isInProgress={facility.status === 'building'}
+                buildTime={facility.constructionEndsAt}
+                badge={facility.icon || '🏗️'}
+                stats={facility.currentBonuses || {}}
+                cost={facility.upgradeCost || {}}
+                onClick={() => handleFacilitySelect(facility)}
+                onAction={() => handleUpgrade(facility)}
+                actionLabel={facility.status === 'building' ? 'En construction...' : (facility.isMaxLevel ? 'Niveau Max' : 'Améliorer')}
+              />
             );
           })}
         </div>
 
-        {/* Facilities Grid */}
-        <div className="facilities-grid" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-          gap: '1.5rem',
-          marginTop: '1.5rem'
-        }}>
-          {filteredFacilities.map(facility => (
-            <FacilityCard
-              key={facility.key}
-              facility={facility}
-              onSelect={handleFacilitySelect}
-              onUpgrade={handleUpgrade}
-              isSelected={selectedFacility?.key === facility.key}
-            />
-          ))}
-        </div>
-
-        {filteredFacilities.length === 0 && (
+        {facilities.length === 0 && (
           <div className="empty-state">
             <Lock size={48} />
-            <p>Aucune installation dans cette catégorie</p>
+            <p>Aucune installation disponible</p>
           </div>
         )}
       </div>

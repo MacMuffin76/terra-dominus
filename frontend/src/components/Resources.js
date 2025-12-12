@@ -4,21 +4,23 @@ import Menu from './Menu';
 import { useAsyncError } from '../hooks/useAsyncError';
 import './Resources.css';
 import ResourcesWidget from './ResourcesWidget';
-import { Alert, Loader, Modal } from './ui';
-import BuildingCard from './resources/BuildingCard';
-import ResourceDetail from './ResourceDetail';
+import { Alert, Loader } from './ui';
+import PremiumCard from './shared/PremiumCard';
+import DetailModal from './shared/DetailModal';
 import {
   getAllowedResourceBuildings,
   getResourceBuildings,
+  upgradeResourceBuilding,
 } from '../api/resourceBuildings';
 
 const Resources = () => {
   const { error, catchError, clearError } = useAsyncError('Resources');
   const [data, setData] = useState([]);
   const [selectedBuilding, setSel] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [allowedBuildings, setAllowedBuildings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterType, setFilterType] = useState('all'); // all, production, storage
+  const [upgrading, setUpgrading] = useState(false);
 
   const orderBuildings = (list, allowed) => 
     allowed.map(n => list.find(b => b.name === n)).filter(Boolean);
@@ -51,36 +53,40 @@ const Resources = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleClick = b => setSel(prev => prev?.id === b.id ? null : b);
-  const handleUp = updated => handleUpdate(updated);
-  const handleDown = updated => handleUpdate(updated);
-
-  const handleUpdate = updated => {
-    const upd = data.map(b => b.id === updated.id ? updated : b);
-    const ordered = orderBuildings(upd, allowedBuildings);
-    setData(ordered);
-    setSel(updated);
+  const handleCardClick = (building) => {
+    setSel(building);
+    setModalOpen(true);
   };
 
-  const getFilteredBuildings = () => {
-    if (filterType === 'all') return data;
-    if (filterType === 'production') {
-      return data.filter(b => 
-        b.name.includes('Mine') || 
-        b.name.includes('Extracteur') || 
-        b.name.includes('Centrale')
-      );
+  const handleUpgrade = async () => {
+    if (!selectedBuilding || upgrading) return;
+    
+    setUpgrading(true);
+    try {
+      const response = await upgradeResourceBuilding(selectedBuilding.id);
+      const updated = response.data?.building || response;
+      
+      // Update local state
+      const updatedData = data.map(b => b.id === updated.id ? updated : b);
+      setData(orderBuildings(updatedData, allowedBuildings));
+      setSel(updated);
+      
+      setModalOpen(false);
+    } catch (err) {
+      catchError(async () => { throw err; }, { 
+        toast: true, 
+        logError: true 
+      }).catch(() => {});
+    } finally {
+      setUpgrading(false);
     }
-    if (filterType === 'storage') {
-      return data.filter(b => 
-        b.name.includes('Hangar') || 
-        b.name.includes('Réservoir')
-      );
-    }
-    return data;
   };
 
-  const filteredData = getFilteredBuildings();
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSel(null);
+  };
+
   const builtCount = data.filter(b => b.level > 0).length;
   const totalProduction = data.reduce((sum, b) => {
     if (b.level > 0) {
@@ -124,46 +130,75 @@ const Resources = () => {
           />
         )}
 
-        {/* Filter Tabs */}
-        {!loading && !error && (
-          <div className="filter-tabs">
-            <button
-              className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterType('all')}
-            >
-              Tous ({data.length})
-            </button>
-            <button
-              className={`filter-tab ${filterType === 'production' ? 'active' : ''}`}
-              onClick={() => setFilterType('production')}
-            >
-              Production ({data.filter(b => b.name.includes('Mine') || b.name.includes('Extracteur') || b.name.includes('Centrale')).length})
-            </button>
-            <button
-              className={`filter-tab ${filterType === 'storage' ? 'active' : ''}`}
-              onClick={() => setFilterType('storage')}
-            >
-              Stockage ({data.filter(b => b.name.includes('Hangar') || b.name.includes('Réservoir')).length})
-            </button>
-          </div>
-        )}
-
         <div className="resources-grid">
           {loading ? (
             Array.from({ length: 6 }).map((_, idx) => (
-              <BuildingCard key={`skeleton-${idx}`} loading={true} />
+              <div key={`skeleton-${idx}`} className="card-skeleton" />
             ))
-          ) : filteredData.length > 0 ? (
-            filteredData.map((building) => (
-              <BuildingCard
-                key={building.id}
-                building={building}
-                isSelected={selectedBuilding?.id === building.id}
-                onClick={handleClick}
-                status={building.status}
-                constructionEndsAt={building.constructionEndsAt}
-              />
-            ))
+          ) : data.length > 0 ? (
+            data.map((building) => {
+              const isBuilt = building.level > 0;
+              const isBuilding = building.status === 'building';
+              const formatFileName = (name) => {
+                if (!name) return 'default';
+                return name
+                  .toLowerCase()
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .replace(/['']/g, '')
+                  .replace(/\s+/g, '_');
+              };
+
+              // Resource icon
+              const getIcon = (name) => {
+                if (name.includes('or')) return '💰';
+                if (name.includes('métal')) return '⚙️';
+                if (name.includes('Extracteur')) return '⛽';
+                if (name.includes('électrique')) return '⚡';
+                if (name.includes('Hangar')) return '📦';
+                if (name.includes('Réservoir')) return '🛢️';
+                return '🏗️';
+              };
+
+              // Tier based on building type
+              const getTier = (name) => {
+                if (name.includes('Centrale')) return 3;
+                if (name.includes('Réservoir')) return 2;
+                if (name.includes('métal') || name.includes('Extracteur')) return 2;
+                return 1;
+              };
+
+              return (
+                <PremiumCard
+                  key={building.id}
+                  title={building.name}
+                  image={`/images/buildings/${formatFileName(building.name)}.png`}
+                  description={building.description || 'Bâtiment de ressource'}
+                  tier={getTier(building.name)}
+                  level={building.level}
+                  maxLevel={building.max_level || 10}
+                  isLocked={!isBuilt}
+                  lockReason={!isBuilt ? 'Non construit' : undefined}
+                  isInProgress={isBuilding}
+                  buildTime={building.constructionEndsAt}
+                  badge={getIcon(building.name)}
+                  stats={{
+                    production: building.production_rate || 0,
+                    capacity: building.capacite || 0,
+                  }}
+                  cost={{
+                    gold: building.cost_gold || 0,
+                    metal: building.cost_metal || 0,
+                    fuel: building.cost_fuel || 0,
+                    energy: building.cost_energy || 0,
+                    time: building.construction_time || 0,
+                  }}
+                  onClick={() => handleCardClick(building)}
+                  onAction={() => handleCardClick(building)}
+                  actionLabel={isBuilt ? 'Améliorer' : 'Construire'}
+                />
+              );
+            })
           ) : (
             !error && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
@@ -174,14 +209,40 @@ const Resources = () => {
         </div>
 
         {selectedBuilding && (
-          <Modal isOpen={!!selectedBuilding} onClose={() => setSel(null)}>
-            <ResourceDetail
-              building={selectedBuilding}
-              onBuildingUpgraded={handleUp}
-              onBuildingDowngraded={handleDown}
-              onClose={() => setSel(null)}
-            />
-          </Modal>
+          <DetailModal
+            isOpen={modalOpen}
+            onClose={handleCloseModal}
+            title={selectedBuilding.name || 'Bâtiment'}
+            image={`/images/buildings/${selectedBuilding.name ? selectedBuilding.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['']/g, '').replace(/\s+/g, '_') : 'default'}.png`}
+            description={selectedBuilding.description || 'Bâtiment de production ou de stockage de ressources'}
+            tier={selectedBuilding.name.includes('Centrale') ? 3 : selectedBuilding.name.includes('Réservoir') || selectedBuilding.name.includes('métal') ? 2 : 1}
+            level={selectedBuilding.level}
+            nextLevel={selectedBuilding.level + 1}
+            stats={{
+              production: selectedBuilding.production_rate || 0,
+              capacity: selectedBuilding.capacite || 0,
+            }}
+            nextLevelStats={{
+              production: (selectedBuilding.production_rate || 0) * 1.5,
+              capacity: (selectedBuilding.capacite || 0) * 1.5,
+            }}
+            cost={{
+              gold: selectedBuilding.cost_gold || 0,
+              metal: selectedBuilding.cost_metal || 0,
+              fuel: selectedBuilding.cost_fuel || 0,
+              energy: selectedBuilding.cost_energy || 0,
+              time: selectedBuilding.construction_time || 0,
+            }}
+            benefits={[
+              'Augmente la production de ressources',
+              'Améliore la capacité de stockage',
+              'Débloque de nouvelles technologies',
+            ]}
+            requirements={{}}
+            onAction={handleUpgrade}
+            actionLabel={upgrading ? 'Amélioration...' : (selectedBuilding.level > 0 ? 'Améliorer' : 'Construire')}
+            actionDisabled={upgrading || selectedBuilding.status === 'building'}
+          />
         )}
       </div>
     </div>

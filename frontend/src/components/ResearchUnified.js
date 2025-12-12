@@ -15,9 +15,12 @@ import { useAsyncError } from '../hooks/useAsyncError';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
+import PremiumCard from './shared/PremiumCard';
+import DetailModal from './shared/DetailModal';
 import './Research.css';
 import './units/UnitTrainingPanel.css';
 import './UnifiedPages.css';
+import './shared/PremiumStyles.css';
 
 /**
  * Research Card Component
@@ -151,8 +154,6 @@ const ResearchUnified = () => {
   const [loading, setLoading] = useState(true);
   const [researchData, setResearchData] = useState(null);
   const [selectedResearch, setSelectedResearch] = useState(null);
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [starting, setStarting] = useState(false);
   const [queueAction, setQueueAction] = useState(null);
 
@@ -304,20 +305,9 @@ const ResearchUnified = () => {
     return a.name.localeCompare(b.name);
   });
 
-  // Filtrer par catégorie
-  let filteredResearch = filterCategory === 'all' 
-    ? allResearch 
-    : allResearch.filter(r => r.category === filterCategory);
-
-  // Filtrer par statut
-  if (filterStatus !== 'all') {
-    filteredResearch = filteredResearch.filter(r => r.status === filterStatus);
-  }
+  const filteredResearch = allResearch;
 
   const researchLabLevel = buildings.researchLab || 0;
-
-  // Obtenir les catégories uniques
-  const uniqueCategories = [...new Set(allResearch.map(r => r.category))];
 
   return (
     <div className="research-container">
@@ -351,119 +341,42 @@ const ResearchUnified = () => {
           </div>
         </div>
 
-        <div className="research-queue-panel">
-          <div className="queue-header">
-            <h3>File de recherche</h3>
-            <span className="queue-count">{queue.length} tâche(s)</span>
-          </div>
-          {activeResearch ? (
-            <div className="queue-card active">
-              <div className="queue-info">
-                <p className="queue-title">{activeResearch.researchName || 'Recherche en cours'}</p>
-                <p className="queue-subtitle">Termine dans {formatDuration(activeResearch.remainingSeconds)}</p>
-              </div>
-              <div className="queue-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleAccelerate(activeResearch)}
-                  disabled={queueAction === activeResearch.id}
-                >
-                  Accélérer
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="queue-card empty">
-              <p>Aucune recherche en cours.</p>
-            </div>
-          )}
+        {/* Research Grid */}
+        <div className="research-grid">
+          {filteredResearch.map(research => {
+            const getTier = (category) => {
+              if (category === 'Militaire') return 4;
+              if (category === 'Défense') return 3;
+              if (category === 'Économie') return 2;
+              return 1;
+            };
 
-          {queuedResearch.length > 0 && (
-            <div className="queue-list">
-              {queuedResearch.map((item) => (
-                <div className="queue-card" key={item.id}>
-                  <div className="queue-info">
-                    <p className="queue-title">{item.researchName || 'Recherche planifiée'}</p>
-                    <p className="queue-subtitle">Début prévu après la tâche active</p>
-                  </div>
-                  <div className="queue-actions">
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => handleCancel(item)}
-                      disabled={queueAction === item.id}
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            const statusIcons = {
+              completed: '✅',
+              inProgress: '🛠️',
+              available: '🔬',
+              locked: '🔒'
+            };
 
-
-        {/* Filter Tabs - Status */}
-        <div className="tier-filters">
-          <button
-            className={`filter-tab ${filterStatus === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterStatus('all')}
-          >
-            Toutes ({allResearch.length})
-          </button>
-          <button
-            className={`filter-tab ${filterStatus === 'completed' ? 'active' : ''}`}
-            onClick={() => setFilterStatus('completed')}
-          >
-            <CheckCircle size={16} /> Complétées ({completed.length})
-          </button>
-          <button
-            className={`filter-tab ${filterStatus === 'inProgress' ? 'active' : ''}`}
-            onClick={() => setFilterStatus('inProgress')}
-          >
-            <Clock size={16} /> En cours ({inProgress.length})
-          </button>
-          <button
-            className={`filter-tab ${filterStatus === 'available' ? 'active' : ''}`}
-            onClick={() => setFilterStatus('available')}
-          >
-            <FlaskConical size={16} /> Disponibles ({available.length})
-          </button>
-        </div>
-
-        {/* Filter Tabs - Category */}
-        <div className="tier-filters" style={{ marginTop: '0.5rem' }}>
-          <button
-            className={`filter-tab ${filterCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('all')}
-          >
-            Toutes Catégories
-          </button>
-          {uniqueCategories.map(category => {
-            const count = allResearch.filter(r => r.category === category).length;
             return (
-              <button
-                key={category}
-                className={`filter-tab ${filterCategory === category ? 'active' : ''}`}
-                onClick={() => setFilterCategory(category)}
-              >
-                {category} ({count})
-              </button>
+              <PremiumCard
+                key={research.id}
+                title={research.name}
+                image={`/images/research/${research.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                description={research.description}
+                tier={getTier(research.category)}
+                badge={statusIcons[research.status] || '🔬'}
+                isLocked={research.status === 'locked'}
+                lockReason={research.missingRequirements?.join(', ') || 'Verrouillée'}
+                isInProgress={research.status === 'inProgress'}
+                stats={research.effects || {}}
+                cost={research.cost || {}}
+                onClick={() => handleResearchSelect(research)}
+                onAction={() => handleStartResearch(research)}
+                actionLabel={research.status === 'completed' ? 'Terminée' : (research.status === 'inProgress' ? 'En cours...' : 'Lancer')}
+              />
             );
           })}
-        </div>
-
-        {/* Research Grid */}
-        <div className="research-grid" style={{ marginTop: '1.5rem' }}>
-          {filteredResearch.map(research => (
-            <ResearchCard
-              key={research.id}
-              research={research}
-              status={research.status}
-              onSelect={handleResearchSelect}
-              onStart={handleStartResearch}
-              isSelected={selectedResearch?.id === research.id}
-            />
-          ))}
         </div>
 
         {filteredResearch.length === 0 && (

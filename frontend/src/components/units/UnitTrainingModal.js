@@ -137,32 +137,7 @@ const UnitTrainingModal = ({ isOpen, onClose, unit, onTrain }) => {
           </div>
         </div>
 
-        {/* Upkeep info */}
-        {(totalUpkeep.gold > 0 || totalUpkeep.metal > 0 || totalUpkeep.fuel > 0) && (
-          <div className="training-upkeep-section">
-            <h5>Entretien (par heure)</h5>
-            <div className="training-upkeep">
-              {totalUpkeep.gold > 0 && (
-                <div className="upkeep-item">
-                  <span className="resource-icon">💰</span>
-                  <span>{totalUpkeep.gold.toLocaleString()}/h</span>
-                </div>
-              )}
-              {totalUpkeep.metal > 0 && (
-                <div className="upkeep-item">
-                  <span className="resource-icon">⚙️</span>
-                  <span>{totalUpkeep.metal.toLocaleString()}/h</span>
-                </div>
-              )}
-              {totalUpkeep.fuel > 0 && (
-                <div className="upkeep-item">
-                  <span className="resource-icon">⛽</span>
-                  <span>{totalUpkeep.fuel.toLocaleString()}/h</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Upkeep désactivé - Les unités ne consomment plus de ressources */}
 
         {/* Unit stats */}
         <div className="training-stats-section">

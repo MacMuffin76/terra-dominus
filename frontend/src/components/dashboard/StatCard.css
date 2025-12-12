@@ -51,6 +51,7 @@
 .terra-stat-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
@@ -66,6 +67,7 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-align: center;
 }
 
 .terra-stat-value {
@@ -76,6 +78,7 @@
   text-shadow: var(--text-glow);
   margin-bottom: var(--spacing-xs);
   line-height: 1.2;
+  text-align: center;
 }
 
 .terra-stat-sublabel {
@@ -83,6 +86,7 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   opacity: 0.7;
+  text-align: center;
 }
 
 .terra-stat-glow {

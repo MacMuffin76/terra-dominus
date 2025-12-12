@@ -42,9 +42,9 @@ function startJobs(container) {
   questJobs = createQuestRotationJob(container);
   questJobs.start();
   
-  // Upkeep job (hourly)
-  startUpkeepJob(container);
-  upkeepJobStarted = true;
+  // Upkeep job (hourly) - DÉSACTIVÉ : Les unités ne consomment plus de ressources
+  // startUpkeepJob(container);
+  // upkeepJobStarted = true;
   
   // Territory resource job (hourly)
   territoryResourceJob.start();

@@ -12,11 +12,13 @@ import { useToast } from '../hooks/useToast';
 import { ToastContainer } from './ui/Toast';
 import { Alert, Loader } from './ui';
 import { useResources } from '../context/ResourcesContext';
-import UnitTrainingCard from './units/UnitTrainingCard';
 import UnitTrainingModal from './units/UnitTrainingModal';
 import TierProgressBar from './units/TierProgressBar';
+import PremiumCard from './shared/PremiumCard';
+import DetailModal from './shared/DetailModal';
 import './Training.css';
 import './units/UnitTrainingPanel.css';
+import './shared/PremiumStyles.css';
 
 /**
  * Page Centre d'Entraînement
@@ -31,7 +33,6 @@ const TrainingUnified = () => {
   const [availableData, setAvailableData] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [unitsLoading, setUnitsLoading] = useState(true);
-  const [filterTier, setFilterTier] = useState('all');
   const [trainingModalOpen, setTrainingModalOpen] = useState(false);
   const [unitToTrain, setUnitToTrain] = useState(null);
 
@@ -143,13 +144,11 @@ const TrainingUnified = () => {
     );
   }
 
-  const { unlocked = [], locked = [], buildings = {}, tierProgress } = availableData || {};
+  const { unlocked = [], locked = [], buildings = {} } = availableData || {};
   const allUnits = [...unlocked, ...locked];
 
-  // Filtrage des unités par tier
-  const filteredUnits = filterTier === 'all'
-    ? allUnits
-    : allUnits.filter(u => u.tier === parseInt(filterTier));
+  // Show all units without filtering
+  const filteredUnits = allUnits;
 
   const trainingCenterLevel = buildings.trainingCenterLevel || 0;
   const forgeLevel = buildings.forgeLevel || 0;
@@ -192,54 +191,33 @@ const TrainingUnified = () => {
           />
         )}
 
-        {/* Tier Progress */}
-        {tierProgress && (
-          <TierProgressBar
-            currentLevel={trainingCenterLevel}
-            tierProgress={tierProgress}
-          />
-        )}
-
-        {/* Filtres de tiers */}
-        <div className="tier-filters">
-          <button
-            className={`filter-tab ${filterTier === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterTier('all')}
-          >
-            Toutes ({allUnits.length})
-          </button>
-          {[1, 2, 3, 4].map(tier => {
-            const count = allUnits.filter(u => u.tier === tier).length;
-            return (
-              <button
-                key={tier}
-                className={`filter-tab tier-${tier} ${filterTier === String(tier) ? 'active' : ''}`}
-                onClick={() => setFilterTier(String(tier))}
-              >
-                Tier {tier} ({count})
-              </button>
-            );
-          })}
-        </div>
-
         {/* Grille des unités */}
-        <div className="units-grid">
+        <div className="training-grid">
           {unitsLoading && <Loader label="Chargement des unités..." />}
           {!unitsLoading && filteredUnits.map(unit => {
             const isLocked = locked.some(u => u.id === unit.id);
             const lockedData = isLocked ? locked.find(u => u.id === unit.id) : null;
 
             return (
-              <UnitTrainingCard
+              <PremiumCard
                 key={unit.id}
-                unit={unit}
+                title={unit.name}
+                image={`/images/units/${unit.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                description={unit.description}
+                tier={unit.tier}
+                badge={unit.icon || '👥'}
                 isLocked={isLocked}
-                requiredLevel={lockedData?.requiredLevel}
-                currentLevel={trainingCenterLevel}
-                onSelect={handleUnitSelect}
-                onLockedClick={handleLockedUnitClick}
-                onTrainClick={handleTrainClick}
-                isSelected={selectedUnit?.id === unit.id}
+                lockReason={lockedData ? `Centre d'Entraînement Niv ${lockedData.requiredLevel} requis` : 'Verrouillée'}
+                stats={{
+                  attack: unit.force || unit.attack || 0,
+                  defense: unit.defense || 0,
+                  health: unit.health || 0,
+                  speed: unit.speed || 0
+                }}
+                cost={unit.cost || {}}
+                onClick={() => isLocked ? handleLockedUnitClick(unit) : handleUnitSelect(unit)}
+                onAction={() => handleTrainClick(unit)}
+                actionLabel="Entraîner"
               />
             );
           })}

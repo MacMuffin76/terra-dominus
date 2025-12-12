@@ -142,7 +142,7 @@ class ResourceService {
       queueByEntityId.set(item.entityId, item);
     });
 
-    return buildings.map((building, index) => {
+    return await Promise.all(buildings.map(async (building, index) => {
       const entityId = entityIds[index];
       const queueItem = queueByEntityId.get(entityId);
 
@@ -159,13 +159,78 @@ class ResourceService {
           : 0;
       }
 
+      const currentLevel = Number(building.level) || 0;
+      const nextLevel = currentLevel + 1;
+
+      // Calculer les coûts pour le prochain niveau
+      const costs = await ResourceCost.findAll({
+        where: {
+          entity_id: entityId,
+          level: nextLevel,
+        },
+      });
+
+      const costMap = {
+        gold: 0,
+        metal: 0,
+        fuel: 0,
+        energy: 0,
+      };
+
+      const typeMap = {
+        'or': 'gold',
+        'metal': 'metal',
+        'carburant': 'fuel',
+        'energie': 'energy',
+      };
+
+      costs.forEach(c => {
+        const key = typeMap[c.resource_type];
+        if (key) {
+          costMap[key] = Number(c.amount);
+        }
+      });
+
+      // Calculer la production ou capacité
+      let production_rate = 0;
+      let capacite = building.capacite || 0;
+
+      if (building.name === 'Hangar') {
+        const caps = calculateStorageCapacities({ hangarLevel: currentLevel });
+        capacite = caps.or;
+      } else if (building.name === 'Réservoir') {
+        const caps = calculateStorageCapacities({ reservoirLevel: currentLevel });
+        capacite = caps.carburant;
+      } else if (building.name === 'Centrale électrique') {
+        const caps = calculateStorageCapacities({ centraleLevel: currentLevel });
+        capacite = caps.energie;
+      } else {
+        // Bâtiments de production
+        const productionData = await ResourceProduction.findOne({
+          where: { building_name: building.name, level: currentLevel },
+        });
+        if (productionData) {
+          production_rate = parseFloat(productionData.production_rate);
+        }
+      }
+
+      const buildDuration = getBuildDurationSeconds(nextLevel);
+
       return {
         ...building.toJSON(),
         status,
         constructionEndsAt,
         remainingTime: etaSeconds,
+        production_rate,
+        capacite,
+        cost_gold: costMap.gold,
+        cost_metal: costMap.metal,
+        cost_fuel: costMap.fuel,
+        cost_energy: costMap.energy,
+        construction_time: buildDuration,
+        max_level: 10, // À ajuster selon vos besoins
       };
-    });
+    }));
   }
 
   async getResourceBuildingDetails(userId, buildingId) {
