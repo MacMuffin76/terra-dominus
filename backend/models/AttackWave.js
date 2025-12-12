@@ -47,9 +47,10 @@ class AttackWave extends Model {
       foreignKey: 'attack_id',
       as: 'attack'
     });
-    AttackWave.belongsTo(models.Entity, {
+    // unit_entity_id référence la table units, pas entities
+    AttackWave.belongsTo(models.Unit, {
       foreignKey: 'unit_entity_id',
-      as: 'unitEntity'
+      as: 'unit'
     });
   }
 }

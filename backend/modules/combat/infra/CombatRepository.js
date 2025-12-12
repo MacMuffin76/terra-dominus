@@ -51,7 +51,7 @@ class CombatRepository {
         include.push({
           model: this.AttackWave,
           as: 'waves',
-          include: [{ model: this.Entity, as: 'unitEntity', attributes: ['id', 'name', 'type'] }]
+          include: [{ model: this.Unit, as: 'unit', attributes: ['id', 'name'] }]
         });
       }
 
@@ -93,7 +93,7 @@ class CombatRepository {
           {
             model: this.AttackWave,
             as: 'waves',
-            include: [{ model: this.Entity, as: 'unitEntity', attributes: ['id', 'name'] }]
+            include: [{ model: this.Unit, as: 'unit', attributes: ['id', 'name', 'quantity'] }]
           }
         ],
         order: [['created_at', 'DESC']],
@@ -118,7 +118,7 @@ class CombatRepository {
           {
             model: this.AttackWave,
             as: 'waves',
-            include: [{ model: this.Entity, as: 'unitEntity' }]
+            include: [{ model: this.Unit, as: 'unit' }]
           }
         ]
       });

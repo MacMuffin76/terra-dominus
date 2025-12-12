@@ -23,15 +23,16 @@ function calculateTravelTime(distance, speedFactor = 1) {
 }
 
 // Calcul de la force d'une unité
-function calculateUnitStrength(unitEntity) {
-  const baseStrength = unitEntity.attack_power || 1;
+function calculateUnitStrength(unit) {
+  // Si c'est une unit avec force, l'utiliser, sinon défaut
+  const baseStrength = unit?.force || unit?.attack_power || 10;
   return baseStrength;
 }
 
 // Calcul de la force totale d'une armée
 function calculateArmyStrength(waves) {
   return waves.reduce((total, wave) => {
-    const unitStrength = calculateUnitStrength(wave.unitEntity);
+    const unitStrength = calculateUnitStrength(wave.unit || wave.unitEntity);
     return total + (unitStrength * wave.quantity);
   }, 0);
 }
@@ -56,7 +57,8 @@ function calculateArmyStrengthWithCounters(attackerWaves, defenderUnits) {
 
   // Map attacker waves
   attackerWaves.forEach(wave => {
-    const unitKey = wave.unitEntity?.unit_key || 'militia';
+    const unit = wave.unit || wave.unitEntity;
+    const unitKey = unit?.unit_key || unit?.name?.toLowerCase() || 'militia';
     attackerComposition[unitKey] = (attackerComposition[unitKey] || 0) + wave.quantity;
   });
 

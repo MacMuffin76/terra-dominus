@@ -4,12 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Menu from './Menu';
 import axiosInstance from '../utils/axiosInstance';
 import { useAsyncError } from '../hooks/useAsyncError';
-import { Send, Target, Zap } from 'lucide-react';
+import { Send, Target, Zap, Clock, Shield } from 'lucide-react';
 import './Fleet.css';
 import ResourcesWidget from './ResourcesWidget';
 import { Alert, Loader, Button } from './ui';
 import AttackConfigModal from './fleet/AttackConfigModal';
 import { getAvailableUnits } from '../api/unitUnlocks';
+import { getUserAttacks } from '../api/combat';
 
 const Fleet = () => {
   const { error, catchError, clearError } = useAsyncError('Fleet');
@@ -18,6 +19,8 @@ const Fleet = () => {
   const [selectedUnits, setSelectedUnits] = useState({});
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [attackType, setAttackType] = useState('raid');
+  const [activeTab, setActiveTab] = useState('units'); // 'units' ou 'attacks'
+  const [attacks, setAttacks] = useState([]);
 
   const fetchUnits = async () => {
     setLoading(true);
@@ -32,21 +35,27 @@ const Fleet = () => {
       const { data: ownedUnits } = await axiosInstance.get('/units');
       
       // Fusionner les données: définitions des unités + quantités possédées
-      const mergedUnits = unlockedUnits.map(unlocked => {
-        const owned = ownedUnits.find(u => u.name === unlocked.name);
-        return {
-          id: unlocked.id,
-          entityId: owned?.id, // ID de l'entité unit dans la DB
-          name: unlocked.name,
-          quantity: owned?.quantity || 0,
-          attack: unlocked.attack,
-          defense: unlocked.defense,
-          health: unlocked.health,
-          tier: unlocked.tier,
-          cost: unlocked.cost
-        };
-      });
+      const mergedUnits = unlockedUnits
+        .map(unlocked => {
+          const owned = ownedUnits.find(u => u.name === unlocked.name);
+          if (!owned) {
+            console.warn(`⚠️ Unité déverrouillée "${unlocked.name}" non trouvée dans la DB`);
+          }
+          return {
+            id: unlocked.id,
+            entityId: owned?.id, // ID de l'entité unit dans la DB
+            name: unlocked.name,
+            quantity: owned?.quantity || 0,
+            attack: unlocked.attack,
+            defense: unlocked.defense,
+            health: unlocked.health,
+            tier: unlocked.tier,
+            cost: unlocked.cost
+          };
+        })
+        .filter(unit => unit.quantity > 0); // Garder toutes les unités avec quantité > 0
       
+      console.log(`✅ ${mergedUnits.length} unités disponibles pour l'attaque`, mergedUnits);
       setUnits(mergedUnits);
       setLoading(false);
     } catch (err) {
@@ -58,10 +67,25 @@ const Fleet = () => {
     }
   };
 
+  const fetchAttacks = async () => {
+    try {
+      const ongoingAttacks = await getUserAttacks({ status: 'traveling' });
+      setAttacks(ongoingAttacks);
+    } catch (err) {
+      await catchError(async () => { throw err; }, { 
+        toast: false, 
+        logError: true 
+      }).catch(() => {});
+    }
+  };
+
   useEffect(() => {
     fetchUnits();
+    if (activeTab === 'attacks') {
+      fetchAttacks();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab]);
 
   const handleQuantityChange = (unitId, entityId, value) => {
     const numValue = parseInt(value) || 0;
@@ -96,7 +120,7 @@ const Fleet = () => {
 
   const getSelectedUnitsList = () => {
     return Object.entries(selectedUnits)
-      .filter(([_, unit]) => unit.quantity > 0)
+      .filter(([_, unit]) => unit.quantity > 0 && unit.entityId !== undefined && unit.entityId !== null)
       .map(([_, unit]) => ({
         entityId: unit.entityId,
         quantity: unit.quantity,
@@ -105,10 +129,14 @@ const Fleet = () => {
   };
 
   const handleNextStep = () => {
+    console.log('🔍 État des unités sélectionnées:', selectedUnits);
     const selectedList = getSelectedUnitsList();
+    console.log('📋 Liste filtrée pour l\'attaque:', selectedList);
+    
     if (selectedList.length === 0) {
+      console.error('❌ Aucune unité valide après filtrage');
       catchError(async () => { 
-        throw new Error('Vous devez sélectionner au moins une unité');
+        throw new Error('Vous devez sélectionner au moins une unité valide (vérifiez que les unités existent en DB)');
       }, { toast: true });
       return;
     }
@@ -135,8 +163,29 @@ const Fleet = () => {
             <h1 className="fleet-title">Centre de Commandement</h1>
           </div>
           <p className="fleet-subtitle">Préparez vos forces et lancez vos opérations militaires</p>
+          
+          {/* Tabs */}
+          <div className="fleet-tabs">
+            <button 
+              className={`fleet-tab ${activeTab === 'units' ? 'active' : ''}`}
+              onClick={() => setActiveTab('units')}
+            >
+              <Send size={18} />
+              <span>Mes Unités</span>
+            </button>
+            <button 
+              className={`fleet-tab ${activeTab === 'attacks' ? 'active' : ''}`}
+              onClick={() => setActiveTab('attacks')}
+            >
+              <Target size={18} />
+              <span>Attaques en cours</span>
+            </button>
+          </div>
         </div>
 
+        {/* Affichage conditionnel selon l'onglet */}
+        {activeTab === 'units' && (
+          <>
         {/* Attack Type Selector */}
         <div className="attack-type-selector">
           <h3>Type d'opération</h3>
@@ -201,7 +250,8 @@ const Fleet = () => {
                         className="fleet-unit-image"
                         onError={(e) => { 
                           e.target.onerror = null; // Empêcher la boucle infinie
-                          e.target.src = '/images/placeholder.png'; 
+                          e.target.style.opacity = '0.3'; // Rendre translucide
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtc2l6ZT0iNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPvCfjoLvuI88L3RleHQ+PC9zdmc+'; // Icône de fallback (emoji militaire)
                         }}
                       />
                       {selected > 0 && (
@@ -223,13 +273,13 @@ const Fleet = () => {
                           min="0"
                           max={unit.quantity}
                           value={selected}
-                          onChange={(e) => handleQuantityChange(unit.id, unit.entityid, e.target.value)}
+                          onChange={(e) => handleQuantityChange(unit.id, unit.entityId, e.target.value)}
                           className="quantity-input"
                           placeholder="0"
                         />
                         <button
                           className="max-button"
-                          onClick={() => handleMaxClick(unit.id, unit.entityid, unit.quantity)}
+                          onClick={() => handleMaxClick(unit.id, unit.entityId, unit.quantity)}
                         >
                           MAX
                         </button>
@@ -292,6 +342,54 @@ const Fleet = () => {
             <Send size={64} className="empty-icon" />
             <h3>Aucune unité disponible</h3>
             <p>Entraînez des unités dans le Centre d'entraînement pour pouvoir lancer des attaques</p>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* Onglet Attaques */}
+        {activeTab === 'attacks' && (
+          <div className="fleet-attacks-section">
+            <h3 style={{ marginBottom: '1rem' }}>Attaques en cours</h3>
+            {loading ? (
+              <Loader />
+            ) : attacks.length === 0 ? (
+              <div className="fleet-empty-state">
+                <Shield size={64} className="empty-icon" />
+                <h3>Aucune attaque en cours</h3>
+                <p>Vos attaques actives s'afficheront ici</p>
+              </div>
+            ) : (
+              <div className="attacks-list">
+                {attacks.map(attack => (
+                  <div key={attack.id} className="attack-card">
+                    <div className="attack-header">
+                      <Target size={20} />
+                      <h4>
+                        {attack.attackerCity?.name} → {attack.defenderCity?.name}
+                      </h4>
+                      <span className={`attack-status ${attack.status}`}>
+                        {attack.status === 'traveling' ? 'En route' : attack.status}
+                      </span>
+                    </div>
+                    <div className="attack-details">
+                      <div className="attack-info">
+                        <Clock size={16} />
+                        <span>Arrivée: {new Date(attack.arrival_time).toLocaleString('fr-FR')}</span>
+                      </div>
+                      <div className="attack-info">
+                        <Zap size={16} />
+                        <span>Type: {attack.attack_type === 'raid' ? 'Raid' : attack.attack_type === 'conquest' ? 'Conquête' : 'Siège'}</span>
+                      </div>
+                      <div className="attack-info">
+                        <Send size={16} />
+                        <span>{attack.waves?.length || 0} vague(s) d'unités</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

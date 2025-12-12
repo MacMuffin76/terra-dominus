@@ -76,10 +76,17 @@ const AttackConfigModal = ({ attackType, selectedUnits, onClose, onSuccess }) =>
         }))
       };
 
+      console.log('📤 Envoi de l\'attaque:', attackData);
       await launchAttack(attackData);
       onSuccess();
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Erreur lors du lancement de l\'attaque');
+      // Afficher les détails de validation si disponibles
+      if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
+        const detailsMsg = err.response.data.details.map(d => `${d.field}: ${d.message}`).join(', ');
+        setError(`${err.response.data.message} - ${detailsMsg}`);
+      } else {
+        setError(err.response?.data?.message || err.message || 'Erreur lors du lancement de l\'attaque');
+      }
     } finally {
       setLoading(false);
     }

@@ -23,7 +23,10 @@ function zodValidate(schema) {
         logger.warn({ 
           errors: error.errors, 
           path: req.path,
-          method: req.method 
+          method: req.method,
+          body: req.body,
+          query: req.query,
+          params: req.params
         }, 'Validation Zod failed');
         
         return res.status(400).json({

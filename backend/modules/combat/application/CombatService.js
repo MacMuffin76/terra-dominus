@@ -209,14 +209,14 @@ class CombatService {
         for (const unitData of units) {
           const unit = await this.Unit.findOne({
             where: {
-              city_id: attackerCityId,
-              entity_id: unitData.entityId
+              id: unitData.entityId,
+              city_id: attackerCityId
             },
             transaction
           });
 
           if (!unit || unit.quantity < unitData.quantity) {
-            throw new Error(`Unités insuffisantes: ${unitData.entityId}`);
+            throw new Error(`Unités insuffisantes: ${unit?.name || unitData.entityId} (disponible: ${unit?.quantity || 0}, demandé: ${unitData.quantity})`);
           }
 
           // Déduire les unités
@@ -224,8 +224,9 @@ class CombatService {
           await unit.save({ transaction });
 
           waves.push({
-            unit_entity_id: unitData.entityId,
-            quantity: unitData.quantity
+            unit_entity_id: unit.id,
+            quantity: unitData.quantity,
+            unitEntity: unit // Inclure les infos de l'unité pour les calculs de combat
           });
         }
 
@@ -435,7 +436,7 @@ class CombatService {
         for (const unit of defenderUnits) {
           const lossRate = defStrLost / defenderStrength;
           const losses = Math.floor(unit.quantity * lossRate);
-          defenderLosses[unit.entity_id] = losses;
+          defenderLosses[unit.id] = losses;
           unit.quantity -= losses;
           await unit.save({ transaction });
         }
@@ -608,21 +609,13 @@ class CombatService {
         }
 
         // 2. Vérifier les espions disponibles
-        const spyEntity = await this.sequelize.models.Entity.findOne({
-          where: { name: 'Espion', type: 'unit' }
-        });
-
-        if (!spyEntity) {
-          throw new Error('Type d\'unité "Espion" introuvable');
-        }
-
         const spyUnit = await this.Unit.findOne({
-          where: { city_id: spyCityId, entity_id: spyEntity.id },
+          where: { city_id: spyCityId, name: 'Espion' },
           transaction
         });
 
         if (!spyUnit || spyUnit.quantity < spyCount) {
-          throw new Error('Espions insuffisants');
+          throw new Error(`Espions insuffisants (disponible: ${spyUnit?.quantity || 0}, demandé: ${spyCount})`);
         }
 
         // 3. Déduire les espions
@@ -858,8 +851,8 @@ class CombatService {
           const refundQuantity = Math.floor(wave.quantity * 0.5);
           const unit = await this.Unit.findOne({
             where: {
-              city_id: attack.attacker_city_id,
-              entity_id: wave.unit_entity_id
+              id: wave.unit_entity_id,
+              city_id: attack.attacker_city_id
             },
             transaction
           });

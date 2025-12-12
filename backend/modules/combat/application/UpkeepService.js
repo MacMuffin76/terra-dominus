@@ -59,8 +59,8 @@ class UpkeepService {
         totalFuel += fuelCost;
 
         unitBreakdown.push({
-          unitId: unit.entity_id,
-          unitName: unit.entity.entity_name,
+          unitId: unit.id,
+          unitName: unit.name,
           quantity: unit.quantity,
           goldPerHour: goldCost,
           metalPerHour: metalCost,
@@ -261,8 +261,8 @@ class UpkeepService {
         await unit.save({ transaction });
 
         disbanded.push({
-          unitId: unit.entity_id,
-          unitName: unit.entity.entity_name,
+          unitId: unit.id,
+          unitName: unit.name,
           quantityLost: toLose,
           quantityRemaining: unit.quantity
         });
