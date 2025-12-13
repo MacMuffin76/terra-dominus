@@ -97,6 +97,7 @@ const createApiRouter = (container) => {
   router.use('/chat', createChatRouter({
     chatController: container.resolve('chatController')
   }));
+  router.use('/messages', require('../routes/messageRoutes')(container));
   router.use('/territories', territoryRoutes);
   router.use('/wars', createWarRouter({
     warController: container.resolve('allianceWarController'),

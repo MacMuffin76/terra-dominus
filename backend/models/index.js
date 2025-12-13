@@ -37,6 +37,7 @@ const DefenseReport = require('./DefenseReport');
 const SpyMission = require('./SpyMission');
 const TradeRoute = require('./TradeRoute');
 const TradeConvoy = require('./TradeConvoy');
+const UserMessage = require('./UserMessage');
 
 // Import des modèles alliances
 const Alliance = require('./Alliance');
@@ -127,6 +128,7 @@ DefenseReport.init(sequelize);
 SpyMission.init(sequelize);
 TradeRoute.init(sequelize);
 TradeConvoy.init(sequelize);
+UserMessage.init(sequelize);
 // Portal now uses factory function pattern, no need for init
 PortalExpedition.init(sequelize);
 
@@ -169,6 +171,7 @@ const models = {
   SpyMission,
   TradeRoute,
   TradeConvoy,
+  UserMessage,
   Alliance,
   AllianceMember,
   AllianceInvitation,

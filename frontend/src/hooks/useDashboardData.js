@@ -121,6 +121,22 @@ const useDashboardData = () => {
     const handleResources = (payload = []) => dispatch(updateResources(payload));
     const handleNotification = (payload) =>
       setNotifications((prev) => [...prev, payload]);
+    
+    // Rafraîchir les taux de production quand une construction est terminée
+    const handleConstructionQueueUpdate = (payload) => {
+      console.log('🏗️ Construction queue updated, refreshing production rates...');
+      if (typeof window !== 'undefined' && window.refreshProductionRates) {
+        window.refreshProductionRates();
+      }
+    };
+    
+    // Rafraîchir les taux de production quand une recherche est terminée (bonus de production)
+    const handleResearchQueueUpdate = (payload) => {
+      console.log('🔬 Research queue updated, refreshing production rates...');
+      if (typeof window !== 'undefined' && window.refreshProductionRates) {
+        window.refreshProductionRates();
+      }
+    };
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
@@ -129,6 +145,8 @@ const useDashboardData = () => {
     socket.io.on('reconnect', handleReconnect);
     socket.on('resources', handleResources);
     socket.on('notification', handleNotification);
+    socket.on('construction_queue:update', handleConstructionQueueUpdate);
+    socket.on('research_queue:update', handleResearchQueueUpdate);
 
     return () => {
       socket.off('connect', handleConnect);
@@ -138,6 +156,8 @@ const useDashboardData = () => {
       socket.io.off('reconnect', handleReconnect);
       socket.off('resources', handleResources);
       socket.off('notification', handleNotification);
+      socket.off('construction_queue:update', handleConstructionQueueUpdate);
+      socket.off('research_queue:update', handleResearchQueueUpdate);
 
       listenersCount -= 1;
       if (listenersCount === 0) {

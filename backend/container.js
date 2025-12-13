@@ -171,6 +171,13 @@ const createContainer = () => {
     });
   });
 
+  // Message service (boîte aux lettres)
+  container.register('messageService', () => {
+    const MessageService = require('./services/MessageService');
+    const sequelize = require('./db');
+    return new MessageService({ sequelize });
+  });
+
   container.register('upkeepService', () => {
     const UpkeepService = require('./modules/combat/application/UpkeepService');
     const { City, Unit, Resource } = require('./models');

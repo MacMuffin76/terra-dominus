@@ -17,6 +17,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ExploreIcon from '@mui/icons-material/Explore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChatIcon from '@mui/icons-material/Chat';
+import MailIcon from '@mui/icons-material/Mail';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
 import { trackSessionEnd } from '../utils/analytics';
@@ -24,6 +25,7 @@ import socket from '../utils/socket';
 
 const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,6 +57,29 @@ const Menu = () => {
     // Forcer un rechargement complet pour nettoyer toutes les donnees en memoire
     window.location.href = '/login';
   };
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/v1/messages/unread-count', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.count);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -249,6 +274,14 @@ const Menu = () => {
               <ChatIcon className="menu-icon" />
               <div>
                 Chat
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/messages" onClick={(e) => handleLinkClick('/messages', e)} id="menu-messages" className={isActive('/messages') ? 'active' : ''}>
+              <MailIcon className="menu-icon" />
+              <div>
+                Messages {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
               </div>
             </Link>
           </li>

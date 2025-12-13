@@ -3,8 +3,18 @@ const { logger } = require('../utils/logger');
 
 /**
  * NotificationService - Service de notifications temps réel via Socket.IO
+ * Envoie aussi les notifications persistantes via MessageService
  */
 class NotificationService {
+  static _messageService = null;
+
+  /**
+   * Initialiser le MessageService (appelé par le container après initialisation)
+   */
+  static setMessageService(messageService) {
+    this._messageService = messageService;
+  }
+
   /**
    * Envoyer une notification à un utilisateur spécifique
    */
@@ -39,7 +49,7 @@ class NotificationService {
   /**
    * Notifications spécifiques au combat
    */
-  static notifyAttackLaunched(attackerUserId, defenderUserId, attackData) {
+  static async notifyAttackLaunched(attackerUserId, defenderUserId, attackData) {
     this.sendToUser(attackerUserId, 'attack_launched', {
       type: 'attack',
       subtype: 'launched',
@@ -54,9 +64,21 @@ class NotificationService {
       data: attackData,
       priority: 'high'
     });
+
+    // Enregistrer dans la boîte aux lettres
+    if (this._messageService) {
+      try {
+        await Promise.all([
+          this._messageService.createAttackLaunchedMessage(attackerUserId, attackData),
+          this._messageService.createAttackIncomingMessage(defenderUserId, attackData)
+        ]);
+      } catch (error) {
+        logger.error('Erreur création messages attaque', { error });
+      }
+    }
   }
 
-  static notifyAttackArrived(attackerUserId, defenderUserId, combatResult) {
+  static async notifyAttackArrived(attackerUserId, defenderUserId, combatResult) {
     const { outcome, attackId, attackerCityName, defenderCityName, loot } = combatResult;
 
     if (outcome === 'attacker_victory') {
@@ -74,6 +96,18 @@ class NotificationService {
         data: combatResult,
         priority: 'high'
       });
+
+      // Messages persistants
+      if (this._messageService) {
+        try {
+          await Promise.all([
+            this._messageService.createAttackResultMessage(attackerUserId, combatResult),
+            this._messageService.createAttackResultMessage(defenderUserId, combatResult)
+          ]);
+        } catch (error) {
+          logger.error('Erreur création messages résultat combat', { error });
+        }
+      }
     } else if (outcome === 'defender_victory') {
       this.sendToUser(attackerUserId, 'attack_defeat', {
         type: 'combat',
@@ -88,6 +122,18 @@ class NotificationService {
         message: `Victoire ! Vous avez repoussé l'attaque sur ${defenderCityName}`,
         data: combatResult
       });
+
+      // Messages persistants
+      if (this._messageService) {
+        try {
+          await Promise.all([
+            this._messageService.createAttackResultMessage(attackerUserId, combatResult),
+            this._messageService.createAttackResultMessage(defenderUserId, combatResult)
+          ]);
+        } catch (error) {
+          logger.error('Erreur création messages résultat combat', { error });
+        }
+      }
     } else {
       // Draw
       this.sendToUsers([attackerUserId, defenderUserId], 'attack_draw', {
@@ -96,6 +142,18 @@ class NotificationService {
         message: 'Combat indécis ! Les deux camps ont subi de lourdes pertes',
         data: combatResult
       });
+
+      // Messages persistants
+      if (this._messageService) {
+        try {
+          await Promise.all([
+            this._messageService.createAttackResultMessage(attackerUserId, combatResult),
+            this._messageService.createAttackResultMessage(defenderUserId, combatResult)
+          ]);
+        } catch (error) {
+          logger.error('Erreur création messages résultat combat', { error });
+        }
+      }
     }
   }
 

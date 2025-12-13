@@ -29,11 +29,15 @@ const emitUserResources = async (socket, userId) => {
 
 // Chat socket handlers
 const registerChatHandlers = require('./modules/chat/socket/chatSocketHandlers');
+const NotificationService = require('./services/NotificationService');
 
 // Initialize Socket.IO (async to support Redis Adapter)
 (async () => {
   const io = await initIO(server);
   startJobs(container);
+  
+  // Initialiser le MessageService pour NotificationService
+  NotificationService.setMessageService(container.resolve('messageService'));
   
   // Synchroniser les jobs de construction au démarrage
   // Cela reprogramme les constructions in_progress et marque les expirées comme completed

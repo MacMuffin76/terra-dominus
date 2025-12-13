@@ -34,6 +34,7 @@ const Shop = React.lazy(() => import('./pages/Shop'));
 const BattleReports = React.lazy(() => import('./pages/BattleReports'));
 const NotificationSettings = React.lazy(() => import('./pages/NotificationSettings'));
 const Chat = React.lazy(() => import('./components/Chat'));
+const MessageInbox = React.lazy(() => import('./components/messages/MessageInbox'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -237,6 +238,14 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <Chat />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/messages"
+                element={(
+                  <PrivateRoute>
+                    <MessageInbox />
                   </PrivateRoute>
                 )}
               />

@@ -751,9 +751,26 @@ class ResourceService {
         let amount = Number(resource.amount) || 0;
         let rate = 0;
 
-        if (building) {
+        if (building && hasEnergyForProduction) {
           const effectiveLevel = effectiveLevelsByName.get(building.name) || 0;
-          rate = hasEnergyForProduction ? getProductionPerSecond(building.name, effectiveLevel) : 0;
+          
+          // Récupérer le taux de production depuis la table resource_production
+          const productionData = await ResourceProduction.findOne({
+            where: {
+              building_name: building.name,
+              level: effectiveLevel
+            },
+            transaction
+          });
+          
+          if (productionData) {
+            // production_rate est par heure dans la table, convertir en par seconde
+            rate = parseFloat(productionData.production_rate) / 3600;
+          } else {
+            // Fallback sur l'ancienne méthode si pas de données
+            rate = getProductionPerSecond(building.name, effectiveLevel);
+          }
+          
           if (diffSec > 0) {
             const produced = rate * diffSec;
             amount += produced;

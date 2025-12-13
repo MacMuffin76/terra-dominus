@@ -548,6 +548,23 @@ class FacilityService {
 
       console.log(`[FacilityService] Facility ${facility.name} upgraded to level ${facility.level}`);
 
+      // Après commit, émettre l'événement socket pour rafraîchir la production
+      transaction.afterCommit(async () => {
+        try {
+          const { getIO } = require('../../../socket');
+          const io = getIO();
+          if (io && userId) {
+            const queue = await ConstructionQueue.findAll({
+              where: { cityId: queueItem.cityId },
+              order: [['slot', 'ASC']],
+            });
+            io.to(`user_${userId}`).emit('construction_queue:update', queue);
+          }
+        } catch (err) {
+          console.error('[FacilityService] Error in afterCommit:', err);
+        }
+      });
+
       return {
         message: 'Facility upgrade completed',
         facility: {

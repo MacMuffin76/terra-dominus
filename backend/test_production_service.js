@@ -5,9 +5,9 @@ const createContainer = require('./container');
     const container = createContainer();
     const productionCalculatorService = container.resolve('productionCalculatorService');
     
-    console.log('🧪 Test ProductionCalculatorService pour user 4\n');
+    console.log('🧪 Test ProductionCalculatorService pour user 95\n');
     
-    const rates = await productionCalculatorService.calculateProductionRates(4);
+    const rates = await productionCalculatorService.calculateProductionRates(95);
     
     console.log('📊 Résultats:');
     console.log('Production par seconde:');

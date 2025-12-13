@@ -18,6 +18,9 @@ export const ResourceProductionProvider = ({ children }) => {
   const intervalRef = useRef(null);
   const lastUpdateRef = useRef(Date.now());
 
+  // Fonction pour rafraîchir les taux de production
+  const fetchProductionRates = useRef(null);
+  
   // Récupérer les taux de production au montage
   useEffect(() => {
     // Ne pas appeler l'API si l'utilisateur n'est pas connecté
@@ -25,8 +28,9 @@ export const ResourceProductionProvider = ({ children }) => {
       return;
     }
 
-    const fetchProductionRates = async () => {
+    fetchProductionRates.current = async () => {
       try {
+        console.log('🔄 Rafraîchissement des taux de production...');
         const response = await axiosInstance.get('/production/rates');
         if (response.data.success) {
           console.log('📊 Taux de production reçus:', response.data.data);
@@ -57,10 +61,10 @@ export const ResourceProductionProvider = ({ children }) => {
       }
     };
 
-    fetchProductionRates();
+    fetchProductionRates.current();
     
     // Rafraîchir les taux toutes les 5 minutes (au cas où des bâtiments changent)
-    const interval = setInterval(fetchProductionRates, 5 * 60 * 1000);
+    const interval = setInterval(fetchProductionRates.current, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [user]);
@@ -252,6 +256,14 @@ export const ResourceProductionProvider = ({ children }) => {
           console.log('✅ Ressources synchronisées:', resourcesObj);
         }
       };
+      
+      // Fonction pour forcer le rafraîchissement des taux de production
+      window.refreshProductionRates = () => {
+        console.log('🔄 Rafraîchissement des taux de production demandé');
+        if (fetchProductionRates.current) {
+          fetchProductionRates.current();
+        }
+      };
     }
 
     return () => {
@@ -261,6 +273,9 @@ export const ResourceProductionProvider = ({ children }) => {
         }
         if (window.forceResourceSync) {
           delete window.forceResourceSync;
+        }
+        if (window.refreshProductionRates) {
+          delete window.refreshProductionRates;
         }
       }
     };
