@@ -16,9 +16,11 @@ import LocationCityIcon from '@mui/icons-material/LocationCity';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ExploreIcon from '@mui/icons-material/Explore';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ChatIcon from '@mui/icons-material/Chat';
 import './Menu.css';
 import { useTheme } from '../context/ThemeContext';
 import { trackSessionEnd } from '../utils/analytics';
+import socket from '../utils/socket';
 
 const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,8 +43,17 @@ const Menu = () => {
 
   const handleLogout = () => {
     trackSessionEnd('logout');
+    
+    // Deconnecter le socket
+    if (socket && socket.connected) {
+      socket.disconnect();
+    }
+    
+    // Dispatch logout pour nettoyer le Redux store
     dispatch(logout());
-    navigate('/login');
+    
+    // Forcer un rechargement complet pour nettoyer toutes les donnees en memoire
+    window.location.href = '/login';
   };
 
   useEffect(() => {
@@ -230,6 +241,14 @@ const Menu = () => {
               <GroupIcon className="menu-icon" />
               <div>
                 Alliance
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link to="/chat" onClick={(e) => handleLinkClick('/chat', e)} id="menu-chat" className={isActive('/chat') ? 'active' : ''}>
+              <ChatIcon className="menu-icon" />
+              <div>
+                Chat
               </div>
             </Link>
           </li>

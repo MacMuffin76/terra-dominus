@@ -43,8 +43,14 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.loading = false;
+      state.error = null;
+      // Nettoyer tout le localStorage
       safeStorage.removeItem('jwtToken');
-      safeStorage.removeItem('userId'); // Supprimer l'ID utilisateur de localStorage lors de la déconnexion
+      safeStorage.removeItem('userId');
+    },
+    clearAuthError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -90,5 +96,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { loginSuccess, logout, clearAuthError } = authSlice.actions;
 export default authSlice.reducer;

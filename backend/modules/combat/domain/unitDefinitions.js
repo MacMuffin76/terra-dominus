@@ -31,7 +31,7 @@ const UNIT_TIERS = {
   },
   TIER_4: { 
     name: 'Forces d\'Élite',
-    requiredBuildings: { trainingCenter: 8, forge: 5 }
+    requiredBuildings: { trainingCenter: 10, forge: 6 }
   }
 };
 
@@ -178,7 +178,8 @@ const UNIT_DEFINITIONS = {
     carryCapacity: 200,
     
     requiredBuildings: {
-      trainingCenter: 3
+      trainingCenter: 2,
+      forge: 1
     },
     requiredResearch: ['motorization_1'],
     
@@ -259,7 +260,7 @@ const UNIT_DEFINITIONS = {
       trainingCenter: 5,
       forge: 1
     },
-    requiredResearch: ['automatic_weapons', 'military_training_1'],
+    requiredResearch: ['military_training_2'],
     
     cost: {
       gold: 250,
@@ -294,10 +295,10 @@ const UNIT_DEFINITIONS = {
     carryCapacity: 50,
     
     requiredBuildings: {
-      trainingCenter: 5,
+      trainingCenter: 4,
       forge: 3
     },
-    requiredResearch: ['light_armor'],
+    requiredResearch: ['motorization_2'],
     
     cost: {
       gold: 400,
@@ -336,10 +337,10 @@ const UNIT_DEFINITIONS = {
     carryCapacity: 20,
     
     requiredBuildings: {
-      trainingCenter: 8,
-      forge: 5
+      trainingCenter: 5,
+      forge: 2
     },
-    requiredResearch: ['anti_armor_weapons'],
+    requiredResearch: ['anti_tank_weapons'],
     
     cost: {
       gold: 350,
@@ -374,8 +375,8 @@ const UNIT_DEFINITIONS = {
     carryCapacity: 100,
     
     requiredBuildings: {
-      trainingCenter: 10,
-      forge: 8
+      trainingCenter: 8,
+      forge: 6
     },
     requiredResearch: ['heavy_armor'],
     
@@ -398,7 +399,20 @@ const UNIT_DEFINITIONS = {
 
 // Helper functions
 function getUnitById(unitId) {
-  return UNIT_DEFINITIONS[unitId.toUpperCase()];
+  if (!unitId) return null;
+  
+  const normalized = unitId.toUpperCase();
+  const unit = UNIT_DEFINITIONS[normalized];
+  
+  // Si pas trouvé directement, chercher par name
+  if (!unit) {
+    return Object.values(UNIT_DEFINITIONS).find(u => 
+      u.name.toLowerCase() === unitId.toLowerCase() || 
+      u.id === unitId.toLowerCase()
+    );
+  }
+  
+  return unit;
 }
 
 function getUnitsByTier(tier) {
@@ -410,16 +424,18 @@ function getUnitsByCategory(category) {
 }
 
 function calculateCounterMultiplier(attackerUnit, defenderUnit) {
+  if (!attackerUnit || !defenderUnit) return 1.0;
+  
   let multiplier = 1.0;
   
   // Check if attacker counters defender
-  if (attackerUnit.counters.includes(defenderUnit.id)) {
+  if (attackerUnit.counters?.includes(defenderUnit.id)) {
     multiplier *= BALANCE_CONFIG.COUNTER_BONUS;
   }
   
   // Check if attacker is weak to defender
-  if (attackerUnit.weakTo.includes(defenderUnit.id) || 
-      attackerUnit.weakTo.includes(defenderUnit.category)) {
+  if (attackerUnit.weakTo?.includes(defenderUnit.id) || 
+      attackerUnit.weakTo?.includes(defenderUnit.category)) {
     multiplier *= BALANCE_CONFIG.WEAK_TO_PENALTY;
   }
   

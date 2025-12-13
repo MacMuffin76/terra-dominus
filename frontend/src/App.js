@@ -33,6 +33,7 @@ const Portals = React.lazy(() => import('./pages/Portals'));
 const Shop = React.lazy(() => import('./pages/Shop'));
 const BattleReports = React.lazy(() => import('./pages/BattleReports'));
 const NotificationSettings = React.lazy(() => import('./pages/NotificationSettings'));
+const Chat = React.lazy(() => import('./components/Chat'));
 
 function App() {
   const [apiError, setApiError] = useState(null);
@@ -228,6 +229,14 @@ function App() {
                 element={(
                   <PrivateRoute>
                     <Portals />
+                  </PrivateRoute>
+                )}
+              />
+              <Route
+                path="/chat"
+                element={(
+                  <PrivateRoute>
+                    <Chat />
                   </PrivateRoute>
                 )}
               />

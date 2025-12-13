@@ -48,6 +48,13 @@ const resourceSlice = createSlice({
       .addCase(fetchResources.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || action.error.message;
+      })
+      // Reinitialiser les resources lors du logout
+      .addCase(logout, (state) => {
+        state.resources = [];
+        state.loading = false;
+        state.error = null;
+        state.lastUpdate = null;
       });
   },
 });

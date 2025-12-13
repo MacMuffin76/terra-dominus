@@ -8,10 +8,29 @@ import { safeStorage } from './safeStorage';
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 const SOCKET_URL = isDevelopment ? 'http://localhost:5000' : window.location.origin;
 
+// Récupérer le token JWT pour l'authentification Socket.IO
+const getAuthToken = () => {
+  return safeStorage.getItem('jwtToken');
+};
+
 export const socket = io(SOCKET_URL, {
   path: "/socket.io",
   transports: ["websocket"],
+  auth: (cb) => {
+    // Fonction callback pour recuperer le token a chaque connexion
+    cb({ token: getAuthToken() });
+  },
+  autoConnect: true,
 });
+
+// Fonction pour reconnecter avec un nouveau token
+export const reconnectSocket = () => {
+  if (socket.connected) {
+    socket.disconnect();
+  }
+  socket.auth = { token: getAuthToken() };
+  socket.connect();
+};
 
 export const sendUserId = (userId, event) => {
     socket.emit('message', JSON.stringify({ event, userId }));

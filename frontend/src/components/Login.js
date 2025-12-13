@@ -5,6 +5,7 @@ import { safeStorage } from '../utils/safeStorage';
 import { Button, Card, Input } from './ui';
 import useAuthForm from '../hooks/useAuthForm';
 import { trackSessionStart } from '../utils/analytics';
+import { reconnectSocket } from '../utils/socket';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,11 +14,15 @@ const Login = () => {
   const { isAuthenticated, token } = authState;
 
   useEffect(() => {
-    // Rediriger uniquement après une connexion réussie (status === 'success')
+    // Rediriger uniquement apres une connexion reussie (status === 'success')
     // et non simplement parce que isAuthenticated est true
     if (status === 'success' && isAuthenticated && token) {
       safeStorage.setItem('jwtToken', token);
       trackSessionStart({ entrypoint: 'login' });
+      
+      // Reconnecter le socket avec le nouveau token
+      reconnectSocket();
+      
       navigate('/dashboard');
     }
   }, [status, isAuthenticated, navigate, token]);

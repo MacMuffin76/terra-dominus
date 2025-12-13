@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Building, TrendingUp } from 'lucide-react';
 import Menu from './Menu';
 import { useAsyncError } from '../hooks/useAsyncError';
+import socket from '../utils/socket';
 import './Resources.css';
 import ResourcesWidget from './ResourcesWidget';
 import { Alert, Loader } from './ui';
@@ -53,6 +54,39 @@ const Resources = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Écouter les événements de construction
+  useEffect(() => {
+    const handleConstructionUpdate = () => {
+      // Rafraîchir les données quand une construction est mise à jour
+      fetchData();
+    };
+
+    socket.on('construction_queue:update', handleConstructionUpdate);
+
+    // Vérifier régulièrement si des constructions sont terminées
+    const checkInterval = setInterval(() => {
+      const hasBuilding = data.some(b => b.status === 'building' && b.constructionEndsAt);
+      if (hasBuilding) {
+        const now = new Date().getTime();
+        const shouldRefresh = data.some(b => {
+          if (b.status === 'building' && b.constructionEndsAt) {
+            const endTime = new Date(b.constructionEndsAt).getTime();
+            return endTime <= now;
+          }
+          return false;
+        });
+        if (shouldRefresh) {
+          fetchData();
+        }
+      }
+    }, 2000); // Vérifier toutes les 2 secondes
+
+    return () => {
+      socket.off('construction_queue:update', handleConstructionUpdate);
+      clearInterval(checkInterval);
+    };
+  }, [data]);
+
   const handleCardClick = (building) => {
     setSel(building);
     setModalOpen(true);
@@ -71,7 +105,10 @@ const Resources = () => {
       setData(orderBuildings(updatedData, allowedBuildings));
       setSel(updated);
       
-      setModalOpen(false);
+      // Ne fermer le modal que si ce n'est pas une construction en cours
+      if (updated.status !== 'building') {
+        setModalOpen(false);
+      }
     } catch (err) {
       catchError(async () => { throw err; }, { 
         toast: true, 
@@ -151,6 +188,7 @@ const Resources = () => {
 
               // Resource icon
               const getIcon = (name) => {
+                if (!name) return '🏗️';
                 if (name.includes('or')) return '💰';
                 if (name.includes('métal')) return '⚙️';
                 if (name.includes('Extracteur')) return '⛽';
@@ -162,6 +200,7 @@ const Resources = () => {
 
               // Tier based on building type
               const getTier = (name) => {
+                if (!name) return 1;
                 if (name.includes('Centrale')) return 3;
                 if (name.includes('Réservoir')) return 2;
                 if (name.includes('métal') || name.includes('Extracteur')) return 2;
@@ -215,7 +254,7 @@ const Resources = () => {
             title={selectedBuilding.name || 'Bâtiment'}
             image={`/images/buildings/${selectedBuilding.name ? selectedBuilding.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['']/g, '').replace(/\s+/g, '_') : 'default'}.png`}
             description={selectedBuilding.description || 'Bâtiment de production ou de stockage de ressources'}
-            tier={selectedBuilding.name.includes('Centrale') ? 3 : selectedBuilding.name.includes('Réservoir') || selectedBuilding.name.includes('métal') ? 2 : 1}
+            tier={selectedBuilding.name ? (selectedBuilding.name.includes('Centrale') ? 3 : selectedBuilding.name.includes('Réservoir') || selectedBuilding.name.includes('métal') ? 2 : 1) : 1}
             level={selectedBuilding.level}
             nextLevel={selectedBuilding.level + 1}
             stats={{

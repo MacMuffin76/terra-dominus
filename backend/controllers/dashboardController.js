@@ -3,6 +3,7 @@
 const User      = require('../models/User');
 const sequelize = require('../db');
 const { getLogger } = require('../utils/logger');
+const { RESEARCH_DEFINITIONS } = require('../modules/research/domain/researchDefinitions');
 
 const logger = getLogger({ module: 'DashboardController' });
 
@@ -89,6 +90,21 @@ exports.getDashboardData = async (req, res) => {
       { replacements: { userId } }
     );
 
+    // Enrichir les recherches avec les données de définition (icon, etc.)
+    const enrichedResearches = researches.map(research => {
+      // Trouver la définition correspondante par nom
+      const definition = Object.values(RESEARCH_DEFINITIONS).find(
+        def => def.name === research.name || def.id === research.name.toLowerCase().replace(/\s+/g, '_')
+      );
+      
+      return {
+        ...research,
+        icon: definition?.icon || null,
+        category: definition?.category || null,
+        tier: definition?.tier || 1
+      };
+    });
+
     // Défenses par ville (optionnel, table peut ne pas exister)
     let defenses = [];
     try {
@@ -114,7 +130,7 @@ exports.getDashboardData = async (req, res) => {
       buildings,
       units,
       facilities,
-      researches,
+      researches: enrichedResearches,
       defenses,
     });
   } catch (error) {

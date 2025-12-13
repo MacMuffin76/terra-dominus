@@ -44,6 +44,8 @@
 }
 
 /* Premium Grid Layout - For all pages */
+
+/* Resources Grid - Auto-responsive */
 .resources-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -52,7 +54,16 @@
   padding: 0 0.5rem;
 }
 
-/* Research Grid - 4 columns max */
+/* Facilities Grid - 3 columns × 2 rows */
+.facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+/* Research Grid - 4 columns */
 .research-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -61,17 +72,8 @@
   padding: 0 0.5rem;
 }
 
-/* Training Grid - 3 columns */
+/* Training Grid - 3 columns × 3 rows */
 .training-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  padding: 0 0.5rem;
-}
-
-/* Facilities Grid - 3 columns × 2 rows */
-.facilities-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
@@ -88,17 +90,21 @@
   padding: 0 0.5rem;
 }
 
+/* Responsive breakpoints */
 @media (max-width: 1400px) {
+  .research-grid,
   .defense-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
-  .facilities-grid {
+  .facilities-grid,
+  .training-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   
+  .research-grid,
   .defense-grid {
     grid-template-columns: repeat(2, 1fr);
   }

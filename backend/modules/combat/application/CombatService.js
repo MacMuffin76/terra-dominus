@@ -5,6 +5,7 @@ const NotificationService = require('../../../services/NotificationService');
 const protectionRules = require('../../protection/domain/protectionRules');
 const pvpBalancingRules = require('../domain/pvpBalancingRules');
 const User = require('../../../models/User');
+const { getCityResources, updateCityResources } = require('../../../utils/resourceHelper');
 
 /**
  * CombatService - Gestion des combats territoriaux et espionnage
@@ -328,13 +329,11 @@ class CombatService {
 
         // 3. Récupérer les bonus technologiques
         const attackerResearches = await this.Research.findAll({
-          where: { user_id: attack.attacker_user_id },
-          include: ['entity']
+          where: { user_id: attack.attacker_user_id }
         });
 
         const defenderResearches = await this.Research.findAll({
-          where: { user_id: attack.defender_user_id },
-          include: ['entity']
+          where: { user_id: attack.defender_user_id }
         });
 
         const attackerTechBonus = combatRules.calculateTechBonus(
@@ -349,12 +348,10 @@ class CombatService {
 
         // 4. Bonus des murailles
         const walls = await this.Building.findOne({
-          where: { city_id: attack.defender_city_id },
-          include: [{
-            model: this.sequelize.models.Entity,
-            as: 'entity',
-            where: { name: 'Murailles' }
-          }],
+          where: { 
+            city_id: attack.defender_city_id,
+            name: 'Murailles'
+          },
           transaction
         });
 
@@ -424,6 +421,7 @@ class CombatService {
 
         // Mettre à jour les survivants des vagues
         for (const wave of attack.waves) {
+          console.log(`📊 Wave ${wave.id}: ${wave.survivors}/${wave.quantity} survivants`);
           await this.sequelize.models.AttackWave.update(
             { survivors: wave.survivors },
             { where: { id: wave.id }, transaction }
@@ -433,23 +431,37 @@ class CombatService {
         // Pertes défenseur
         const defenderLosses = {};
         const defStrLost = defenderStrength - combatResult.finalDefenderStrength;
-        for (const unit of defenderUnits) {
-          const lossRate = defStrLost / defenderStrength;
-          const losses = Math.floor(unit.quantity * lossRate);
-          defenderLosses[unit.id] = losses;
-          unit.quantity -= losses;
-          await unit.save({ transaction });
+        
+        if (defenderUnits.length > 0 && defenderStrength > 0) {
+          for (const unit of defenderUnits) {
+            const lossRate = defStrLost / defenderStrength;
+            const losses = Math.floor(unit.quantity * lossRate);
+            defenderLosses[unit.id] = losses;
+            unit.quantity -= losses;
+            await unit.save({ transaction });
+          }
         }
 
         // 8. Butin si victoire attaquant
         let loot = { gold: 0, metal: 0, fuel: 0 };
         if (combatResult.outcome === 'attacker_victory') {
-          const defenderResources = await this.Resource.findOne({
-            where: { city_id: attack.defender_city_id },
-            transaction
-          });
+          // Récupérer les ressources du défenseur (format legacy)
+          const defenderResourcesRaw = await getCityResources(this.Resource, attack.defender_city_id, transaction);
+          
+          // Convertir au format attendu par calculateLoot
+          const defenderResources = {
+            gold: defenderResourcesRaw.or || 0,
+            metal: defenderResourcesRaw.metal || 0,
+            fuel: defenderResourcesRaw.carburant || 0
+          };
 
           loot = combatRules.calculateLoot(defenderResources, attack.attack_type);
+          
+          console.log('💰 Calcul du butin', {
+            defenderResources,
+            attackType: attack.attack_type,
+            loot
+          });
           
           // Apply PvP balancing reward scaling (en s'appuyant sur les métadonnées lues plus haut)
           let rewardMultiplier = 1.0;
@@ -474,14 +486,58 @@ class CombatService {
             console.error('⚠️ Failed to apply reward scaling:', error.message);
           }
 
-          // Déduire des ressources du défenseur
-          defenderResources.gold = Math.max(0, defenderResources.gold - loot.gold);
-          defenderResources.metal = Math.max(0, defenderResources.metal - loot.metal);
-          defenderResources.fuel = Math.max(0, defenderResources.fuel - loot.fuel);
-          await defenderResources.save({ transaction });
+          // Déduire des ressources du défenseur (format legacy)
+          await updateCityResources(
+            this.Resource,
+            attack.defender_city_id,
+            {
+              or: -loot.gold,
+              metal: -loot.metal,
+              carburant: -loot.fuel
+            },
+            false,
+            transaction
+          );
 
-          // Ajouter au pillard (quand les troupes reviennent)
-          // TODO: Implémenter le retour des troupes avec le butin
+          // Ajouter le butin aux ressources de l'attaquant (format legacy)
+          await updateCityResources(
+            this.Resource,
+            attack.attacker_city_id,
+            {
+              or: loot.gold,
+              metal: loot.metal,
+              carburant: loot.fuel
+            },
+            false,
+            transaction
+          );
+          
+          console.log('💰 Butin transféré', {
+            fromCity: attack.defender_city_id,
+            toCity: attack.attacker_city_id,
+            loot
+          });
+        }
+
+        // Restituer les unités survivantes à l'attaquant
+        for (const wave of attack.waves) {
+          const survivors = wave.survivors || 0;
+          if (survivors > 0) {
+            await this.Unit.increment(
+              'quantity',
+              {
+                by: survivors,
+                where: { id: wave.unit_entity_id },
+                transaction
+              }
+            );
+            
+            console.log('↩️  Unités restituées', {
+              unitId: wave.unit_entity_id,
+              survivors,
+              originalQuantity: wave.quantity
+            });
+          }
         }
 
         // 9. Mettre à jour l'attaque

@@ -17,7 +17,6 @@ import PremiumCard from './shared/PremiumCard';
 import DetailModal from './shared/DetailModal';
 import './Defense.css';
 import './units/UnitTrainingPanel.css';
-import './shared/PremiumStyles.css';
 
 /**
  * Defense Card Component

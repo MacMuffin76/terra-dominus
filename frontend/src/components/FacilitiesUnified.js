@@ -15,7 +15,6 @@ import DetailModal from './shared/DetailModal';
 import './Facilities.css';
 import './units/UnitTrainingPanel.css';
 import './UnifiedPages.css';
-import './shared/PremiumStyles.css';
 
 /**
  * Facility Card Component
@@ -399,11 +398,22 @@ const FacilitiesUnified = () => {
               return 1;
             };
 
+            // Format filename: lowercase, remove accents, replace spaces/apostrophes
+            const formatFileName = (name) => {
+              if (!name) return 'default';
+              return name
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/['']/g, '')
+                .replace(/\s+/g, '_');
+            };
+
             return (
               <PremiumCard
                 key={facility.key}
                 title={facility.name}
-                image={`/images/facilities/${facility.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                image={`/images/facilities/${formatFileName(facility.name)}.png`}
                 description={facility.description}
                 tier={getTier(facility.category)}
                 level={facility.currentLevel}

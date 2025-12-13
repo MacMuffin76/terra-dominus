@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Lock, TrendingUp, Clock, Zap } from 'lucide-react';
 import './PremiumCard.css';
 
@@ -42,6 +42,7 @@ const PremiumCard = ({
   className = ''
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   const tierColors = {
     1: 'tier-1',
@@ -50,10 +51,43 @@ const PremiumCard = ({
     4: 'tier-4'
   };
 
+  // Calculer le temps restant si buildTime est une date
+  useEffect(() => {
+    if (!isInProgress || !buildTime) {
+      setRemainingTime(0);
+      return;
+    }
+
+    // Si buildTime est une date (string ou timestamp)
+    const endTime = new Date(buildTime).getTime();
+    if (isNaN(endTime)) {
+      // Si ce n'est pas une date valide, c'est probablement une durée en secondes
+      setRemainingTime(buildTime);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+      setRemainingTime(remaining);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [isInProgress, buildTime]);
+
   const formatTime = (seconds) => {
+    if (seconds <= 0) return '--:--';
     if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
-    return `${Math.floor(seconds / 3600)}h`;
+    if (seconds < 3600) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h${m.toString().padStart(2, '0')}`;
   };
 
   const handleImageError = useCallback((e) => {
@@ -163,7 +197,13 @@ const PremiumCard = ({
         )}
 
         {/* Temps de construction */}
-        {buildTime > 0 && !isLocked && (
+        {isInProgress && remainingTime > 0 && !isLocked && (
+          <div className="premium-card-time">
+            <Clock size={14} />
+            <span>{formatTime(remainingTime)}</span>
+          </div>
+        )}
+        {!isInProgress && buildTime > 0 && !isLocked && (
           <div className="premium-card-time">
             <Clock size={14} />
             <span>{formatTime(buildTime)}</span>

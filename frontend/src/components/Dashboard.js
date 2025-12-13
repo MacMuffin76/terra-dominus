@@ -172,7 +172,7 @@ const Dashboard = () => {
       id: r.id,
       name: r.name,
       level: r.level,
-      image: `./images/researches/${formatFileName(r.name)}.png`
+      image: r.icon ? `/images/research/${r.icon}` : `./images/research/${formatFileName(r.name)}.png`
     }));
 
   const defensesData = defenses.map(d => ({

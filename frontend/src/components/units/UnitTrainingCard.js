@@ -33,23 +33,22 @@ const UnitTrainingCard = ({
     }
   };
 
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case 'infantry':
-        return '🪖';
-      case 'mounted':
-        return '🐎';
-      case 'siege':
-        return '💣';
-      case 'armor':
-        return '🛡️';
-      case 'air':
-        return '✈️';
-      case 'support':
-        return '🔧';
-      default:
-        return '⚔️';
-    }
+  const getUnitImage = (unitId) => {
+    const imageMap = {
+      'militia': 'milice.png',
+      'riflemen': 'fusiliers.png',
+      'scouts': 'eclaireurs.png',
+      'transport': 'transport_blinde.png',
+      'engineer': 'sapeurs.png',
+      'marksmen': 'tireurs_d_elite.png',
+      'light_tank': 'chars_legers.png',
+      'anti_armor': 'anti_blindage.png',
+      'heavy_tank': 'tanks_lourds.png'
+    };
+    const imageName = imageMap[unitId] || 'milice.png';
+    const imagePath = `${process.env.PUBLIC_URL || ''}/images/training/${imageName}`;
+    console.log(`Loading image for unit ${unitId}:`, imagePath);
+    return imagePath;
   };
 
   const getTierColor = (tier) => {
@@ -87,13 +86,25 @@ const UnitTrainingCard = ({
       {isLocked && (
         <div className="lock-overlay">
           <Lock size={32} />
-          <span className="level-requirement">Level {requiredLevel}</span>
+          {unit.missingRequirements && unit.missingRequirements.length > 0 && (
+            <span className="level-requirement">
+              {unit.missingRequirements.length} prérequis
+            </span>
+          )}
         </div>
       )}
 
       <div className="unit-card-header">
         <div className="unit-icon">
-          {getCategoryIcon(unit.category)}
+          <img 
+            src={getUnitImage(unit.id)} 
+            alt={unit.name}
+            className="unit-image"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.textContent = unit.icon || '⚔️';
+            }}
+          />
         </div>
         <div className="unit-header-info">
           <h3 className="unit-name">{unit.name}</h3>

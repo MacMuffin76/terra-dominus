@@ -141,7 +141,9 @@ function calculateWallsBonus(wallLevel) {
 function calculateTechBonus(researches, techNames) {
   let bonus = 0;
   researches.forEach(research => {
-    if (techNames.includes(research.entity.name) && research.level > 0) {
+    // Utiliser research.name directement car Research.entity n'existe pas dans ce schéma
+    const researchName = research.entity?.name || research.name;
+    if (techNames.includes(researchName) && research.level > 0) {
       bonus += research.level * 0.10; // +10% par niveau
     }
   });
@@ -211,7 +213,16 @@ function simulateCombat(attackerStrength, defenderStrength, defenderWallsBonus =
 
 // Calculer les pertes d'unités
 function calculateLosses(waves, strengthLost, totalStrength) {
-  const lossRate = strengthLost / totalStrength;
+  // Protection contre division par zéro
+  if (!totalStrength || totalStrength <= 0 || strengthLost <= 0) {
+    // Aucune perte, tous survivent
+    waves.forEach(wave => {
+      wave.survivors = wave.quantity;
+    });
+    return {};
+  }
+
+  const lossRate = Math.min(1.0, strengthLost / totalStrength);
   const losses = {};
 
   waves.forEach(wave => {

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 @import './terra-ui-system.css';
 @import './terra-migration.css';
+@import '../components/shared/PremiumStyles.css';
 
 :root {
   --font-family-base: 'Roboto', 'Inter', Arial, sans-serif;

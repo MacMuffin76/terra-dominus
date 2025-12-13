@@ -2,19 +2,17 @@
 
 ## Overview
 
-Le système d'unlock d'unités gère la progression des joueurs à travers 4 tiers d'unités, débloquées selon le niveau du joueur. Ce système crée une courbe de progression naturelle et encourage la montée en niveau.
+Le système d'unlock d'unités gère la progression des joueurs à travers 4 tiers d'unités, débloquées selon **le niveau des bâtiments** (Centre d'Entraînement + Forge) et **les recherches complétées**. Ce système crée une courbe de progression naturelle avec différenciation entre unités d'infanterie et véhicules.
 
 ## Tier Structure
 
-### Tier 1: Basic Units (Level 1+)
-**Unlock Level**: 1  
+### Tier 1: Survivants (Centre d'Entraînement Niv 1)
 **Description**: Unités de départ, faible coût, idéales pour early game
 
-| Unit | Cost | Upkeep | Role |
-|------|------|--------|------|
-| Militia | 50g, 20m | 1g/h | Early defense |
-| Infantry | 100g, 50m | 1g/h | Basic combat |
-| Archer | 120g, 60m | 1g/h | Ranged support |
+| Unit | Requirements | Cost | Upkeep | Role |
+|------|-------------|------|--------|------|
+| 👥 Milice | Centre Niv 1 | 50g, 20m | 1g/h | Chair à canon |
+| 🔫 Fusiliers | Centre Niv 1 + Recherche "Entraînement Militaire I" | 100g, 50m | 2g/h | Infanterie de base |
 
 **Strategic Value**:
 - Économique (faible upkeep)
@@ -22,85 +20,99 @@ Le système d'unlock d'unités gère la progression des joueurs à travers 4 tie
 - Parfait pour exploration et premiers raids
 - Faible contre unités Tier 2+
 
-### Tier 2: Advanced Units (Level 5+)
-**Unlock Level**: 5  
-**Description**: Unités spécialisées avec counters définis
+### Tier 2: Forces Organisées (Centre Niv 2-3)
+**Description**: Unités spécialisées avec premières motorisations
 
-| Unit | Cost | Upkeep | Role |
-|------|------|--------|------|
-| Cavalry | 250g, 100m, 50f | 2g, 1m, 1f/h | Fast striker |
-| Spearmen | 200g, 120m | 2g/h | Anti-cavalry |
-| Artillery | 400g, 300m, 150f | 3g, 2m, 2f/h | Siege weapon |
-| Engineer | 300g, 200m | 2g, 1m/h | Utility/repair |
-| Spy | 500g, 200f | 3g, 1f/h | Intelligence |
+| Unit | Requirements | Cost | Upkeep | Role |
+|------|-------------|------|--------|------|
+| 🏃 Éclaireurs | Centre Niv 3 + Recherche "Tactiques de Guérilla I" | 150g, 60m, 30f | 3g, 1m, 1f/h | Reconnaissance rapide |
+| 🚚 Transport Blindé | Centre Niv 2 + Forge Niv 1 + Recherche "Motorisation I" | 200g, 120m, 80f | 2g, 1m, 2f/h | Logistique |
+| 🔧 Sapeurs | Centre Niv 3 | 180g, 150m, 50f | 3g, 2m, 1f/h | Support/réparation |
 
 **Strategic Value**:
-- Systèmes de counters actifs
+- Introduction des véhicules (nécessite Forge)
 - Spécialisation tactique
 - Coût modéré
-- Dominance vs Tier 1
+- Mobilité accrue
 
-### Tier 3: Elite Units (Level 10+)
-**Unlock Level**: 10  
-**Description**: Unités puissantes pour late game
+### Tier 3: Forces Mécanisées (Centre Niv 4-5 + Forge)
+**Description**: Unités blindées et infanterie d'élite
 
-| Unit | Cost | Upkeep | Role |
-|------|------|--------|------|
-| Tanks | 800g, 600m, 400f | 5g, 3m, 3f/h | Heavy armor |
-| Anti-Tank | 600g, 400m, 300f | 4g, 2m, 2f/h | Tank counter |
-| Aircraft | 1000g, 800m, 600f | 8g, 5m, 5f/h | Air superiority |
-| Anti-Air | 900g, 600m, 500f | 6g, 4m, 3f/h | Air defense |
+| Unit | Requirements | Cost | Upkeep | Role |
+|------|-------------|------|--------|------|
+| 🎯 Tireurs d'Élite | Centre Niv 5 + Forge Niv 1 + Recherche "Entraînement Militaire II" | 250g, 100m, 50f | 4g, 1m, 1f/h | Anti-infanterie spécialisé |
+| 🛡️ Chars Légers | Centre Niv 4 + Forge Niv 3 + Recherche "Motorisation II" | 400g, 300m, 200f | 5g, 3m, 3f/h | Appui blindé mobile |
 
 **Strategic Value**:
 - Haute puissance de combat
-- Upkeep significatif
-- Requires strong economy
-- Counters Tier 1-2 easily
+- Nécessite bonne économie (upkeep significatif)
+- Domination contre Tier 1-2
+- Premiers véhicules de combat
 
-### Tier 4: Experimental Units (Level 15+)
-**Unlock Level**: 15  
-**Description**: Unités ultra-puissantes, très coûteuses
+### Tier 4: Forces d'Élite (Centre Niv 5-10 + Forge avancée)
+**Description**: Unités ultra-puissantes pour domination
 
-| Unit | Cost | Upkeep | Role |
-|------|------|--------|------|
-| Mech | 3000g, 2500m, 2000f | 15g, 10m, 10f/h | Super heavy |
-| Stealth Bomber | 4000g, 3000m, 2500f | 20g, 12m, 15f/h | Stealth strike |
+| Unit | Requirements | Cost | Upkeep | Role |
+|------|-------------|------|--------|------|
+| 💥 Anti-Blindage | Centre Niv 5 + Forge Niv 2 + Recherche "Armes Antichar" | 350g, 250m, 150f | 6g, 3m, 2f/h | Chasseur de tanks |
+| 🚀 Tanks Lourds | Centre Niv 8 + Forge Niv 6 + Recherche "Blindage Lourd" | 800g, 600m, 400f | 10g, 5m, 5f/h | Super-lourd d'assaut |
 
 **Strategic Value**:
-- Domination absolue
-- Upkeep massif (nécessite économie late game)
+- Domination absolue du champ de bataille
+- Upkeep très élevé (économie late game obligatoire)
 - Game-changing power
-- Limité par coût et upkeep
+- Nécessite investissement massif dans bâtiments + recherches
 
 ## Progression System
 
-### Level Milestones
+### Building Requirements
 
 ```
-Level 1  ━━━━━━━━━━━━━━━━━  Tier 1 Unlocked (3 units)
-   ↓
-Level 5  ━━━━━━━━━━━━━━━━━  Tier 2 Unlocked (+5 units)
-   ↓
-Level 10 ━━━━━━━━━━━━━━━━━  Tier 3 Unlocked (+4 units)
-   ↓
-Level 15 ━━━━━━━━━━━━━━━━━  Tier 4 Unlocked (+2 units)
+Centre d'Entraînement Level Progression:
+Niv 1  ━━ Milice, Fusiliers (Tier 1)
+Niv 2  ━━ Transport Blindé (avec Forge 1)
+Niv 3  ━━ Éclaireurs, Sapeurs (Tier 2)
+Niv 4  ━━ Chars Légers (avec Forge 3)
+Niv 5  ━━ Tireurs d'Élite, Anti-Blindage (Tier 3/4)
+Niv 8  ━━ Tanks Lourds (avec Forge 6)
+
+Forge Militaire Level Progression:
+Niv 1  ━━ Débloque véhicules légers (Transport)
+Niv 2  ━━ Débloque armes lourdes (Anti-Blindage)
+Niv 3  ━━ Débloque blindés légers (Chars Légers)
+Niv 6  ━━ Débloque super-lourds (Tanks Lourds)
 ```
+
+### Research Requirements
+
+Les recherches suivantes sont nécessaires pour débloquer certaines unités :
+
+| Research | Unlocks | Description |
+|----------|---------|-------------|
+| Entraînement Militaire I | Fusiliers | Formation militaire de base |
+| Tactiques de Guérilla I | Éclaireurs | Tactiques de reconnaissance rapide |
+| Motorisation I | Transport Blindé | Premiers véhicules motorisés |
+| Entraînement Militaire II | Tireurs d'Élite | Formation avancée de précision |
+| Motorisation II | Chars Légers | Véhicules de combat blindés légers |
+| Armes Antichar | Anti-Blindage | Lance-roquettes et armes antichar |
+| Blindage Lourd | Tanks Lourds | Blindages ultra-résistants |
 
 ### Unlock Notifications
 
-Quand un joueur atteint un niveau de tier:
-1. Notification push avec liste des nouvelles unités
+Quand un joueur construit/améliore son Centre d'Entraînement ou sa Forge :
+1. Notification des nouvelles unités débloquées
 2. Badge "New Units Available" dans l'UI training
-3. Achievement unlock ("Advanced Warfare", "Elite Commander", etc.)
-4. Tutorial pointer vers training menu
+3. Vérification automatique des prérequis (bâtiments + recherches)
+4. Affichage des unités encore verrouillées avec prérequis manquants
 
-### XP Requirements (Estimated)
+### Building Upgrade Path (Recommended)
 
-| Level | XP Required | Cumulative XP | Activities |
-|-------|-------------|---------------|------------|
-| 1→5 | ~5,000 XP | 5,000 | Tutorials, first buildings, early quests |
-| 5→10 | ~15,000 XP | 20,000 | Combat, resource growth, research |
-| 10→15 | ~30,000 XP | 50,000 | Advanced combat, portals, alliances |
+| Phase | Focus | Buildings to Upgrade |
+|-------|-------|---------------------|
+| Early Game (0-10min) | Tier 1 units | Centre d'Entraînement Niv 1 |
+| Mid Game (10-30min) | Tier 2 mobility | Centre Niv 2-3 + Forge Niv 1 |
+| Late Game (30min+) | Tier 3 power | Centre Niv 4-5 + Forge Niv 3 |
+| End Game (1h+) | Tier 4 domination | Centre Niv 8-10 + Forge Niv 6 |
 
 ## API Reference
 

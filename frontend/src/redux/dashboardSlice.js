@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../utils/axiosInstance';
+import { logout } from './authSlice';
 
 export const fetchDashboardData = createAsyncThunk('dashboard/fetchDashboardData', async () => {
   const response = await axios.get('/dashboard');
@@ -41,7 +42,20 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
-      });
+      })
+      // Réinitialiser le dashboard lors du logout
+      .addCase(logout, () => ({
+        user: {},
+        resources: [],
+        buildings: [],
+        units: [],
+        facilities: [],
+        researches: [],
+        defenses: [],
+        messages: [],
+        status: 'idle',
+        error: null,
+      }));
   },
 });
 

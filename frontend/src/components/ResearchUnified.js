@@ -20,7 +20,6 @@ import DetailModal from './shared/DetailModal';
 import './Research.css';
 import './units/UnitTrainingPanel.css';
 import './UnifiedPages.css';
-import './shared/PremiumStyles.css';
 
 /**
  * Research Card Component
@@ -362,7 +361,7 @@ const ResearchUnified = () => {
               <PremiumCard
                 key={research.id}
                 title={research.name}
-                image={`/images/research/${research.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                image={research.icon ? `/images/research/${research.icon}` : `/images/research/${research.name.toLowerCase().replace(/\s+/g, '_').replace(/'/g, '')}.png`}
                 description={research.description}
                 tier={getTier(research.category)}
                 badge={statusIcons[research.status] || '🔬'}

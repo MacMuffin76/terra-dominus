@@ -18,7 +18,6 @@ import PremiumCard from './shared/PremiumCard';
 import DetailModal from './shared/DetailModal';
 import './Training.css';
 import './units/UnitTrainingPanel.css';
-import './shared/PremiumStyles.css';
 
 /**
  * Page Centre d'Entraînement
@@ -198,16 +197,36 @@ const TrainingUnified = () => {
             const isLocked = locked.some(u => u.id === unit.id);
             const lockedData = isLocked ? locked.find(u => u.id === unit.id) : null;
 
+            // Mapper les unit.id aux noms de fichiers d'images
+            const imageMap = {
+              'militia': 'milice.png',
+              'riflemen': 'fusiliers.png',
+              'scouts': 'eclaireurs.png',
+              'transport': 'transport_blinde.png',
+              'engineer': 'sapeurs.png',
+              'marksmen': 'tireurs_d_elite.png',
+              'light_tank': 'chars_legers.png',
+              'anti_armor': 'anti_blindage.png',
+              'heavy_tank': 'tanks_lourds.png'
+            };
+            const imagePath = `/images/training/${imageMap[unit.id] || 'milice.png'}`;
+
+            // Générer le message de déblocage à partir des prérequis manquants
+            let lockReason = 'Verrouillée';
+            if (lockedData && lockedData.missingRequirements && lockedData.missingRequirements.length > 0) {
+              lockReason = lockedData.missingRequirements.join(' • ');
+            }
+
             return (
               <PremiumCard
                 key={unit.id}
                 title={unit.name}
-                image={`/images/units/${unit.name.toLowerCase().replace(/\s+/g, '_')}.png`}
+                image={imagePath}
                 description={unit.description}
                 tier={unit.tier}
                 badge={unit.icon || '👥'}
                 isLocked={isLocked}
-                lockReason={lockedData ? `Centre d'Entraînement Niv ${lockedData.requiredLevel} requis` : 'Verrouillée'}
+                lockReason={lockReason}
                 stats={{
                   attack: unit.force || unit.attack || 0,
                   defense: unit.defense || 0,

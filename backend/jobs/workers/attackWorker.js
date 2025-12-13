@@ -59,27 +59,52 @@ async function processAttack(attackId, combatService, job) {
 
 async function scanArrivedAttacks(combatRepository, job) {
   try {
+    // Trouver les attaques qui sont arrivées à destination
     const arrivedAttacks = await combatRepository.getArrivedAttacks();
     logger.info(`[AttackWorker] ${arrivedAttacks.length} attaques arrivées trouvées`);
+
+    const Queue = require('bullmq').Queue;
+    const { connection } = require('../queueConfig');
+    const attackQueue = new Queue(queueNames.ATTACK, { connection });
 
     for (const attack of arrivedAttacks) {
       // Marquer comme arrivée
       await combatRepository.updateAttackStatus(attack.id, 'arrived');
 
-      // Ajouter job de traitement
-      const Queue = require('bullmq').Queue;
-      const { connection } = require('../queueConfig');
-      const attackQueue = new Queue(queueNames.ATTACK, { connection });
-      
+      // Ajouter job de traitement immédiat
       await attackQueue.add(
         'process-attack',
         { type: 'process-attack', data: { attackId: attack.id } },
         { attempts: 3, backoff: { type: 'exponential', delay: 5000 } }
       );
+      
+      logger.info(`[AttackWorker] Attaque ${attack.id} programmée pour traitement`);
+    }
+
+    // IMPORTANT : Aussi traiter les attaques déjà en status 'arrived' (cas de relance après crash)
+    const stuckAttacks = await combatRepository.getAttacksByStatus('arrived');
+    logger.info(`[AttackWorker] ${stuckAttacks.length} attaques bloquées en 'arrived' trouvées`);
+
+    for (const attack of stuckAttacks) {
+      // Ajouter job de traitement si pas déjà en cours
+      await attackQueue.add(
+        'process-attack',
+        { type: 'process-attack', data: { attackId: attack.id } },
+        { 
+          attempts: 3, 
+          backoff: { type: 'exponential', delay: 5000 },
+          jobId: `attack-${attack.id}` // Évite les doublons
+        }
+      );
+      
+      logger.info(`[AttackWorker] Attaque bloquée ${attack.id} programmée pour traitement`);
     }
 
     job.updateProgress(100);
-    return { processed: arrivedAttacks.length };
+    return { 
+      newlyArrived: arrivedAttacks.length,
+      stuckProcessed: stuckAttacks.length 
+    };
   } catch (error) {
     logger.error({ err: error }, '[AttackWorker] Erreur scan attaques');
     throw error;

@@ -67,7 +67,14 @@ const createResourceController = ({ resourceService }) => {
     try {
       const result = await resourceService.upgradeResourceBuilding(req.user.id, req.params.id);
       (req.logger || logger).audit({ userId: req.user.id, buildingId: req.params.id }, 'Resource building upgraded');
-      return res.json(result);
+      
+      // Récupérer les données complètes du bâtiment après l'upgrade
+      const building = await resourceService.getResourceBuildingDetails(req.user.id, req.params.id);
+      
+      return res.json({
+        ...result,
+        building: building
+      });
     } catch (err) {
       (req.logger || logger).error({ err }, 'Error upgrading building');
       return res

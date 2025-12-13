@@ -127,11 +127,16 @@ const registerChatHandlers = (io, socket, { chatService }) => {
       const messagePayload = {
         id: createdMessage.id,
         userId: createdMessage.userId,
-        username: user.username,
+        author: {
+          id: user.id,
+          username: user.username,
+        },
         channelType: createdMessage.channelType,
         channelId: createdMessage.channelId,
         message: createdMessage.message,
         metadata: createdMessage.metadata,
+        isDeleted: false,
+        editedAt: null,
         createdAt: createdMessage.createdAt,
       };
 
@@ -181,7 +186,7 @@ const registerChatHandlers = (io, socket, { chatService }) => {
           ? 'chat:global'
           : `chat:alliance:${updatedMessage.channelId}`;
 
-      io.to(room).emit('chat:message:edited', {
+      io.to(room).emit('chat:edited', {
         id: updatedMessage.id,
         message: updatedMessage.message,
         editedAt: updatedMessage.editedAt,
@@ -239,8 +244,8 @@ const registerChatHandlers = (io, socket, { chatService }) => {
           ? 'chat:global'
           : `chat:alliance:${message.channelId}`;
 
-      io.to(room).emit('chat:message:deleted', {
-        id: messageId,
+      io.to(room).emit('chat:deleted', {
+        messageId: messageId,
       });
 
       logger.info('Chat message deleted', { messageId, userId });

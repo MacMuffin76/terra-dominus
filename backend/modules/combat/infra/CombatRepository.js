@@ -126,6 +126,26 @@ class CombatRepository {
   }
 
   /**
+   * Récupérer les attaques par statut (pour débloquer les attaques coincées)
+   */
+  async getAttacksByStatus(status) {
+    return runWithContext(async () => {
+      return this.Attack.findAll({
+        where: { status },
+        include: [
+          { model: this.City, as: 'attackerCity' },
+          { model: this.City, as: 'defenderCity' },
+          {
+            model: this.AttackWave,
+            as: 'waves',
+            include: [{ model: this.Unit, as: 'unit' }]
+          }
+        ]
+      });
+    });
+  }
+
+  /**
    * Mettre à jour le statut d'une attaque
    */
   async updateAttackStatus(attackId, status, additionalData = {}, transaction) {

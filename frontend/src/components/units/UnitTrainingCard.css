@@ -4,11 +4,14 @@
   background: linear-gradient(135deg, #1a1f3a 0%, #0f1425 100%);
   border: 2px solid #2a3f5f;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
 }
 
 .unit-training-card:hover:not(.locked) {
@@ -64,20 +67,29 @@
 .unit-card-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .unit-icon {
-  font-size: 32px;
-  width: 48px;
-  height: 48px;
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 217, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid rgba(0, 217, 255, 0.3);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.unit-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .unit-header-info {
@@ -88,7 +100,7 @@
 }
 
 .unit-name {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
@@ -104,21 +116,26 @@
 }
 
 .unit-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #b0b8c8;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-  min-height: 40px;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+  min-height: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .unit-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px;
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .stat {
@@ -145,14 +162,14 @@
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #8a94a8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
 }
@@ -160,11 +177,11 @@
 .unit-costs {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
 
 .cost-section,
@@ -219,11 +236,11 @@
 .unit-weaknesses {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  margin-top: 8px;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-top: 6px;
 }
 
 .unit-counters {
@@ -251,20 +268,20 @@
 /* Train button */
 .unit-train-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 12px;
+  padding: 10px;
+  margin-top: auto;
   background: linear-gradient(135deg, #00d4ff, #0099cc);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .unit-train-btn:hover {
