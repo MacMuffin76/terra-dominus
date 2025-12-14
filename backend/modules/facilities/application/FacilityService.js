@@ -293,6 +293,83 @@ class FacilityService {
   }
 
   /**
+   * Obtenir les détails d'une installation par sa clé
+   * @param {number} userId
+   * @param {string} facilityKey - Clé de l'installation (ex: 'TRAINING_CENTER')
+   * @returns {Promise<Object>}
+   */
+  async getFacilityDetailsByKey(userId, facilityKey) {
+    const facilityDef = FACILITY_DEFINITIONS[facilityKey.toUpperCase()];
+    if (!facilityDef) {
+      throw new Error(`Facility definition not found: ${facilityKey}`);
+    }
+
+    return await this.sequelize.transaction(async (transaction) => {
+      const city = await this.City.findOne({ 
+        where: { user_id: userId, is_capital: true },
+        transaction
+      });
+      if (!city) {
+        throw new Error('City not found');
+      }
+
+      // Trouver l'installation
+      const facility = await this.Facility.findOne({ 
+        where: { 
+          city_id: city.id,
+          name: facilityDef.name
+        },
+        transaction
+      });
+
+      const currentLevel = facility ? facility.level : 0;
+      const targetLevel = currentLevel + 1;
+
+      // Récupérer le niveau du Centre de Commandement
+      const commandCenter = await this.Facility.findOne({
+        where: {
+          city_id: city.id,
+          name: 'Centre de Commandement'
+        },
+        transaction
+      });
+      const commandCenterLevel = commandCenter?.level || 0;
+
+      // Calculer le coût du prochain niveau si pas au max
+      let nextLevelCost = null;
+      if (currentLevel < facilityDef.maxLevel) {
+        const upgradeCost = this._calculateUpgradeCost(facilityDef, targetLevel);
+        nextLevelCost = Object.entries(upgradeCost).map(([type, amount]) => ({
+          resource_type: this._mapResourceName(type),
+          amount
+        }));
+      }
+
+      // Calculer le prérequis pour le niveau actuel et le niveau suivant
+      const requiredCommandCenter = facilityDef.requiredCommandCenter || 0;
+      
+      return {
+        id: facility?.id,
+        key: facilityKey,
+        name: facilityDef.name,
+        description: facilityDef.description,
+        level: currentLevel,
+        maxLevel: facilityDef.maxLevel,
+        nextLevelCost,
+        currentBonuses: this._calculateBonuses(facilityDef, currentLevel),
+        nextLevelBonuses: currentLevel < facilityDef.maxLevel 
+          ? this._calculateBonuses(facilityDef, targetLevel)
+          : null,
+        prerequisites: {
+          requiredCommandCenter,
+          currentCommandCenter: commandCenterLevel,
+          meetsRequirements: commandCenterLevel >= requiredCommandCenter
+        }
+      };
+    });
+  }
+
+  /**
    * Améliorer une installation par sa clé
    * @param {number} userId
    * @param {string} facilityKey - Clé de l'installation (ex: 'TRAINING_CENTER')
@@ -460,6 +537,7 @@ class FacilityService {
           await scheduleConstructionCompletion({
             id: committedItem.id,
             finishTime: committedItem.finishTime,
+            type: 'facility',
           }, { userId });
           console.log(`[FacilityService] Successfully scheduled facility construction completion for queueItem ${queueId}`);
         } catch (err) {

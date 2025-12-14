@@ -82,6 +82,21 @@ const createFacilityUnlockRouter = (container) => {
   });
 
   /**
+   * GET /api/facilities/unlock/details/:facilityKey
+   * Obtenir les détails d'une installation par sa clé
+   */
+  router.get('/details/:facilityKey', protect, async (req, res) => {
+    try {
+      const data = await facilityService.getFacilityDetailsByKey(req.user.id, req.params.facilityKey);
+      res.json(data);
+    } catch (error) {
+      req.logger?.error({ err: error }, 'Error getting facility details');
+      const status = error.status || 500;
+      res.status(status).json({ message: error.message || 'Error fetching facility details' });
+    }
+  });
+
+  /**
    * GET /api/facilities/unlock/check/:facilityKey
    * Vérifier si une installation peut être construite/améliorée
    */

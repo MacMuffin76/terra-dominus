@@ -81,6 +81,14 @@ class ResearchQueueRepository {
     let hasActive = false;
     let slot = 1;
 
+    // Étape 1: Assigner des slots temporaires négatifs pour éviter les conflits
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      item.slot = -(i + 1000); // slots temporaires négatifs
+      await item.save({ transaction });
+    }
+
+    // Étape 2: Réassigner les vrais slots
     for (const item of queue) {
       const durationMs = item.finishTime && item.startTime
         ? new Date(item.finishTime) - new Date(item.startTime)

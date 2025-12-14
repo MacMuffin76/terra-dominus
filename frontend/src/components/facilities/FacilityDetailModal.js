@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { useResources } from '../../context/ResourcesContext';
+import socket from '../../utils/socket';
 import './FacilityDetailModal.css';
 
 const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacilityDowngraded }) => {
@@ -29,9 +30,12 @@ const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacility
       setLoading(true);
       setError(null);
       try {
-        const { data } = await axiosInstance.get(
-          `/facilities/facility-buildings/${facility.id}`
-        );
+        // Utiliser l'ID si disponible, sinon utiliser le key pour retrouver la facility
+        let endpoint = facility.id 
+          ? `/facilities/facility-buildings/${facility.id}`
+          : `/facilities/unlock/details/${facility.key}`;
+        
+        const { data } = await axiosInstance.get(endpoint);
         setDetail(data);
       } catch (err) {
         setError(err.response?.data?.error || 'Erreur lors du chargement');
@@ -41,42 +45,41 @@ const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacility
     };
 
     fetchDetail();
-  }, [facility.id]);
+
+    // Écouter les événements socket pour rafraîchir quand la construction est terminée
+    const handleConstructionUpdate = () => {
+      console.log('🏗️ Construction queue updated, refreshing facility details...');
+      fetchDetail();
+    };
+
+    socket.on('construction_queue:update', handleConstructionUpdate);
+
+    return () => {
+      socket.off('construction_queue:update', handleConstructionUpdate);
+    };
+  }, [facility.id, facility.key]);
 
   const handleUpgrade = async () => {
     if (!detail) return;
+    if (!facility.key) {
+      alert('Erreur: facilityKey manquante');
+      return;
+    }
 
     try {
       const { data } = await axiosInstance.post(
-        `/facilities/facility-buildings/${facility.id}/upgrade`
+        `/facilities/unlock/upgrade/${facility.key}`
       );
 
       if (data.message) {
         alert(data.message);
-      } else {
-        const costList = detail.nextLevelCost || [];
-        const updatedResources = resources.map((r) => {
-          const cost = costList.find((c) => c.resource_type === r.type);
-          if (cost) {
-            return {
-              ...r,
-              amount: Math.max(0, (Number(r.amount) || 0) - (Number(cost.amount) || 0))
-            };
-          }
-          return r;
-        });
-        setResources(updatedResources);
-
-        const upgraded = { ...facility, level: facility.level + 1 };
-        onFacilityUpgraded(upgraded);
-
-        const { data: refreshed } = await axiosInstance.get(
-          `/facilities/facility-buildings/${facility.id}`
-        );
-        setDetail(refreshed);
+        // Rafraîchir les données de la facility pour voir la construction en cours
+        setTimeout(() => {
+          onClose(); // Fermer la modale pour montrer la construction en cours
+        }, 1000);
       }
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'amélioration');
+      alert(err.response?.data?.message || err.response?.data?.error || 'Erreur lors de l\'amélioration');
     }
   };
 
@@ -111,6 +114,13 @@ const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacility
 
   const canAffordUpgrade = () => {
     if (!detail?.nextLevelCost) return false;
+    
+    // Vérifier les prérequis
+    if (detail.prerequisites && !detail.prerequisites.meetsRequirements) {
+      return false;
+    }
+    
+    // Vérifier les ressources
     return detail.nextLevelCost.every((cost) => {
       const userResource = resources.find((r) => r.type === cost.resource_type);
       return userResource && Number(userResource.amount) >= Number(cost.amount);
@@ -158,6 +168,10 @@ const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacility
                     <span className="label">Niveau actuel</span>
                     <span className="value">{detail.level}</span>
                   </div>
+                  <div className="terra-facility-info-item">
+                    <span className="label">Niveau maximum</span>
+                    <span className="value">{detail.maxLevel}</span>
+                  </div>
                   {detail.description && (
                     <div className="terra-facility-info-item full-width">
                       <span className="label">Description</span>
@@ -166,6 +180,35 @@ const FacilityDetailModal = ({ facility, onClose, onFacilityUpgraded, onFacility
                   )}
                 </div>
               </div>
+
+              {detail.prerequisites && (
+                <div className="terra-facility-modal-section">
+                  <h3>🔓 Prérequis</h3>
+                  <div className="terra-facility-prerequisites">
+                    <div className={`terra-facility-prerequisite-item ${detail.prerequisites.meetsRequirements ? 'met' : 'not-met'}`}>
+                      <span className="prerequisite-icon">
+                        {detail.prerequisites.meetsRequirements ? '✅' : '🔒'}
+                      </span>
+                      <div className="prerequisite-details">
+                        <span className="prerequisite-name">Centre de Commandement</span>
+                        <span className="prerequisite-requirement">
+                          Niveau requis: {detail.prerequisites.requiredCommandCenter} 
+                          {' '}(Actuel: {detail.prerequisites.currentCommandCenter})
+                        </span>
+                      </div>
+                    </div>
+                    {!detail.prerequisites.meetsRequirements && (
+                      <div className="terra-alert terra-alert-warning" style={{ marginTop: '0.5rem' }}>
+                        <span className="alert-icon">⚠️</span>
+                        <span className="alert-text">
+                          Vous devez améliorer votre Centre de Commandement au niveau {detail.prerequisites.requiredCommandCenter} 
+                          {detail.level === 0 ? ' pour débloquer' : ' pour continuer à améliorer'} cette installation.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {detail.nextLevelCost && detail.nextLevelCost.length > 0 && (
                 <div className="terra-facility-modal-section">

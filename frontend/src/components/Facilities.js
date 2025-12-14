@@ -64,6 +64,22 @@ const Facilities = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Écouter les événements socket pour rafraîchir quand une construction est terminée
+  useEffect(() => {
+    const socket = require('../utils/socket').default;
+    
+    const handleConstructionUpdate = () => {
+      console.log('🏗️ Construction queue updated, refreshing facilities list...');
+      fetchData().catch(() => {});
+    };
+
+    socket.on('construction_queue:update', handleConstructionUpdate);
+
+    return () => {
+      socket.off('construction_queue:update', handleConstructionUpdate);
+    };
+  }, [fetchData]);
+
   // 3) Helpers pour gestion du click et callbacks
   const handleFacilityClick = facility =>
     setSelectedFacility(prev =>
