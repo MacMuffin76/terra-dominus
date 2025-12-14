@@ -52,6 +52,7 @@ const buildAccessToken = (userId) =>
         model: WorldGrid,
         as: 'grid',
         attributes: ['coord_x', 'coord_y'],
+        required: true, // INNER JOIN au lieu de LEFT JOIN pour éviter l'erreur FOR UPDATE
       },
     ],
     order: [['id', 'ASC']],
@@ -196,12 +197,13 @@ async function initializeUserGameData(userId, transaction) {
   );
 
   const facilityTypes = [
-    'Centre de commandement',
-    'Comptoir commercial',
-    'Atelier de defense',
-    'Centre d\'entraînement',
-    'Forge militaire',
-    'Laboratoire de recherche'
+    'Centre de Commandement',
+    'Centre d\'Entraînement',
+    'Centre de Recherche',
+    'Atelier de Défense',
+    'Laboratoire de Recherche',
+    'Forge Militaire',
+    'Comptoir Commercial'
   ];
 
   await Promise.all(

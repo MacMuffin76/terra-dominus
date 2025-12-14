@@ -215,7 +215,10 @@ const ResourceDetail = ({
       if (updatedDetail) {
         onBuildingUpgraded(updatedDetail);
       }
-
+      // ✅ Fermer automatiquement le modal après l'amélioration
+      if (onClose) {
+        onClose();
+      }
       if (upgradeData.message && upgradeData.status !== 'building') {
         alert(upgradeData.message);
       }

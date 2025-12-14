@@ -103,12 +103,13 @@ const Resources = () => {
       // Update local state
       const updatedData = data.map(b => b.id === updated.id ? updated : b);
       setData(orderBuildings(updatedData, allowedBuildings));
-      setSel(updated);
       
-      // Ne fermer le modal que si ce n'est pas une construction en cours
-      if (updated.status !== 'building') {
-        setModalOpen(false);
-      }
+      // ✅ Toujours fermer le modal après l'amélioration
+      setModalOpen(false);
+      setSel(null);
+      
+      // ✅ Rafraîchir toutes les données de la page
+      await fetchData();
     } catch (err) {
       catchError(async () => { throw err; }, { 
         toast: true, 

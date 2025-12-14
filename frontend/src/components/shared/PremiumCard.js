@@ -156,25 +156,25 @@ const PremiumCard = ({
         {/* Stats */}
         {Object.keys(stats).length > 0 && (
           <div className="premium-card-stats">
-            {stats.attack && (
+            {stats.attack > 0 && (
               <div className="stat-item">
                 <span className="stat-icon">⚔️</span>
                 <span className="stat-value">{stats.attack}</span>
               </div>
             )}
-            {stats.defense && (
+            {stats.defense > 0 && (
               <div className="stat-item">
                 <span className="stat-icon">🛡️</span>
                 <span className="stat-value">{stats.defense}</span>
               </div>
             )}
-            {stats.production && (
+            {stats.production > 0 && (
               <div className="stat-item">
                 <TrendingUp size={14} />
                 <span className="stat-value">{Number(stats.production).toFixed(2)}/h</span>
               </div>
             )}
-            {stats.capacity && (
+            {stats.capacity > 0 && (
               <div className="stat-item">
                 <span className="stat-icon">📦</span>
                 <span className="stat-value">{stats.capacity}</span>

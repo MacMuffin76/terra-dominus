@@ -75,6 +75,7 @@ const FacilityDetail = ({
   facility,
   onFacilityUpgraded,
   onFacilityDowngraded,
+  onClose,
 }) => {
   const [detail, setDetail] = useState(null);
   const { resources, setResources } = useResources();
@@ -122,8 +123,11 @@ const FacilityDetail = ({
       }
 
       await refreshFacility();
-      onFacilityUpgraded && onFacilityUpgraded(detail);
-    } catch (err) {
+      onFacilityUpgraded && onFacilityUpgraded(detail);      
+      // ✅ Fermer automatiquement le modal après l'amélioration
+      if (onClose) {
+        onClose();
+      }    } catch (err) {
       const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
       alert(message);
     }

@@ -65,7 +65,7 @@ const formatDuration = (seconds) => {
   return `${n} seconde${n > 1 ? 's' : ''}`;
 };
 
-const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) => {
+const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed, onClose }) => {
   const [detail, setDetail] = useState(null);
   const { resources, setResources } = useResources();
 
@@ -120,8 +120,11 @@ const ResearchDetail = ({ research, onResearchUpgraded, onResearchDestroyed }) =
       }
 
       await refreshResearch();
-      onResearchUpgraded && onResearchUpgraded(detail);
-    } catch (err) {
+      onResearchUpgraded && onResearchUpgraded(detail);      
+      // ✅ Fermer automatiquement le modal après l'amélioration
+      if (onClose) {
+        onClose();
+      }    } catch (err) {
       const message = getApiErrorMessage(err, "Erreur lors de l’amélioration");
       alert(message);
     }

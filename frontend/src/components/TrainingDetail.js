@@ -8,7 +8,7 @@ import './TrainingDetail.css';
 const formatNumber = (value) =>
   new Intl.NumberFormat('fr-FR').format(Number(value || 0));
 
-const TrainingDetail = ({ training, onTrainingUpdated }) => {
+const TrainingDetail = ({ training, onTrainingUpdated, onClose }) => {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -43,12 +43,17 @@ const TrainingDetail = ({ training, onTrainingUpdated }) => {
       if (onTrainingUpdated) {
         onTrainingUpdated(data);
       }
+      
+      // ✅ Fermer automatiquement le modal après l'amélioration
+      if (onClose) {
+        onClose();
+      }
     } catch (err) {
       logger.error('Failed to upgrade training', err);
     } finally {
       setLoading(false);
     }
-  }, [detail, training?.id, onTrainingUpdated]);
+  }, [detail, training?.id, onTrainingUpdated, onClose]);
 
   const handleDestroy = useCallback(async () => {
     if (!window.confirm('Supprimer ce centre d\'entraînement ?')) return;
